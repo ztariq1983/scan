@@ -204,6 +204,41 @@ table.orb-tbl tbody tr.flash{animation:flashRow 1.2s ease}
 .orb-quote.up{color:var(--green)}
 .orb-quote.down{color:var(--red)}
 
+/* ─── Pre-Market Pipeline ─────────────────────────────────────────── */
+.pipeline-panel{position:relative;background:linear-gradient(135deg,var(--surface) 0%,rgba(180,125,255,0.05) 100%);border:1px solid var(--purple);padding:18px 20px;margin-bottom:20px;overflow:hidden}
+.pipeline-panel::before{content:'';position:absolute;top:0;left:0;width:60px;height:3px;background:linear-gradient(90deg,var(--purple),var(--accent))}
+.pipeline-panel::after{content:'';position:absolute;top:-50%;right:-10%;width:200px;height:200px;background:radial-gradient(circle,rgba(180,125,255,0.1) 0%,transparent 70%);pointer-events:none}
+.pipeline-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;position:relative}
+.pipeline-title{font-family:var(--font-display);font-size:14px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase}
+.pipeline-title .sparkle{color:var(--purple);margin-right:6px}
+.pipeline-desc{font-size:10px;color:var(--muted);letter-spacing:.5px;line-height:1.7;margin-bottom:14px}
+.pipeline-desc b{color:var(--accent)}
+.btn-pipeline{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:2px;padding:14px 32px;background:linear-gradient(135deg,var(--purple),var(--accent));color:#000;border:none;cursor:pointer;text-transform:uppercase;transition:all .2s;position:relative;overflow:hidden}
+.btn-pipeline:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(180,125,255,0.4)}
+.btn-pipeline:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-pipeline.running::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:sweep 1s infinite}
+
+/* Pipeline progress */
+.pipeline-steps{display:flex;gap:0;margin-top:14px;border:1px solid var(--border2)}
+.pipeline-step{flex:1;padding:10px 14px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);position:relative;text-align:center;border-right:1px solid var(--border2);transition:all .3s}
+.pipeline-step:last-child{border-right:none}
+.pipeline-step.active{color:var(--accent);background:var(--accent-dim)}
+.pipeline-step.done{color:var(--green);background:var(--green-dim)}
+.pipeline-step.skipped{color:var(--muted);opacity:0.5}
+.pipeline-step .step-num{font-family:var(--font-display);font-weight:700;font-size:14px;display:block;margin-bottom:2px}
+.pipeline-step .step-lbl{font-size:9px;letter-spacing:1.5px}
+
+/* Shortlist panel */
+.shortlist-panel{background:var(--surface);border:1px solid var(--purple);margin-bottom:20px;overflow:hidden}
+.shortlist-panel::before{content:'';position:absolute;top:0;left:0;width:80px;height:3px;background:var(--purple)}
+.shortlist-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);gap:16px;flex-wrap:wrap;background:rgba(180,125,255,0.03)}
+.shortlist-title{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple)}
+.shortlist-subtitle{font-size:10px;color:var(--muted);letter-spacing:.5px;margin-top:3px}
+.btn-send-orb{background:var(--accent);color:#000;border:none;font-family:var(--font-mono);font-weight:600;font-size:11px;letter-spacing:2px;padding:10px 20px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.btn-send-orb:hover{box-shadow:0 0 16px var(--accent-glow)}
+.btn-save-shortlist{background:var(--green-dim);color:var(--green);border:1px solid var(--green);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 16px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.btn-save-shortlist:hover{background:var(--green);color:#000}
+
 /* Panel base */
 .panel{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:20px;position:relative}
 .panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px}
@@ -447,6 +482,58 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
         <button class="btn-use" id="btn-use">Use These →<br><span style="font-size:8px;opacity:.55">Ctrl+Enter</span></button>
         <button class="btn btn-green" id="btn-save-wl" style="padding:8px 14px">💾 Save As...</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Pre-Market Pipeline -->
+  <div class="pipeline-panel">
+    <div class="pipeline-header">
+      <div>
+        <div class="pipeline-title"><span class="sparkle">✦</span>Pre-Market Pipeline</div>
+      </div>
+      <button class="btn-pipeline" id="btn-pipeline">🚀 Run Full Pipeline</button>
+    </div>
+    <div class="pipeline-desc">
+      One-click automation: <b>ranks your ETFs by 1-week relative strength</b> → pulls holdings from top 5 strongest → merges with your <b>custom watchlist</b> (below) → runs <b>all 8 strategies</b> → shortlists anything with <b>HVC live OR 2+ setup matches</b> → ready to <b>load into ORB tab</b> for market open.
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px">
+      <div class="creds-field" style="min-width:220px;max-width:280px;margin:0">
+        <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Custom Watchlist (always included)</label>
+        <select id="pipeline-custom-wl" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;cursor:pointer">
+          <option value="">— None / skip —</option>
+        </select>
+      </div>
+      <div id="pipeline-status" style="font-size:11px;color:var(--muted);letter-spacing:1px;flex:1;min-width:200px">Ready. ETFs tracked: <b id="pipeline-etf-ct" style="color:var(--purple)">0</b></div>
+    </div>
+    <div class="pipeline-steps" id="pipeline-steps" style="display:none">
+      <div class="pipeline-step" data-step="1"><span class="step-num">1</span><span class="step-lbl">Rank ETFs</span></div>
+      <div class="pipeline-step" data-step="2"><span class="step-num">2</span><span class="step-lbl">Pull Holdings</span></div>
+      <div class="pipeline-step" data-step="3"><span class="step-num">3</span><span class="step-lbl">Merge Custom</span></div>
+      <div class="pipeline-step" data-step="4"><span class="step-num">4</span><span class="step-lbl">Scan Strategies</span></div>
+      <div class="pipeline-step" data-step="5"><span class="step-num">5</span><span class="step-lbl">Shortlist</span></div>
+    </div>
+  </div>
+
+  <!-- Shortlist results (shown after pipeline runs) -->
+  <div class="shortlist-panel" id="shortlist-panel" style="display:none;position:relative">
+    <div class="shortlist-header">
+      <div>
+        <div class="shortlist-title">🎯 Today's Shortlist</div>
+        <div class="shortlist-subtitle" id="shortlist-subtitle">—</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-save-shortlist" id="btn-save-shortlist">💾 Save as Watchlist</button>
+        <button class="btn-send-orb" id="btn-send-orb">→ Send to ORB Tab</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Ticker</th><th>Price</th><th>Change %</th><th>Source ETF</th>
+          <th>Setups</th><th>Signals</th>
+        </tr></thead>
+        <tbody id="shortlist-tbody"></tbody>
+      </table>
     </div>
   </div>
 
@@ -1099,6 +1186,8 @@ function getAllWatchlists() {
 
 function saveAllWatchlists(wls) {
   localStorage.setItem(WL_KEY, JSON.stringify(wls));
+  // Refresh pipeline UI if it exists
+  if (typeof refreshPipelineUI === 'function') refreshPipelineUI();
 }
 
 function refreshWatchlistDropdown(selectedName = '') {
@@ -1520,6 +1609,7 @@ function saveTrackedETFs(list) {
   localStorage.setItem(ETF_KEY, JSON.stringify(list));
   g('etf-count').textContent = list.length + ' tracked';
   g('etf-tab-count').textContent = list.length ? `(${list.length})` : '';
+  if (typeof refreshPipelineUI === 'function') refreshPipelineUI();
 }
 
 function getETFHoldings() {
@@ -1749,6 +1839,10 @@ function switchTab(name) {
   // Refresh ORB watchlist dropdown when entering ORB tab
   if (name === 'orb' && typeof refreshORBWatchlistDropdown === 'function') {
     refreshORBWatchlistDropdown();
+  }
+  // Refresh pipeline UI when returning to scanner tab
+  if (name === 'scanner' && typeof refreshPipelineUI === 'function') {
+    refreshPipelineUI();
   }
 }
 
@@ -2601,6 +2695,284 @@ g('orb-refresh-sec').addEventListener('change', () => {
 
 // Initial load of finnhub key
 loadFinnhubKey();
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PRE-MARKET PIPELINE (one-click automation)
+// ═════════════════════════════════════════════════════════════════════════════
+
+let pipelineRunning = false;
+let shortlistTickers = [];
+let shortlistResults = [];
+
+function refreshPipelineUI() {
+  // ETF count
+  g('pipeline-etf-ct').textContent = getTrackedETFs().length;
+
+  // Custom watchlist dropdown — populated from saved watchlists
+  const wls = getAllWatchlists();
+  const names = Object.keys(wls).sort();
+  const sel = g('pipeline-custom-wl');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— None / skip —</option>' +
+    names.map(n => `<option value="${n}"${n===current?' selected':''}>${n} (${wls[n].length})</option>`).join('');
+}
+
+function setPipelineStep(stepNum, state) {
+  // state: 'active' | 'done' | 'skipped' | ''
+  const el = document.querySelector(`.pipeline-step[data-step="${stepNum}"]`);
+  if (!el) return;
+  el.classList.remove('active','done','skipped');
+  if (state) el.classList.add(state);
+}
+
+function setPipelineStatus(msg) {
+  g('pipeline-status').innerHTML = msg;
+}
+
+async function runPipeline() {
+  if (pipelineRunning) return;
+  const alpacaKeys = getKeys();
+  if (!alpacaKeys.key || !alpacaKeys.secret) {
+    setPipelineStatus('<span style="color:var(--red)">⚠ Alpaca API keys required — set them above first</span>');
+    return;
+  }
+
+  const trackedETFs = getTrackedETFs();
+  const customWlName = g('pipeline-custom-wl').value;
+  const customTickers = customWlName ? (getAllWatchlists()[customWlName] || []) : [];
+
+  if (!trackedETFs.length && !customTickers.length) {
+    setPipelineStatus('<span style="color:var(--red)">⚠ Add ETFs on the ETFs tab or pick a custom watchlist</span>');
+    return;
+  }
+
+  pipelineRunning = true;
+  shortlistTickers = [];
+  shortlistResults = [];
+  g('shortlist-panel').style.display = 'none';
+  const btn = g('btn-pipeline');
+  btn.disabled = true;
+  btn.classList.add('running');
+  btn.textContent = '⟳ Running pipeline...';
+  g('pipeline-steps').style.display = 'flex';
+  [1,2,3,4,5].forEach(n => setPipelineStep(n, ''));
+  g('cors-warn').style.display = 'none';
+
+  try {
+    // ═══ STEP 1: Rank ETFs by 1-week RS ═══
+    let topETFs = [];
+    if (trackedETFs.length) {
+      setPipelineStep(1, 'active');
+      setPipelineStatus(`<b>Step 1/5:</b> Fetching ETF performance for ${trackedETFs.length} ETFs...`);
+
+      const etfPerf = [];
+      for (const ticker of trackedETFs) {
+        try {
+          const bars = await fetchDaily(ticker);
+          const closes = bars.map(b => b.c);
+          const cur = closes[closes.length - 1];
+          const past = closes[closes.length - 6] || closes[0];
+          const pct1w = past ? ((cur - past) / past) * 100 : 0;
+          etfPerf.push({ ticker, pct1w });
+        } catch(e) {
+          if (e.message.includes('CORS') || e.name === 'TypeError') {
+            g('cors-warn').style.display = 'block';
+            throw new Error('CORS blocked — see warning above');
+          }
+          // Skip ETFs that fail
+        }
+      }
+
+      etfPerf.sort((a,b) => b.pct1w - a.pct1w);
+      topETFs = etfPerf.slice(0, 5);
+      setPipelineStep(1, 'done');
+    } else {
+      setPipelineStep(1, 'skipped');
+    }
+
+    // ═══ STEP 2: Pull holdings from top ETFs ═══
+    setPipelineStep(2, 'active');
+    const etfHoldings = getETFHoldings();
+    const etfStocksMap = {}; // { ticker: sourceETF }
+    let etfStocks = 0;
+
+    for (const { ticker: etfTicker } of topETFs) {
+      const holdings = etfHoldings[etfTicker];
+      if (!holdings || !holdings.length) continue;
+      for (const stock of holdings) {
+        if (!etfStocksMap[stock]) {
+          etfStocksMap[stock] = etfTicker;
+          etfStocks++;
+        }
+      }
+    }
+
+    setPipelineStatus(`<b>Step 2/5:</b> Found ${etfStocks} unique stocks across top ${topETFs.length} strongest ETFs (${topETFs.map(e=>e.ticker).join(', ') || '—'})`);
+
+    if (etfStocks === 0 && topETFs.length > 0) {
+      setPipelineStatus(`<span style="color:var(--orange)">⚠ Top ETFs don't have holdings saved. Add holdings on the ETFs tab (click 🎯 Holdings button on each ETF).</span>`);
+    }
+    setPipelineStep(2, etfStocks > 0 ? 'done' : 'skipped');
+
+    // ═══ STEP 3: Merge custom watchlist ═══
+    setPipelineStep(3, 'active');
+    const allTickersMap = { ...etfStocksMap };  // {ticker: source}
+    for (const t of customTickers) {
+      if (!allTickersMap[t]) {
+        allTickersMap[t] = customWlName ? `📌 ${customWlName}` : '📌 Custom';
+      }
+    }
+    const allTickers = Object.keys(allTickersMap);
+    if (customTickers.length) {
+      setPipelineStatus(`<b>Step 3/5:</b> Added ${customTickers.length} from "${customWlName}" → <b>${allTickers.length}</b> total unique tickers to scan`);
+      setPipelineStep(3, 'done');
+    } else {
+      setPipelineStep(3, 'skipped');
+    }
+
+    if (!allTickers.length) {
+      setPipelineStatus('<span style="color:var(--red)">⚠ No tickers to scan. Add ETF holdings or pick a custom watchlist.</span>');
+      throw new Error('no tickers');
+    }
+
+    // ═══ STEP 4: Scan all tickers with all strategies ═══
+    setPipelineStep(4, 'active');
+    const scanResults = [];
+    let done = 0;
+    for (const ticker of allTickers) {
+      setPipelineStatus(`<b>Step 4/5:</b> Scanning <b>${ticker}</b> — ${done+1}/${allTickers.length}`);
+      try {
+        const data = await fetchDaily(ticker);
+        const result = analyzeStock(ticker, data);
+        result.sourceETF = allTickersMap[ticker];
+        scanResults.push(result);
+      } catch(e) {
+        if (e.message.includes('CORS') || e.name === 'TypeError') {
+          g('cors-warn').style.display = 'block';
+          throw new Error('CORS blocked during scan');
+        }
+        // Skip individual ticker failures silently
+      }
+      done++;
+    }
+    setPipelineStep(4, 'done');
+
+    // ═══ STEP 5: Filter to shortlist (HVC live OR 2+ matches) ═══
+    setPipelineStep(5, 'active');
+    shortlistResults = scanResults.filter(r => {
+      if (!r.signals || !r.signals.length) return false;
+      // HVC triggered (live)?
+      if (r.signals.includes('hvc') && r.hvcTriggered) return true;
+      // 2+ strategy matches?
+      return r.signals.length >= 2;
+    });
+
+    // Sort: HVC triggered first, then by signal count
+    shortlistResults.sort((a,b) => {
+      const aHvc = a.signals.includes('hvc') && a.hvcTriggered ? 1 : 0;
+      const bHvc = b.signals.includes('hvc') && b.hvcTriggered ? 1 : 0;
+      if (aHvc !== bHvc) return bHvc - aHvc;
+      return b.signals.length - a.signals.length;
+    });
+
+    shortlistTickers = shortlistResults.map(r => r.ticker);
+    setPipelineStep(5, 'done');
+
+    // Render shortlist panel
+    renderShortlist(topETFs, allTickers.length);
+
+    setPipelineStatus(`<b style="color:var(--green)">✓ Pipeline complete</b> — ${allTickers.length} scanned, <b style="color:var(--purple)">${shortlistResults.length} shortlisted</b>`);
+
+  } catch(e) {
+    setPipelineStatus(`<span style="color:var(--red)">✗ Pipeline failed: ${e.message}</span>`);
+  } finally {
+    pipelineRunning = false;
+    btn.disabled = false;
+    btn.classList.remove('running');
+    btn.textContent = '🚀 Run Full Pipeline';
+  }
+}
+
+function renderShortlist(topETFs, totalScanned) {
+  const panel = g('shortlist-panel');
+  if (!shortlistResults.length) {
+    panel.style.display = 'block';
+    g('shortlist-subtitle').textContent = `${totalScanned} tickers scanned · 0 matched shortlist criteria`;
+    g('shortlist-tbody').innerHTML = `<tr><td colspan="6"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Candidates</div><div class="es">No stocks met the HVC-live-OR-2-match threshold today</div></div></td></tr>`;
+    return;
+  }
+
+  panel.style.display = 'block';
+  const topEtfNames = topETFs.map(e => `${e.ticker} (+${e.pct1w.toFixed(1)}%)`).join(', ');
+  g('shortlist-subtitle').innerHTML = `${shortlistResults.length} candidates from ${totalScanned} scanned · Top ETFs: <b style="color:var(--accent)">${topEtfNames || 'none'}</b>`;
+
+  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC' };
+
+  g('shortlist-tbody').innerHTML = shortlistResults.map((r, i) => {
+    const tags = r.signals.map(s => `<span class="stag ${s}">${s==='hvc'?(r.hvcTriggered?'HVC ⚡':'HVC ⏳'):lbl[s]}</span>`).join('');
+    const chCls = r.changePct >= 0 ? 'up' : 'down';
+    const chStr = (r.changePct >= 0 ? '+' : '') + r.changePct.toFixed(2) + '%';
+    const isHvcLive = r.signals.includes('hvc') && r.hvcTriggered;
+    const priority = isHvcLive ? '<span style="color:var(--green);font-weight:700;font-size:10px;letter-spacing:1px">🚀 LIVE</span> ' : '';
+
+    return `<tr style="animation-delay:${i*25}ms">
+      <td class="td-tick">${priority}${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+      <td>$${r.price.toFixed(2)}</td>
+      <td class="td-change ${chCls}">${chStr}</td>
+      <td style="font-size:10px;color:var(--muted)">${r.sourceETF || '—'}</td>
+      <td style="text-align:center"><span style="font-family:var(--font-display);font-weight:700;color:var(--purple)">${r.signals.length}</span></td>
+      <td><div class="strats-cell">${tags}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function saveShortlistAsWatchlist() {
+  if (!shortlistTickers.length) return;
+  const date = new Date();
+  const defaultName = `Shortlist ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  const name = prompt(`Save ${shortlistTickers.length} shortlisted tickers as watchlist:`, defaultName);
+  if (!name || !name.trim()) return;
+
+  const wls = getAllWatchlists();
+  const trimmed = name.trim();
+  if (wls[trimmed] && !confirm(`"${trimmed}" exists. Overwrite?`)) return;
+
+  wls[trimmed] = shortlistTickers.slice();
+  saveAllWatchlists(wls);
+  refreshWatchlistDropdown(trimmed);
+  refreshPipelineUI();
+  setPipelineStatus(`<b style="color:var(--green)">✓ Saved</b> "${trimmed}" with ${shortlistTickers.length} tickers`);
+}
+
+function sendShortlistToORB() {
+  if (!shortlistTickers.length) return;
+
+  // Save as a shortlist watchlist so ORB dropdown can find it
+  const date = new Date();
+  const autoName = `ORB Ready ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  const wls = getAllWatchlists();
+  wls[autoName] = shortlistTickers.slice();
+  saveAllWatchlists(wls);
+
+  // Switch to ORB tab and select it
+  switchTab('orb');
+  refreshORBWatchlistDropdown();
+  setTimeout(() => {
+    const sel = g('orb-wl-select');
+    sel.value = autoName;
+    // Highlight feedback
+    sel.style.borderColor = 'var(--green)';
+    setTimeout(() => sel.style.borderColor = '', 2000);
+  }, 100);
+}
+
+// Wire pipeline events
+g('btn-pipeline').addEventListener('click', runPipeline);
+g('btn-save-shortlist').addEventListener('click', saveShortlistAsWatchlist);
+g('btn-send-orb').addEventListener('click', sendShortlistToORB);
+
+// Initial pipeline UI load
+refreshPipelineUI();
 
 // Load saved keys and watchlists on page ready
 loadKeys();
