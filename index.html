@@ -158,6 +158,52 @@ table.trade-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
 .act-btn.exit:hover{background:var(--green);color:#000;border-color:var(--green)}
 .act-btn.del:hover{color:var(--red);border-color:var(--red);background:var(--red-dim)}
 
+/* ─── ORB Scanner ─────────────────────────────────────────────────── */
+.orb-stat-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--bg);border:1px solid var(--border2)}
+.orb-stat-item{display:flex;flex-direction:column;gap:2px}
+.orb-stat-lbl{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.orb-stat-val{font-family:var(--font-display);font-size:14px;font-weight:700;color:#fff}
+.orb-stat-val.green{color:var(--green)}
+.orb-stat-val.amber{color:var(--orange)}
+.orb-live-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.orb-live-dot.active{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s infinite}
+.orb-live-dot.paused{background:var(--orange);box-shadow:0 0 6px var(--orange)}
+.orb-live-dot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
+
+table.orb-tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.orb-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.orb-tbl th{padding:11px 14px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+table.orb-tbl th.num{text-align:right}
+table.orb-tbl th.ctr{text-align:center}
+table.orb-tbl td{padding:11px 14px;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums}
+table.orb-tbl td.num{text-align:right}
+table.orb-tbl td.ctr{text-align:center}
+table.orb-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+table.orb-tbl tbody tr:hover{background:rgba(255,255,255,.02)}
+table.orb-tbl tbody tr.broken{background:rgba(61,255,160,.06)}
+table.orb-tbl tbody tr.broken:hover{background:rgba(61,255,160,.09)}
+table.orb-tbl tbody tr.approaching{background:rgba(232,255,71,.04)}
+table.orb-tbl tbody tr.flash{animation:flashRow 1.2s ease}
+@keyframes flashRow{0%{background:rgba(61,255,160,.25)}100%{background:rgba(61,255,160,.06)}}
+
+.orb-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap}
+.orb-status.waiting{background:rgba(74,85,104,.2);color:var(--muted);border:1px solid var(--border2)}
+.orb-status.inside{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(78,232,255,.3)}
+.orb-status.approaching{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,255,71,.4)}
+.orb-status.broken{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.5);font-weight:700}
+.orb-status.below{background:rgba(74,85,104,.2);color:var(--muted);border:1px solid var(--border2)}
+.orb-status.err{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+
+.orb-dist-bar{position:relative;width:80px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.orb-dist-marker{position:absolute;top:-2px;width:2px;height:8px;background:#fff;transform:translateX(-50%)}
+.orb-dist-low,.orb-dist-high{position:absolute;top:0;width:2px;height:4px;background:var(--muted)}
+.orb-dist-low{left:0} .orb-dist-high{right:0}
+.orb-dist-txt{font-size:10px;color:var(--muted)}
+
+.orb-quote{font-size:12px;color:var(--text);font-weight:500}
+.orb-quote.up{color:var(--green)}
+.orb-quote.down{color:var(--red)}
+
 /* Panel base */
 .panel{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:20px;position:relative}
 .panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px}
@@ -322,6 +368,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
   <div class="tabs">
     <button class="tab active" data-tab="scanner">Scanner</button>
     <button class="tab" data-tab="etfs">ETFs <span class="tab-count" id="etf-tab-count"></span></button>
+    <button class="tab" data-tab="orb">ORB Live <span class="tab-count" id="orb-tab-count"></span></button>
     <button class="tab" data-tab="journal">Journal <span class="tab-count" id="journal-tab-count"></span></button>
   </div>
 
@@ -516,6 +563,159 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     </div>
 
   </div><!-- /tab-etfs -->
+
+  <!-- ═══ ORB TAB ═══ -->
+  <div class="tab-panel" id="tab-orb">
+
+    <!-- Finnhub credentials -->
+    <div class="panel cyan">
+      <div class="panel-title">
+        Finnhub API Key
+        <span id="finnhub-status" style="color:var(--muted)">Not connected</span>
+      </div>
+      <div class="creds-row">
+        <div class="creds-field">
+          <label for="finnhub-key">API Key (get from finnhub.io — free tier)</label>
+          <input type="password" id="finnhub-key" placeholder="••••••••••••••••" autocomplete="off">
+        </div>
+        <button class="btn btn-cyan" id="btn-save-finnhub">Save Key</button>
+        <button class="btn btn-accent" id="btn-test-finnhub">Test</button>
+      </div>
+      <div class="creds-note">🔒 Stored in browser localStorage only. Used only for real-time quotes.</div>
+      <div id="finnhub-log" style="display:none;margin-top:12px;background:var(--bg);border:1px solid var(--border2);padding:12px 14px;font-size:10px;line-height:2;letter-spacing:.5px"></div>
+    </div>
+
+    <!-- ORB controls -->
+    <div class="panel accent">
+      <div class="panel-title">
+        Opening Range Breakout · Long Only
+        <span id="orb-wl-label" style="color:var(--muted)">no watchlist loaded</span>
+      </div>
+
+      <!-- Watchlist picker + settings -->
+      <div class="creds-row" style="align-items:flex-end">
+        <div class="creds-field" style="min-width:200px">
+          <label>Watchlist</label>
+          <select id="orb-wl-select" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;letter-spacing:1px;cursor:pointer">
+            <option value="">— Select a saved watchlist —</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:130px">
+          <label>Range (min)</label>
+          <select id="orb-range-min" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;cursor:pointer">
+            <option value="5" selected>5 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:130px">
+          <label>Refresh (sec)</label>
+          <select id="orb-refresh-sec" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;cursor:pointer">
+            <option value="15">15 sec</option>
+            <option value="30" selected>30 sec</option>
+            <option value="60">60 sec</option>
+            <option value="120">2 min</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:130px">
+          <label>Min Vol Surge</label>
+          <select id="orb-vol-mult" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;cursor:pointer">
+            <option value="1">Any</option>
+            <option value="1.5" selected>≥ 1.5×</option>
+            <option value="2">≥ 2×</option>
+            <option value="3">≥ 3×</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center">
+        <button class="btn-scan" id="btn-orb-load-range" style="padding:11px 28px">1. Load Opening Range</button>
+        <button class="btn btn-cyan" id="btn-orb-start" disabled style="opacity:0.5">▶ 2. Start Live Scan</button>
+        <button class="btn btn-ghost" id="btn-orb-stop" style="display:none">⏸ Pause</button>
+        <button class="btn btn-ghost" id="btn-orb-reset">✕ Reset</button>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="orb-stat-bar" id="orb-stat-bar" style="display:none">
+      <div class="orb-live-dot" id="orb-live-dot"></div>
+      <div class="orb-stat-item">
+        <span class="orb-stat-lbl">Status</span>
+        <span class="orb-stat-val" id="orb-status-val">Idle</span>
+      </div>
+      <div class="orb-stat-item">
+        <span class="orb-stat-lbl">Next Refresh</span>
+        <span class="orb-stat-val" id="orb-next-val">—</span>
+      </div>
+      <div class="orb-stat-item">
+        <span class="orb-stat-lbl">Tickers</span>
+        <span class="orb-stat-val" id="orb-ticker-val">0</span>
+      </div>
+      <div class="orb-stat-item">
+        <span class="orb-stat-lbl">Breakouts</span>
+        <span class="orb-stat-val green" id="orb-break-val">0</span>
+      </div>
+      <div class="orb-stat-item">
+        <span class="orb-stat-lbl">Approaching</span>
+        <span class="orb-stat-val amber" id="orb-approach-val">0</span>
+      </div>
+      <div class="orb-stat-item" style="margin-left:auto">
+        <span class="orb-stat-lbl">Last Update</span>
+        <span class="orb-stat-val" id="orb-last-val" style="font-size:11px">—</span>
+      </div>
+    </div>
+
+    <!-- ORB table -->
+    <div class="results-panel">
+      <div class="res-header">
+        <div class="res-title">Live Breakout Monitor</div>
+        <div class="sort-row">
+          <span class="sort-lbl">Sort</span>
+          <select id="orb-sort" class="sort-sel" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;outline:none;cursor:pointer">
+            <option value="status">Status (Breakouts first)</option>
+            <option value="dist-asc">Distance to Trigger ↑</option>
+            <option value="dist-desc">Distance to Trigger ↓</option>
+            <option value="ticker">Ticker A–Z</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="orb-tbl">
+          <thead><tr>
+            <th>Ticker</th>
+            <th class="num">Quote</th>
+            <th class="num">OR High</th>
+            <th class="num">OR Low</th>
+            <th>Range Position</th>
+            <th class="num">Dist to Trigger</th>
+            <th class="ctr">Vol vs Avg</th>
+            <th class="ctr">Status</th>
+          </tr></thead>
+          <tbody id="orb-tbody">
+            <tr><td colspan="8"><div class="empty-cell">
+              <div class="ei">◷</div>
+              <div class="et">ORB Scanner Ready</div>
+              <div class="es">Pick a watchlist → Load Opening Range after 9:35 AM ET → Start Live Scan</div>
+            </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Info footer -->
+    <div style="margin-top:16px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);font-size:11px;line-height:1.9;color:var(--muted);letter-spacing:.3px">
+      <b style="color:var(--accent);font-family:var(--font-display);letter-spacing:2px;text-transform:uppercase">How it works</b><br>
+      <b style="color:var(--cyan)">1. Load Opening Range</b> — after 9:35 AM ET, fetches the first <span id="orb-min-text">5</span>-minute bar from Alpaca and records each ticker's opening high, low, and volume.<br>
+      <b style="color:var(--cyan)">2. Start Live Scan</b> — polls live quotes from Finnhub every <span id="orb-refresh-text">30</span> seconds. Flags when price breaks above the opening high with volume confirmation.<br>
+      <b style="color:var(--accent)">Status key:</b>
+      <span class="orb-status waiting" style="margin-left:8px">Waiting</span> before 9:35 ·
+      <span class="orb-status inside">Inside</span> within range ·
+      <span class="orb-status approaching">Approaching</span> within 0.3% of high ·
+      <span class="orb-status broken">🚀 Breakout</span> above high with volume
+    </div>
+
+  </div><!-- /tab-orb -->
 
   <!-- ═══ JOURNAL TAB ═══ -->
   <div class="tab-panel" id="tab-journal">
@@ -1546,6 +1746,10 @@ function switchTab(name) {
   if (name === 'etfs' && getTrackedETFs().length && !etfData.length) {
     refreshETFs();
   }
+  // Refresh ORB watchlist dropdown when entering ORB tab
+  if (name === 'orb' && typeof refreshORBWatchlistDropdown === 'function') {
+    refreshORBWatchlistDropdown();
+  }
 }
 
 document.querySelectorAll('.tab').forEach(t => {
@@ -1960,6 +2164,443 @@ renderJournal();
 
 // Initial ETF render (shows empty state or loads existing)
 renderETFs();
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ORB LIVE SCANNER
+// ═════════════════════════════════════════════════════════════════════════════
+
+const FINNHUB_KEY = 'apex_finnhub_key';
+
+let orbRangeData = {};     // {TICKER: {high, low, vol, avgVol20}}
+let orbQuotes    = {};     // {TICKER: {price, change, t, prevStatus}}
+let orbWatchlist = [];     // tickers currently being scanned
+let orbPollTimer = null;   // setInterval handle
+let orbCountdownTimer = null;
+let orbNextPollAt = 0;
+let orbScanning = false;
+let orbWasBroken = new Set();  // tickers that have already triggered (to animate first-break flash)
+
+function getFinnhubKey() {
+  return (g('finnhub-key').value || '').trim() || localStorage.getItem(FINNHUB_KEY) || '';
+}
+
+function loadFinnhubKey() {
+  const k = localStorage.getItem(FINNHUB_KEY);
+  if (k) {
+    g('finnhub-key').value = k;
+    g('finnhub-status').textContent = 'Connected ✓';
+    g('finnhub-status').style.color = 'var(--green)';
+  }
+}
+
+function saveFinnhubKey() {
+  const k = g('finnhub-key').value.trim();
+  if (!k) { g('finnhub-status').textContent = '⚠ Enter a key'; g('finnhub-status').style.color = 'var(--red)'; return; }
+  localStorage.setItem(FINNHUB_KEY, k);
+  g('finnhub-status').textContent = '✓ Saved';
+  g('finnhub-status').style.color = 'var(--green)';
+}
+
+async function testFinnhub() {
+  const log = g('finnhub-log');
+  log.style.display = 'block';
+  log.innerHTML = '';
+  const L = (msg, c='var(--muted)') => { log.innerHTML += `<div style="color:${c}">${msg}</div>`; };
+
+  const key = g('finnhub-key').value.trim();
+  L(`Key: ${key ? key.slice(0,6)+'••••••' : '<b style="color:var(--red)">EMPTY</b>'}`, 'var(--text)');
+  if (!key) { L('✗ Enter a key first', 'var(--red)'); return; }
+
+  L('Fetching AAPL real-time quote…');
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${encodeURIComponent(key)}`);
+    const j = await r.json();
+    if (r.ok && j && typeof j.c === 'number' && j.c > 0) {
+      L(`✓ Connected — AAPL last: $${j.c.toFixed(2)}  (high: $${j.h?.toFixed(2)}  low: $${j.l?.toFixed(2)})`, 'var(--green)');
+      localStorage.setItem(FINNHUB_KEY, key);
+      g('finnhub-status').textContent = 'Connected ✓';
+      g('finnhub-status').style.color = 'var(--green)';
+      L('✓ Key saved.', 'var(--green)');
+    } else if (r.status === 401 || r.status === 403 || j?.error) {
+      L(`✗ Auth error: ${j?.error || 'invalid key'}`, 'var(--red)');
+      g('finnhub-status').textContent = 'Invalid key';
+      g('finnhub-status').style.color = 'var(--red)';
+    } else {
+      L(`✗ Unexpected response: ${JSON.stringify(j).slice(0,100)}`, 'var(--red)');
+    }
+  } catch(e) {
+    L(`✗ ${e.message}`, 'var(--red)');
+    if (e.name === 'TypeError') L('  → CORS? This should work in browser but check your network.', 'var(--orange)');
+  }
+}
+
+// Populate watchlist dropdown in ORB tab
+function refreshORBWatchlistDropdown() {
+  const wls = getAllWatchlists();
+  const names = Object.keys(wls).sort();
+  const sel = g('orb-wl-select');
+  const current = sel.value;
+  if (!names.length) {
+    sel.innerHTML = '<option value="">— No saved watchlists — create one on Scanner tab —</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— Select a watchlist —</option>' +
+    names.map(n => `<option value="${n}"${n===current?' selected':''}>${n} (${wls[n].length})</option>`).join('');
+}
+
+// ─── Load opening range from Alpaca ─────────────────────────────────────────
+async function loadOpeningRange() {
+  const wlName = g('orb-wl-select').value;
+  if (!wlName) { alert('Select a watchlist first'); return; }
+  const wls = getAllWatchlists();
+  const tickers = wls[wlName];
+  if (!tickers || !tickers.length) { alert('Watchlist is empty'); return; }
+
+  const alpacaKeys = getKeys();
+  if (!alpacaKeys.key || !alpacaKeys.secret) {
+    alert('Alpaca keys required — set them on the Scanner tab (used for opening-range bars).');
+    return;
+  }
+
+  const rangeMin = parseInt(g('orb-range-min').value, 10);
+
+  // Build start/end for today's opening range
+  // Opening range = 9:30 ET → 9:30+rangeMin ET
+  // Alpaca accepts ISO timestamps in UTC
+  const now = new Date();
+  const etOffset = getETOffsetMinutes(now); // minutes ET is ahead/behind UTC (negative during standard/daylight)
+  // Calculate today's market open in UTC
+  const marketOpenUtc = new Date(now);
+  marketOpenUtc.setUTCHours(13, 30, 0, 0); // 9:30 AM ET during EDT (UTC-4) = 13:30 UTC
+  // If we're in EST (UTC-5), opening is 14:30 UTC; detect DST
+  const isDST = isUSDaylightSaving(now);
+  marketOpenUtc.setUTCHours(isDST ? 13 : 14, 30, 0, 0);
+  const rangeEndUtc = new Date(marketOpenUtc.getTime() + rangeMin * 60_000);
+
+  // Check if we're past the opening range already today
+  if (now < rangeEndUtc) {
+    const mins = Math.ceil((rangeEndUtc - now) / 60000);
+    if (!confirm(`Opening range not complete yet (${mins} min left). Load with partial data?`)) return;
+  }
+
+  const btn = g('btn-orb-load-range');
+  btn.disabled = true;
+  btn.textContent = '⟳ Loading range…';
+
+  orbRangeData = {};
+  orbWatchlist = tickers.slice();
+  g('orb-wl-label').textContent = `${wlName} · ${tickers.length} tickers`;
+
+  // Render loading state
+  g('orb-tbody').innerHTML = tickers.map(t =>
+    `<tr><td class="td-tick">${t}</td><td colspan="7" style="color:var(--muted);font-size:10px">Loading opening range…</td></tr>`
+  ).join('');
+
+  // Fetch 1-min bars for each ticker for just the opening range window
+  const startIso = marketOpenUtc.toISOString();
+  const endIso   = rangeEndUtc.toISOString();
+
+  for (const ticker of tickers) {
+    try {
+      const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars`
+                + `?timeframe=1Min&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`
+                + `&limit=50&feed=iex&sort=asc`;
+      const resp = await fetch(url, {
+        headers: { 'APCA-API-KEY-ID': alpacaKeys.key, 'APCA-API-SECRET-KEY': alpacaKeys.secret }
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const j = await resp.json();
+      const bars = j?.bars || [];
+
+      if (bars.length === 0) {
+        orbRangeData[ticker] = { error: 'No opening-range bars yet' };
+      } else {
+        const high = Math.max(...bars.map(b => b.h));
+        const low  = Math.min(...bars.map(b => b.l));
+        const vol  = bars.reduce((a,b) => a + (b.v||0), 0);
+        orbRangeData[ticker] = { high, low, vol, error: null };
+      }
+    } catch(e) {
+      orbRangeData[ticker] = { error: e.message };
+    }
+
+    // Fetch 20-day avg volume (using existing Alpaca daily fetch)
+    try {
+      const dailyData = await fetchDaily(ticker);
+      const volsN = dailyData.slice(-21, -1).map(d => d.v).filter(Boolean);
+      const avgVol = volsN.length ? volsN.reduce((a,b)=>a+b,0) / volsN.length : 0;
+      // Scale avg volume to the opening range duration (rangeMin out of ~390 mins/day)
+      const scaled = avgVol * (rangeMin / 390);
+      if (orbRangeData[ticker] && !orbRangeData[ticker].error) {
+        orbRangeData[ticker].avgVolRange = scaled;
+      }
+    } catch(e) {
+      // non-fatal, just no vol confirmation
+    }
+
+    renderORBTable();
+  }
+
+  btn.disabled = false;
+  btn.textContent = '1. Load Opening Range';
+
+  // Enable Start button
+  g('btn-orb-start').disabled = false;
+  g('btn-orb-start').style.opacity = '1';
+}
+
+// Approximate DST check for US Eastern (second Sun of Mar to first Sun of Nov)
+function isUSDaylightSaving(date) {
+  const year = date.getUTCFullYear();
+  // Second Sunday of March
+  const dstStart = new Date(Date.UTC(year, 2, 1));
+  dstStart.setUTCDate(1 + ((7 - dstStart.getUTCDay()) % 7) + 7);
+  // First Sunday of November
+  const dstEnd = new Date(Date.UTC(year, 10, 1));
+  dstEnd.setUTCDate(1 + ((7 - dstEnd.getUTCDay()) % 7));
+  return date >= dstStart && date < dstEnd;
+}
+
+function getETOffsetMinutes(date) {
+  return isUSDaylightSaving(date) ? -240 : -300; // ET is UTC-4 (EDT) or UTC-5 (EST)
+}
+
+// ─── Live polling via Finnhub ───────────────────────────────────────────────
+async function startORBScan() {
+  const fKey = getFinnhubKey();
+  if (!fKey) { alert('Finnhub key required — save it above first.'); return; }
+  if (!orbWatchlist.length) { alert('Load the opening range first.'); return; }
+
+  orbScanning = true;
+  g('btn-orb-start').style.display = 'none';
+  g('btn-orb-stop').style.display = 'inline-block';
+  g('orb-stat-bar').style.display = 'flex';
+  g('orb-live-dot').classList.add('active');
+  g('orb-live-dot').classList.remove('paused','err');
+  g('orb-status-val').textContent = 'Live';
+  g('orb-ticker-val').textContent = orbWatchlist.length;
+
+  await pollQuotes();
+  scheduleNextPoll();
+}
+
+function stopORBScan() {
+  orbScanning = false;
+  if (orbPollTimer) { clearTimeout(orbPollTimer); orbPollTimer = null; }
+  if (orbCountdownTimer) { clearInterval(orbCountdownTimer); orbCountdownTimer = null; }
+  g('btn-orb-start').style.display = 'inline-block';
+  g('btn-orb-stop').style.display = 'none';
+  g('orb-live-dot').classList.remove('active');
+  g('orb-live-dot').classList.add('paused');
+  g('orb-status-val').textContent = 'Paused';
+  g('orb-next-val').textContent = '—';
+}
+
+function resetORBScan() {
+  stopORBScan();
+  orbRangeData = {};
+  orbQuotes = {};
+  orbWatchlist = [];
+  orbWasBroken.clear();
+  g('orb-stat-bar').style.display = 'none';
+  g('orb-wl-label').textContent = 'no watchlist loaded';
+  g('btn-orb-start').disabled = true;
+  g('btn-orb-start').style.opacity = '0.5';
+  g('orb-tbody').innerHTML = `<tr><td colspan="8"><div class="empty-cell">
+    <div class="ei">◷</div><div class="et">ORB Scanner Ready</div>
+    <div class="es">Pick a watchlist → Load Opening Range after 9:35 AM ET → Start Live Scan</div>
+  </div></td></tr>`;
+}
+
+async function pollQuotes() {
+  if (!orbScanning) return;
+  const fKey = getFinnhubKey();
+  if (!fKey) { stopORBScan(); return; }
+
+  // Throttle: Finnhub allows 60 calls/min = 1/sec. We'll space requests ~100ms apart.
+  for (const ticker of orbWatchlist) {
+    try {
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(fKey)}`);
+      const j = await r.json();
+      if (r.ok && j && typeof j.c === 'number' && j.c > 0) {
+        orbQuotes[ticker] = { price: j.c, dayHigh: j.h, dayLow: j.l, prevClose: j.pc, t: j.t };
+      } else if (j?.error) {
+        orbQuotes[ticker] = { error: j.error };
+      }
+    } catch(e) {
+      orbQuotes[ticker] = { error: e.message };
+    }
+    await new Promise(r => setTimeout(r, 120)); // ~8 req/sec → safely under 60/min
+  }
+
+  g('orb-last-val').textContent = new Date().toLocaleTimeString();
+  renderORBTable();
+}
+
+function scheduleNextPoll() {
+  if (!orbScanning) return;
+  const refreshSec = parseInt(g('orb-refresh-sec').value, 10);
+  orbNextPollAt = Date.now() + refreshSec * 1000;
+
+  if (orbCountdownTimer) clearInterval(orbCountdownTimer);
+  orbCountdownTimer = setInterval(() => {
+    const left = Math.max(0, Math.ceil((orbNextPollAt - Date.now()) / 1000));
+    g('orb-next-val').textContent = left + 's';
+  }, 500);
+
+  orbPollTimer = setTimeout(async () => {
+    await pollQuotes();
+    scheduleNextPoll();
+  }, refreshSec * 1000);
+}
+
+// ─── Render ORB table ───────────────────────────────────────────────────────
+function renderORBTable() {
+  const tbody = g('orb-tbody');
+  const volMult = parseFloat(g('orb-vol-mult').value);
+
+  if (!orbWatchlist.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-cell"><div class="ei">◷</div><div class="et">ORB Scanner Ready</div><div class="es">Pick a watchlist → Load Opening Range → Start Live Scan</div></div></td></tr>`;
+    return;
+  }
+
+  const rows = orbWatchlist.map(ticker => {
+    const range = orbRangeData[ticker];
+    const quote = orbQuotes[ticker];
+    let status = 'waiting', statusLabel = 'Waiting';
+    let distPct = null;
+
+    if (range?.error) { status = 'err'; statusLabel = range.error.slice(0,22); }
+    else if (range && quote && !quote.error) {
+      const price = quote.price;
+      const volOK = !range.avgVolRange || (quote.dayHigh != null); // simple — we don't have current vol from finnhub quote
+      distPct = ((range.high - price) / range.high) * 100;
+
+      if (price > range.high) {
+        status = 'broken'; statusLabel = '🚀 Breakout';
+      } else if (distPct <= 0.3 && distPct >= 0) {
+        status = 'approaching'; statusLabel = 'Approaching';
+      } else if (price >= range.low && price <= range.high) {
+        status = 'inside'; statusLabel = 'Inside Range';
+      } else if (price < range.low) {
+        status = 'below'; statusLabel = 'Below Low';
+      }
+    } else if (!range) {
+      status = 'waiting'; statusLabel = 'No Range';
+    } else if (quote?.error) {
+      status = 'err'; statusLabel = 'Quote err';
+    }
+
+    return { ticker, range, quote, status, statusLabel, distPct };
+  });
+
+  // Sort
+  const sortBy = g('orb-sort').value;
+  const statusOrder = { broken: 0, approaching: 1, inside: 2, waiting: 3, below: 4, err: 5 };
+  rows.sort((a,b) => {
+    if (sortBy === 'ticker') return a.ticker.localeCompare(b.ticker);
+    if (sortBy === 'dist-asc')  return (a.distPct ?? Infinity) - (b.distPct ?? Infinity);
+    if (sortBy === 'dist-desc') return (b.distPct ?? -Infinity) - (a.distPct ?? -Infinity);
+    // status
+    return (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+  });
+
+  // Counts
+  const breakouts = rows.filter(r => r.status === 'broken').length;
+  const approaching = rows.filter(r => r.status === 'approaching').length;
+  g('orb-break-val').textContent = breakouts;
+  g('orb-approach-val').textContent = approaching;
+
+  // Flash new breakouts
+  const newlyBroken = [];
+  for (const r of rows) {
+    if (r.status === 'broken' && !orbWasBroken.has(r.ticker)) {
+      newlyBroken.push(r.ticker);
+      orbWasBroken.add(r.ticker);
+    } else if (r.status !== 'broken' && orbWasBroken.has(r.ticker)) {
+      orbWasBroken.delete(r.ticker);
+    }
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const q = r.quote;
+    const rg = r.range;
+    let quoteCell, orHighCell, orLowCell, rangePosCell, distCell, volCell;
+
+    if (rg?.error || !rg) {
+      quoteCell = `<span style="color:var(--muted)">—</span>`;
+      orHighCell = orLowCell = '—';
+      rangePosCell = '—';
+      distCell = '—';
+      volCell = '—';
+    } else {
+      quoteCell = q && !q.error
+        ? `<span class="orb-quote ${q.price >= (q.prevClose || q.price) ? 'up' : 'down'}">$${q.price.toFixed(2)}</span>`
+        : q?.error ? `<span style="color:var(--red);font-size:10px">${q.error.slice(0,18)}</span>`
+                   : `<span style="color:var(--muted)">—</span>`;
+      orHighCell = `$${rg.high.toFixed(2)}`;
+      orLowCell  = `$${rg.low.toFixed(2)}`;
+
+      // Range position bar
+      if (q && !q.error) {
+        const pct = Math.max(0, Math.min(100, ((q.price - rg.low) / (rg.high - rg.low)) * 100));
+        rangePosCell = `<div class="orb-dist-bar">
+          <div class="orb-dist-low"></div>
+          <div class="orb-dist-high"></div>
+          <div class="orb-dist-marker" style="left:${pct}%;background:${r.status==='broken'?'var(--green)':r.status==='approaching'?'var(--accent)':'#fff'}"></div>
+        </div>`;
+      } else {
+        rangePosCell = `<div class="orb-dist-bar"><div class="orb-dist-low"></div><div class="orb-dist-high"></div></div>`;
+      }
+
+      if (r.distPct == null) distCell = '—';
+      else if (r.distPct < 0) distCell = `<span style="color:var(--green);font-weight:500">+${Math.abs(r.distPct).toFixed(2)}% above</span>`;
+      else distCell = `<span class="orb-dist-txt">-${r.distPct.toFixed(2)}%</span>`;
+
+      // Volume: we only have opening-range aggregate vs scaled avg
+      if (rg.avgVolRange && rg.vol) {
+        const ratio = rg.vol / rg.avgVolRange;
+        const color = ratio >= volMult ? 'var(--green)' : ratio >= 1 ? 'var(--accent)' : 'var(--muted)';
+        volCell = `<span style="color:${color};font-weight:500">${ratio.toFixed(1)}×</span>`;
+      } else {
+        volCell = '<span style="color:var(--muted);font-size:10px">—</span>';
+      }
+    }
+
+    const rowCls = r.status === 'broken' ? 'broken' : r.status === 'approaching' ? 'approaching' : '';
+    const flashCls = newlyBroken.includes(r.ticker) ? ' flash' : '';
+
+    return `<tr class="${rowCls}${flashCls}">
+      <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+      <td class="num">${quoteCell}</td>
+      <td class="num">${orHighCell}</td>
+      <td class="num">${orLowCell}</td>
+      <td>${rangePosCell}</td>
+      <td class="num">${distCell}</td>
+      <td class="ctr">${volCell}</td>
+      <td class="ctr"><span class="orb-status ${r.status}">${r.statusLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Wire ORB events ────────────────────────────────────────────────────────
+g('btn-save-finnhub').addEventListener('click', saveFinnhubKey);
+g('btn-test-finnhub').addEventListener('click', testFinnhub);
+g('btn-orb-load-range').addEventListener('click', loadOpeningRange);
+g('btn-orb-start').addEventListener('click', startORBScan);
+g('btn-orb-stop').addEventListener('click', stopORBScan);
+g('btn-orb-reset').addEventListener('click', resetORBScan);
+g('orb-sort').addEventListener('change', renderORBTable);
+g('orb-vol-mult').addEventListener('change', renderORBTable);
+g('orb-range-min').addEventListener('change', () => {
+  g('orb-min-text').textContent = g('orb-range-min').value;
+});
+g('orb-refresh-sec').addEventListener('change', () => {
+  g('orb-refresh-text').textContent = g('orb-refresh-sec').value;
+});
+
+// Initial load of finnhub key
+loadFinnhubKey();
 
 // Load saved keys and watchlists on page ready
 loadKeys();
