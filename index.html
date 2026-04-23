@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Swing Trade Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08080c;--surface:#0f0f17;--surface2:#14141e;--border:#1e1e2e;--border2:#2a2a3e;
+  --text:#d4d4e8;--muted:#52526e;--accent:#e8ff47;--accent-dim:rgba(232,255,71,0.08);
+  --accent-glow:rgba(232,255,71,0.25);--green:#3dffa0;--green-dim:rgba(61,255,160,0.08);
+  --red:#ff5277;--red-dim:rgba(255,82,119,0.08);--orange:#ff9b4e;--orange-dim:rgba(255,155,78,0.08);
+  --purple:#b47dff;--purple-dim:rgba(180,125,255,0.08);--cyan:#4ee8ff;--cyan-dim:rgba(78,232,255,0.08);
+  --font-display:'Syne',sans-serif;--font-mono:'Fira Code',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-20%;left:-10%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(232,255,71,0.04) 0%,transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-20%;right:-10%;width:50%;height:50%;background:radial-gradient(ellipse,rgba(61,255,160,0.03) 0%,transparent 70%);pointer-events:none;z-index:0}
+#prog{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--green));box-shadow:0 0 12px var(--accent-glow);transition:width .25s ease;z-index:1000;width:0}
+.wrap{max-width:1600px;margin:0 auto;padding:28px 24px;position:relative;z-index:1}
+header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.brand-name{font-family:var(--font-display);font-weight:800;font-size:28px;letter-spacing:-1px;color:#fff;line-height:1}
+.brand-name em{color:var(--accent);font-style:normal;text-shadow:0 0 24px var(--accent-glow)}
+.brand-sub{font-size:10px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+.header-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.live-ind{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:3px;color:var(--green);text-transform:uppercase}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 8px var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.ts{font-size:10px;color:var(--muted);letter-spacing:1px}
+
+/* Tab nav */
+.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--border)}
+.tab{background:transparent;border:none;color:var(--muted);font-family:var(--font-display);font-weight:600;font-size:13px;letter-spacing:2px;padding:14px 24px;cursor:pointer;text-transform:uppercase;transition:all .15s;position:relative;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.tab-count{font-size:9px;color:var(--muted);margin-left:6px;letter-spacing:1px}
+.tab.active .tab-count{color:var(--accent)}
+
+/* ETF list */
+.etf-input-row{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+#etf-input{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:10px 14px;outline:none;resize:none;height:52px;letter-spacing:2px;text-transform:uppercase;transition:border-color .2s}
+#etf-input:focus{border-color:var(--purple)}
+
+.panel.purple::before{background:var(--purple)}
+.panel.purple .panel-title{color:var(--purple)}
+
+.btn-purple{background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple)}
+.btn-purple:hover{background:var(--purple);color:#000}
+
+/* ETF table */
+.etf-table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border)}
+table.etf-tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.etf-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.etf-tbl th{padding:11px 16px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+table.etf-tbl th.num{text-align:right}
+table.etf-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .1s;animation:fi .3s ease forwards;opacity:0}
+table.etf-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+table.etf-tbl td{padding:12px 16px;white-space:nowrap;vertical-align:middle}
+table.etf-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.perf-cell{display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px}
+.perf-abs{font-size:12px;font-weight:500}
+.perf-rs{font-size:9px;letter-spacing:1px;opacity:.7}
+.perf-abs.up{color:var(--green)}
+.perf-abs.down{color:var(--red)}
+.perf-rs.strong{color:var(--green)}
+.perf-rs.weak{color:var(--red)}
+.perf-rs.flat{color:var(--muted)}
+
+.etf-ticker{font-family:var(--font-display);font-weight:700;font-size:14px;color:#fff}
+.etf-actions{display:flex;gap:6px;flex-wrap:nowrap}
+.etf-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;padding:5px 10px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .15s;white-space:nowrap}
+.etf-btn:hover{color:var(--accent);border-color:var(--accent)}
+.etf-btn.btn-hold{color:var(--purple);border-color:rgba(180,125,255,.3)}
+.etf-btn.btn-hold:hover{background:var(--purple);color:#000;border-color:var(--purple)}
+.etf-btn.btn-del:hover{color:var(--red);border-color:var(--red);background:var(--red-dim)}
+
+/* Holdings modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--purple);max-width:640px;width:100%;max-height:85vh;overflow-y:auto;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;width:80px;height:3px;background:var(--purple)}
+.modal-header{padding:20px 24px 12px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase}
+.modal-title em{color:var(--purple);font-style:normal}
+.modal-sub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:4px}
+.modal-body{padding:20px 24px}
+.modal-body label{display:block;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.modal-body textarea{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:12px 14px;outline:none;resize:vertical;min-height:180px;letter-spacing:1.5px;text-transform:uppercase;transition:border-color .2s}
+.modal-body textarea:focus{border-color:var(--purple)}
+.modal-hint{font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:.5px;line-height:1.7}
+.modal-footer{padding:14px 24px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);flex-wrap:wrap}
+
+/* ─── Journal ─────────────────────────────────────────────────────── */
+.panel.orange::before{background:var(--orange)}
+.panel.orange .panel-title{color:var(--orange)}
+.btn-orange{background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange)}
+.btn-orange:hover{background:var(--orange);color:#000}
+.jdash{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:2px;margin-bottom:20px}
+.jdash .stat-box{padding:16px 20px}
+.jdash .stat-n{font-size:26px}
+.strat-perf-wrap{background:var(--surface);border:1px solid var(--border);margin-bottom:20px}
+.strat-perf-wrap .panel-title{padding:14px 20px;border-bottom:1px solid var(--border);margin:0}
+table.perf-tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.perf-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.perf-tbl th{padding:10px 16px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+table.perf-tbl th.num{text-align:right}
+table.perf-tbl td{padding:11px 16px;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums}
+table.perf-tbl td.num{text-align:right}
+table.perf-tbl tbody tr{border-bottom:1px solid var(--border)}
+table.perf-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+.wr-bar-wrap{display:inline-flex;align-items:center;gap:6px}
+.wr-bar{width:50px;height:3px;background:var(--border2)}
+.wr-fill{height:100%}
+.wr-txt{font-size:10px;color:var(--muted);min-width:32px}
+.trade-filters{display:flex;gap:8px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.trade-filters select{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;outline:none;cursor:pointer;letter-spacing:1px}
+.trade-filters select option{background:var(--bg)}
+.trade-filters-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+table.trade-tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.trade-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.trade-tbl th{padding:11px 16px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+table.trade-tbl th.num{text-align:right}
+table.trade-tbl th.ctr{text-align:center}
+table.trade-tbl td{padding:12px 16px;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums}
+table.trade-tbl td.num{text-align:right}
+table.trade-tbl td.ctr{text-align:center}
+table.trade-tbl tbody tr{border-bottom:1px solid var(--border);animation:fi .3s ease forwards;opacity:0}
+table.trade-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+.trade-date{font-size:10px;color:var(--muted)}
+.trade-status{display:inline-flex;padding:3px 8px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.trade-status.open{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.3)}
+.trade-status.win{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.3)}
+.trade-status.loss{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.trade-status.be{background:rgba(74,85,104,.2);color:var(--muted);border:1px solid var(--border2)}
+.pl-up{color:var(--green);font-weight:500}
+.pl-down{color:var(--red);font-weight:500}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column}
+.form-field.full{grid-column:1/-1}
+.form-field label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.form-field input,.form-field select,.form-field textarea{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:9px 12px;outline:none;transition:border-color .2s}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--orange)}
+.form-field input[type=text]{text-transform:uppercase;letter-spacing:1px}
+.form-field textarea{resize:vertical;min-height:60px;text-transform:none;letter-spacing:0}
+.form-field select option{background:var(--bg)}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap}
+.strat-chip,.reason-chip{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;padding:6px 10px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.strat-chip.active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+.reason-chip.active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.td-act{display:flex;gap:6px;justify-content:center}
+.act-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;padding:5px 10px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .15s;white-space:nowrap}
+.act-btn:hover{color:var(--accent);border-color:var(--accent)}
+.act-btn.exit{color:var(--green);border-color:rgba(61,255,160,.3)}
+.act-btn.exit:hover{background:var(--green);color:#000;border-color:var(--green)}
+.act-btn.del:hover{color:var(--red);border-color:var(--red);background:var(--red-dim)}
+
+/* Panel base */
+.panel{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:20px;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px}
+.panel.accent::before{background:var(--accent)}
+.panel.cyan::before{background:var(--cyan)}
+.panel-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.panel.accent .panel-title{color:var(--accent)}
+.panel.cyan .panel-title{color:var(--cyan)}
+
+/* Creds */
+.creds-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.creds-field{flex:1;min-width:180px}
+.creds-field label{display:block;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.creds-field input{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:9px 12px;outline:none;letter-spacing:1px;transition:border-color .2s}
+.creds-field input:focus{border-color:var(--accent)}
+.btn{font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 18px;cursor:pointer;text-transform:uppercase;white-space:nowrap;flex-shrink:0;transition:all .15s;border:1px solid}
+.btn-accent{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.btn-accent:hover{background:var(--accent);color:#000}
+.btn-cyan{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.btn-cyan:hover{background:var(--cyan);color:#000}
+.btn-green{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.btn-green:hover{background:var(--green);color:#000}
+.btn-ghost{background:transparent;border-color:var(--border2);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--red);color:var(--red)}
+.creds-note{font-size:9px;color:var(--muted);margin-top:8px;letter-spacing:.5px}
+#conn-log{display:none;margin-top:12px;background:var(--bg);border:1px solid var(--border2);padding:12px 14px;font-size:10px;line-height:2;letter-spacing:.5px}
+
+/* CORS warning */
+#cors-warn{display:none;background:rgba(255,155,78,.08);border:1px solid var(--orange);padding:16px 20px;margin-bottom:20px;font-size:11px;line-height:1.9}
+#cors-warn .cors-title{color:var(--orange);font-family:var(--font-display);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+#cors-warn code{color:var(--cyan);background:var(--cyan-dim);padding:1px 5px}
+#cors-warn b{color:var(--accent)}
+
+/* Upload */
+.upload-zone{border:1px dashed var(--border2);background:var(--surface);padding:24px;margin-bottom:20px;position:relative;cursor:pointer;transition:border-color .2s,background .2s}
+.upload-zone:hover,.upload-zone.over{border-color:var(--accent);background:var(--accent-dim)}
+.upload-zone::before{content:'';position:absolute;top:0;left:0;width:40px;height:2px;background:var(--accent)}
+.upload-inner{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.upload-icon{font-size:28px;opacity:.5;flex-shrink:0}
+.upload-title{font-family:var(--font-display);font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
+.upload-hint{font-size:10px;color:var(--muted);letter-spacing:1px;line-height:1.8}
+.upload-hint code{color:var(--cyan);background:var(--cyan-dim);padding:1px 5px}
+.tickers-preview{margin-top:12px;font-size:10px;color:var(--muted);letter-spacing:1px}
+.tickers-preview strong{color:var(--accent)}
+#csv-file{display:none}
+
+/* Watchlist row */
+.wl-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--bg);border:1px solid var(--border2)}
+.wl-lbl{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.wl-select{flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:7px 10px;outline:none;cursor:pointer;letter-spacing:1px}
+.wl-select:focus{border-color:var(--cyan)}
+.wl-select option{background:var(--surface2)}
+.wl-mini{padding:7px 12px!important;font-size:9px!important;letter-spacing:1px!important}
+
+/* Manual row */
+.manual-row{display:flex;gap:10px;align-items:flex-start}
+#manual-tickers{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:10px 14px;outline:none;resize:none;height:52px;letter-spacing:2px;text-transform:uppercase;transition:border-color .2s}
+#manual-tickers:focus{border-color:var(--cyan)}
+.btn-use{background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 16px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap;flex-shrink:0;line-height:1.8}
+.btn-use:hover{background:var(--cyan);color:#000}
+
+/* Strat toggles */
+.strat-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.strat-lbl{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-right:4px;white-space:nowrap}
+.strat-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;padding:7px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.strat-btn[data-color=accent].active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.strat-btn[data-color=green].active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.strat-btn[data-color=orange].active{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+.strat-btn[data-color=purple].active{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+.strat-btn[data-color=cyan].active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.strat-btn[data-color=red].active{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+
+/* Action bar */
+.action-bar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+.btn-scan{font-family:var(--font-display);font-weight:700;font-size:13px;letter-spacing:3px;padding:13px 36px;background:var(--accent);color:#000;border:none;cursor:pointer;text-transform:uppercase;transition:all .2s;position:relative;overflow:hidden}
+.btn-scan:hover{box-shadow:0 0 28px var(--accent-glow);transform:translateY(-1px)}
+.btn-scan:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-scan.running::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);animation:sweep 1s infinite}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.btn-sec{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:13px 18px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.btn-sec:hover{border-color:var(--red);color:var(--red)}
+#scan-info{font-size:11px;color:var(--muted);letter-spacing:1px;flex:1}
+
+/* Stats */
+.stats-strip{display:flex;gap:2px;margin-bottom:20px;flex-wrap:wrap}
+.stat-box{background:var(--surface);border:1px solid var(--border);padding:14px 20px;flex:1;min-width:110px;position:relative;overflow:hidden}
+.stat-box::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.stat-box.ca::after{background:var(--accent)}.stat-box.cg::after{background:var(--green)}
+.stat-box.co::after{background:var(--orange)}.stat-box.cp::after{background:var(--purple)}
+.stat-box.cc::after{background:var(--cyan)}.stat-box.cm::after{background:var(--border2)}
+.stat-n{font-family:var(--font-display);font-size:26px;font-weight:700;color:#fff;line-height:1;margin-bottom:4px}
+.stat-n.ca{color:var(--accent)}.stat-n.cg{color:var(--green)}.stat-n.co{color:var(--orange)}.stat-n.cp{color:var(--purple)}.stat-n.cc{color:var(--cyan)}
+.stat-lbl{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+
+/* Table */
+.results-panel{background:var(--surface);border:1px solid var(--border);overflow:hidden}
+.res-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);gap:16px;flex-wrap:wrap}
+.res-title{font-family:var(--font-display);font-size:12px;font-weight:600;letter-spacing:3px;text-transform:uppercase}
+.sort-row{display:flex;gap:8px;align-items:center}
+.sort-lbl{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+select#sort-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;outline:none;cursor:pointer}
+select#sort-sel option{background:var(--bg)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{border-bottom:1px solid var(--border2)}
+th{padding:11px 16px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+tbody tr{border-bottom:1px solid var(--border);animation:fi .3s ease forwards;opacity:0;transition:background .1s}
+tbody tr:hover{background:rgba(255,255,255,.015)}
+@keyframes fi{to{opacity:1;transform:translateY(0)}from{opacity:0;transform:translateY(4px)}}
+td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
+.td-tick{font-family:var(--font-display);font-weight:700;font-size:14px;color:#fff}
+.td-tv{display:inline-block;margin-left:7px;font-size:9px;color:var(--muted);text-decoration:none;letter-spacing:1px;border-bottom:1px solid var(--border2);transition:color .15s,border-color .15s}
+.td-tv:hover{color:var(--accent);border-color:var(--accent)}
+.up{color:var(--green)}.down{color:var(--red)}
+.strats-cell{display:flex;flex-wrap:wrap;gap:4px;max-width:340px}
+.stag{display:inline-flex;align-items:center;padding:3px 9px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;white-space:nowrap}
+.stag.nr4{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,255,71,.25)}
+.stag.nr7{background:rgba(232,255,71,.14);color:var(--accent);border:1px solid rgba(232,255,71,.35)}
+.stag.macross{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.3)}
+.stag.pull50{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.3)}
+.stag.flat{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.3)}
+.stag.cup{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(78,232,255,.3)}
+.stag.vcp{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.stag.hvc{background:rgba(61,255,160,.14);color:var(--green);border:1px solid rgba(61,255,160,.4);font-weight:600}
+.conf-wrap{display:flex;align-items:center;gap:8px}
+.conf-dots{display:flex;gap:3px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border2)}
+.dot.l1{background:var(--orange);box-shadow:0 0 5px rgba(255,155,78,.4)}
+.dot.l2{background:var(--accent);box-shadow:0 0 5px var(--accent-glow)}
+.dot.l3{background:var(--green);box-shadow:0 0 5px rgba(61,255,160,.4)}
+.conf-score{font-size:11px;color:var(--muted);min-width:20px}
+.vbar-wrap{display:flex;align-items:center;gap:6px}
+.vbar{width:50px;height:3px;background:var(--border2)}
+.vfill{height:100%}
+.vtxt{font-size:10px;color:var(--muted)}
+.empty-cell{padding:80px 20px;text-align:center;color:var(--muted)}
+.empty-cell .ei{font-size:32px;margin-bottom:14px;opacity:.25}
+.empty-cell .et{font-family:var(--font-display);font-size:15px;letter-spacing:3px;color:var(--border2);text-transform:uppercase;margin-bottom:8px}
+.empty-cell .es{font-size:10px;letter-spacing:1px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+@media(max-width:768px){header{flex-direction:column;gap:12px}.strat-bar{gap:6px}}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand-name">AP<em>E</em>X</div>
+      <div class="brand-sub">Scanner · ETFs · Journal</div>
+    </div>
+    <div class="header-meta">
+      <div class="live-ind"><div class="live-dot"></div>Live</div>
+      <div class="ts" id="ts">—</div>
+    </div>
+  </header>
+
+  <!-- Tab navigation -->
+  <div class="tabs">
+    <button class="tab active" data-tab="scanner">Scanner</button>
+    <button class="tab" data-tab="etfs">ETFs <span class="tab-count" id="etf-tab-count"></span></button>
+    <button class="tab" data-tab="journal">Journal <span class="tab-count" id="journal-tab-count"></span></button>
+  </div>
+
+  <!-- CORS warning (visible on any tab when triggered) -->
+  <div id="cors-warn">
+    <div class="cors-title">⚠ CORS Error — File must be served over http://</div>
+    <div>Opening as <code>file://</code> blocks all API calls to Alpaca. Quick fix:</div>
+    <div style="margin-top:8px;color:var(--muted)">
+      <b>Python:</b> open terminal in folder → <code>python -m http.server 8000</code> → visit <code>http://localhost:8000</code><br>
+      <b>VS Code:</b> install <b>Live Server</b> extension → right-click file → <b>Open with Live Server</b><br>
+      <b>Node:</b> <code>npx serve .</code> in the folder
+    </div>
+  </div>
+
+  <!-- ═══ SCANNER TAB ═══ -->
+  <div class="tab-panel active" id="tab-scanner">
+
+  <!-- Credentials -->
+  <div class="panel accent">
+    <div class="panel-title">
+      Alpaca API Credentials
+      <span id="creds-status" style="color:var(--muted)">Not connected</span>
+    </div>
+    <div class="creds-row">
+      <div class="creds-field">
+        <label for="alpaca-key">API Key ID</label>
+        <input type="text" id="alpaca-key" placeholder="PK••••••••••••••" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="creds-field">
+        <label for="alpaca-secret">Secret Key</label>
+        <input type="password" id="alpaca-secret" placeholder="••••••••••••••••" autocomplete="off">
+      </div>
+      <button class="btn btn-accent" id="btn-save">Save Keys</button>
+      <button class="btn btn-cyan"   id="btn-test">Test Connection</button>
+    </div>
+    <div class="creds-note">🔒 Stored in your browser only — calls go directly to data.alpaca.markets</div>
+    <div id="conn-log"></div>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="drop-zone">
+    <div class="upload-inner">
+      <div class="upload-icon">📋</div>
+      <div>
+        <div class="upload-title">Import TradingView Watchlist</div>
+        <div class="upload-hint">Drag &amp; drop a <code>.csv</code> export here, or click Choose File</div>
+      </div>
+      <button class="btn btn-ghost" id="btn-choose">Choose File</button>
+    </div>
+    <div class="tickers-preview" id="tickers-preview">No file loaded.</div>
+    <input type="file" id="csv-file" accept=".csv,.txt">
+  </div>
+
+  <!-- Saved Watchlists + Manual entry -->
+  <div class="panel cyan">
+    <div class="panel-title">
+      Watchlists
+      <span id="manual-count" style="color:var(--muted)">0 tickers</span>
+    </div>
+
+    <!-- Saved watchlists row -->
+    <div class="wl-row" id="wl-row">
+      <span class="wl-lbl">Saved:</span>
+      <select id="wl-select" class="wl-select">
+        <option value="">— No saved watchlists —</option>
+      </select>
+      <button class="btn btn-cyan wl-mini" id="btn-load-wl" title="Load into textarea">↓ Load</button>
+      <button class="btn btn-ghost wl-mini" id="btn-rename-wl" title="Rename">✎ Rename</button>
+      <button class="btn btn-ghost wl-mini" id="btn-delete-wl" title="Delete">✕ Delete</button>
+    </div>
+
+    <!-- Ticker entry -->
+    <div class="manual-row" style="margin-top:12px">
+      <textarea id="manual-tickers" placeholder="AAPL, NVDA, TSLA, MSFT, META, AMD ..."></textarea>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <button class="btn-use" id="btn-use">Use These →<br><span style="font-size:8px;opacity:.55">Ctrl+Enter</span></button>
+        <button class="btn btn-green" id="btn-save-wl" style="padding:8px 14px">💾 Save As...</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategies -->
+  <div class="strat-bar">
+    <span class="strat-lbl">Strategies:</span>
+    <button class="strat-btn active" data-strat="nr4"     data-color="accent">NR4</button>
+    <button class="strat-btn active" data-strat="nr7"     data-color="accent">NR7</button>
+    <button class="strat-btn active" data-strat="macross" data-color="orange">MA Cross 20/50</button>
+    <button class="strat-btn active" data-strat="pull50"  data-color="green">50 SMA Pullback</button>
+    <button class="strat-btn active" data-strat="flat"    data-color="purple">Flat Base</button>
+    <button class="strat-btn active" data-strat="cup"     data-color="cyan">Cup &amp; Handle</button>
+    <button class="strat-btn active" data-strat="vcp"     data-color="red">VCP</button>
+    <button class="strat-btn active" data-strat="hvc"     data-color="green">HVC Breakout</button>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn-scan" id="btn-scan">▶ Run Scan</button>
+    <button class="btn-sec"  id="btn-retry" style="display:none">↺ Retry Failed</button>
+    <button class="btn-sec"  id="btn-clear">✕ Clear</button>
+    <div id="scan-info">Enter your Alpaca keys above, add tickers, then run scan.</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-strip" id="stats-strip" style="display:none">
+    <div class="stat-box cm"><div class="stat-n" id="st-scanned">0</div><div class="stat-lbl">Scanned</div></div>
+    <div class="stat-box ca"><div class="stat-n ca" id="st-hits">0</div><div class="stat-lbl">Setups Found</div></div>
+    <div class="stat-box ca"><div class="stat-n ca" id="st-nr">0</div><div class="stat-lbl">NR4 / NR7</div></div>
+    <div class="stat-box co"><div class="stat-n co" id="st-ma">0</div><div class="stat-lbl">MA Cross</div></div>
+    <div class="stat-box cg"><div class="stat-n cg" id="st-pull">0</div><div class="stat-lbl">50 Pullback</div></div>
+    <div class="stat-box cp"><div class="stat-n cp" id="st-pat">0</div><div class="stat-lbl">Patterns</div></div>
+    <div class="stat-box cc"><div class="stat-n cc" id="st-hvc">0</div><div class="stat-lbl">HVC</div></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-panel">
+    <div class="res-header">
+      <div class="res-title">Scan Results</div>
+      <div class="sort-row">
+        <span class="sort-lbl">Sort by</span>
+        <select id="sort-sel">
+          <option value="signals-desc">Signal Count ↓</option>
+          <option value="change-desc">Change % ↓</option>
+          <option value="change-asc">Change % ↑</option>
+          <option value="vol-desc">Volume Ratio ↓</option>
+          <option value="ticker-asc">Ticker A–Z</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Ticker</th><th>Price</th><th>Change %</th><th>Vol Ratio</th>
+          <th>Setups</th><th>Signals</th><th>Details</th>
+        </tr></thead>
+        <tbody id="tbody">
+          <tr><td colspan="7"><div class="empty-cell">
+            <div class="ei">◈</div>
+            <div class="et">Awaiting Scan</div>
+            <div class="es">Enter Alpaca keys, add tickers, then press Run Scan</div>
+          </div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- /tab-scanner -->
+
+  <!-- ═══ ETF TAB ═══ -->
+  <div class="tab-panel" id="tab-etfs">
+
+    <!-- Add ETF input -->
+    <div class="panel purple">
+      <div class="panel-title">
+        Tracked ETFs
+        <span id="etf-count" style="color:var(--muted)">0 tracked</span>
+      </div>
+      <div class="etf-input-row">
+        <textarea id="etf-input" placeholder="SPY, QQQ, XLK, XLE, XLF, SMH, ARKK, IWM, DIA, XLV ..."></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn btn-purple" id="btn-add-etfs">Add / Track</button>
+          <button class="btn btn-ghost" id="btn-refresh-etfs">↻ Refresh All</button>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:10px;letter-spacing:.5px;line-height:1.7">
+        Performance is total return (price + dividends) vs <b style="color:var(--accent)">SPY</b> benchmark.
+        Click <b style="color:var(--purple)">🎯 Holdings</b> on any ETF to save its top 20–25 stocks and import them as a scanner watchlist.
+      </div>
+    </div>
+
+    <!-- ETF Table -->
+    <div class="etf-table-wrap">
+      <table class="etf-tbl">
+        <thead>
+          <tr>
+            <th>ETF</th>
+            <th>Price</th>
+            <th class="num">1W</th>
+            <th class="num">4W</th>
+            <th class="num">3M</th>
+            <th class="num">6M</th>
+            <th style="text-align:center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="etf-tbody">
+          <tr><td colspan="7"><div class="empty-cell">
+            <div class="ei">▤</div>
+            <div class="et">No ETFs Tracked</div>
+            <div class="es">Add ETF tickers above to start tracking performance</div>
+          </div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /tab-etfs -->
+
+  <!-- ═══ JOURNAL TAB ═══ -->
+  <div class="tab-panel" id="tab-journal">
+
+    <!-- New trade button + stats -->
+    <div class="panel orange">
+      <div class="panel-title">
+        Trade Journal
+        <span id="journal-count" style="color:var(--muted)">0 trades</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-orange" id="btn-new-trade">+ Log New Trade</button>
+        <button class="btn btn-ghost" id="btn-export-journal">⬇ Export JSON</button>
+        <button class="btn btn-ghost" id="btn-import-journal">⬆ Import JSON</button>
+        <input type="file" id="journal-file" accept=".json" style="display:none">
+        <div style="font-size:10px;color:var(--muted);letter-spacing:.5px;flex:1;min-width:200px">
+          All P/L is tracked as <b style="color:var(--accent)">% gain/loss</b> (FX-neutral). Saved to browser localStorage.
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall stats dashboard -->
+    <div class="jdash" id="jdash">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Per-strategy performance table -->
+    <div class="strat-perf-wrap">
+      <div class="panel-title" style="color:var(--accent)">Performance by Strategy</div>
+      <div style="overflow-x:auto">
+        <table class="perf-tbl">
+          <thead><tr>
+            <th>Strategy</th>
+            <th class="num">Trades</th>
+            <th class="num">Wins</th>
+            <th class="num">Losses</th>
+            <th class="num">Win %</th>
+            <th class="num">Avg Win</th>
+            <th class="num">Avg Loss</th>
+            <th class="num">Expectancy</th>
+            <th class="num">Total %</th>
+          </tr></thead>
+          <tbody id="perf-tbody">
+            <tr><td colspan="9"><div class="empty-cell" style="padding:40px 20px"><div class="es">No closed trades yet</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Trade log -->
+    <div class="results-panel">
+      <div class="res-header">
+        <div class="res-title">Trade Log</div>
+      </div>
+      <div class="trade-filters">
+        <span class="trade-filters-lbl">Filter:</span>
+        <select id="trade-filter-status">
+          <option value="all">All statuses</option>
+          <option value="open">Open only</option>
+          <option value="closed">Closed only</option>
+          <option value="win">Wins only</option>
+          <option value="loss">Losses only</option>
+        </select>
+        <select id="trade-filter-strat">
+          <option value="all">All strategies</option>
+          <option value="nr4">NR4</option>
+          <option value="nr7">NR7</option>
+          <option value="macross">MA Cross 20/50</option>
+          <option value="pull50">50 SMA Pullback</option>
+          <option value="flat">Flat Base</option>
+          <option value="cup">Cup &amp; Handle</option>
+          <option value="vcp">VCP</option>
+          <option value="hvc">HVC Breakout</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="trade-sort">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="pl-desc">Best P/L first</option>
+          <option value="pl-asc">Worst P/L first</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table class="trade-tbl">
+          <thead><tr>
+            <th>Ticker</th>
+            <th>Entry Date</th>
+            <th class="num">Entry Price</th>
+            <th>Strategy</th>
+            <th>Exit Date</th>
+            <th class="num">Exit Price</th>
+            <th class="num">P/L %</th>
+            <th>Reason</th>
+            <th class="ctr">Status</th>
+            <th class="ctr">Actions</th>
+          </tr></thead>
+          <tbody id="trade-tbody">
+            <tr><td colspan="10"><div class="empty-cell">
+              <div class="ei">◷</div>
+              <div class="et">No Trades Logged</div>
+              <div class="es">Click "+ Log New Trade" above to add your first entry</div>
+            </div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-journal -->
+
+</div><!-- /wrap -->
+
+<!-- Holdings modal -->
+<div class="modal-overlay" id="modal-holdings">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Top Holdings · <em id="modal-etf-name">—</em></div>
+      <div class="modal-sub">Enter the top 20–25 stocks in this ETF (comma/space/newline separated)</div>
+    </div>
+    <div class="modal-body">
+      <label for="modal-tickers">Stock Tickers</label>
+      <textarea id="modal-tickers" placeholder="AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA, AVGO ..."></textarea>
+      <div class="modal-hint">
+        💡 Find the holdings on the ETF issuer's website (iShares, SPDR, Invesco, etc.) under "Holdings" or "Fund Composition".<br>
+        Saved holdings become a scanner watchlist named <code style="color:var(--cyan);background:var(--cyan-dim);padding:1px 5px"><span id="modal-wl-name">—</span></code>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-cyan" id="modal-save-only">Save Holdings Only</button>
+      <button class="btn btn-purple" id="modal-save-scan">Save + Load to Scanner</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trade ENTRY modal -->
+<div class="modal-overlay" id="modal-entry">
+  <div class="modal" style="border-color:var(--orange);max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title"><em id="entry-modal-title" style="color:var(--orange)">New Trade Entry</em></div>
+      <div class="modal-sub">Log a new trade when you enter the position</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Ticker</label>
+          <input type="text" id="entry-ticker" placeholder="AAPL" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-field">
+          <label>Entry Date</label>
+          <input type="date" id="entry-date">
+        </div>
+        <div class="form-field">
+          <label>Entry Price</label>
+          <input type="number" id="entry-price" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-field">
+          <label>Position Size (optional)</label>
+          <input type="text" id="entry-size" placeholder="e.g. 100 shares or 2% acct" style="text-transform:none">
+        </div>
+        <div class="form-field full">
+          <label>Strategy (pick one)</label>
+          <div class="chip-row" id="entry-strat-row">
+            <button class="strat-chip" data-strat="nr4">NR4</button>
+            <button class="strat-chip" data-strat="nr7">NR7</button>
+            <button class="strat-chip" data-strat="macross">MA Cross 20/50</button>
+            <button class="strat-chip" data-strat="pull50">50 SMA Pullback</button>
+            <button class="strat-chip" data-strat="flat">Flat Base</button>
+            <button class="strat-chip" data-strat="cup">Cup &amp; Handle</button>
+            <button class="strat-chip" data-strat="vcp">VCP</button>
+            <button class="strat-chip" data-strat="hvc">HVC Breakout</button>
+            <button class="strat-chip" data-strat="other">Other</button>
+          </div>
+        </div>
+        <div class="form-field full">
+          <label>Entry Notes (optional)</label>
+          <textarea id="entry-notes" placeholder="Setup quality, market conditions, target/stop plan..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="entry-cancel">Cancel</button>
+      <button class="btn btn-orange" id="entry-save">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trade EXIT modal -->
+<div class="modal-overlay" id="modal-exit">
+  <div class="modal" style="border-color:var(--green);max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">Close Trade · <em id="exit-ticker-name" style="color:var(--green)">—</em></div>
+      <div class="modal-sub" id="exit-subtitle">Log the exit to close this trade</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field">
+          <label>Exit Date</label>
+          <input type="date" id="exit-date">
+        </div>
+        <div class="form-field">
+          <label>Exit Price (optional)</label>
+          <input type="number" id="exit-price" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-field full">
+          <label>P/L % <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-size:10px">(auto-calculated from prices, or enter manually)</span></label>
+          <input type="number" id="exit-pl" step="0.01" placeholder="e.g. 4.25 or -2.10">
+        </div>
+        <div class="form-field full">
+          <label>Exit Reason</label>
+          <div class="chip-row" id="exit-reason-row">
+            <button class="reason-chip" data-reason="Target hit">🎯 Target hit</button>
+            <button class="reason-chip" data-reason="Stopped out">⛔ Stopped out</button>
+            <button class="reason-chip" data-reason="Trailing stop">📉 Trailing stop</button>
+            <button class="reason-chip" data-reason="Time stop">⏳ Time stop</button>
+            <button class="reason-chip" data-reason="Setup invalidated">✕ Setup invalidated</button>
+            <button class="reason-chip" data-reason="Discretionary">🎲 Discretionary</button>
+            <button class="reason-chip" data-reason="Break-even">〜 Break-even</button>
+          </div>
+        </div>
+        <div class="form-field full">
+          <label>Exit Notes (optional)</label>
+          <textarea id="exit-notes" placeholder="What worked, what didn't, lessons..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="exit-cancel">Cancel</button>
+      <button class="btn btn-green" id="exit-save">Close Trade</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── All JS at end of body — DOM is fully ready, no wrapper needed ───────────
+
+// State
+let activeTickers = [];
+let results       = [];
+let activeStrats  = new Set(['nr4','nr7','macross','pull50','flat','cup','vcp','hvc']);
+let scanning      = false;
+
+// Shorthand
+const g = id => document.getElementById(id);
+const setInfo = html => { g('scan-info').innerHTML = html; };
+
+// ─── Credentials ─────────────────────────────────────────────────────────────
+function getKeys() {
+  return {
+    key:    (g('alpaca-key').value    || '').trim() || localStorage.getItem('alpaca_key')    || '',
+    secret: (g('alpaca-secret').value || '').trim() || localStorage.getItem('alpaca_secret') || '',
+  };
+}
+
+function setStatus(msg, color) {
+  g('creds-status').textContent = msg;
+  g('creds-status').style.color = color;
+}
+
+function saveKeys() {
+  const {key, secret} = getKeys();
+  if (!key || !secret) { setStatus('⚠ Enter both keys', 'var(--red)'); return; }
+  localStorage.setItem('alpaca_key', key);
+  localStorage.setItem('alpaca_secret', secret);
+  setStatus('✓ Saved', 'var(--green)');
+}
+
+function loadKeys() {
+  const k = localStorage.getItem('alpaca_key');
+  const s = localStorage.getItem('alpaca_secret');
+  if (k) g('alpaca-key').value    = k;
+  if (s) g('alpaca-secret').value = s;
+  if (k && s) setStatus('Connected ✓', 'var(--green)');
+}
+
+async function testConnection() {
+  const log = g('conn-log');
+  log.style.display = 'block';
+  log.innerHTML = '';
+  const L = (msg, c = 'var(--muted)') => { log.innerHTML += `<div style="color:${c}">${msg}</div>`; };
+
+  const {key, secret} = getKeys();
+  L('── Test ─────────────────────────────────');
+  L(`Key    : ${key    ? key.slice(0,6)+'••••••' : '<b style="color:var(--red)">EMPTY</b>'}`, 'var(--text)');
+  L(`Secret : ${secret ? '••••••••••••'          : '<b style="color:var(--red)">EMPTY</b>'}`, 'var(--text)');
+
+  if (!key || !secret) {
+    L('✗ Both keys required', 'var(--red)');
+    return;
+  }
+
+  L('');
+  L('Fetching AAPL test bars from Alpaca…');
+  try {
+    const end   = new Date().toISOString().split('T')[0];
+    const start = new Date(Date.now() - 15 * 864e5).toISOString().split('T')[0];
+    const url   = `https://data.alpaca.markets/v2/stocks/AAPL/bars`
+                + `?timeframe=1Day&start=${start}&end=${end}&limit=10&feed=iex&sort=asc`;
+
+    const r = await fetch(url, {
+      headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret }
+    });
+    const j = await r.json().catch(() => ({}));
+
+    if (r.ok) {
+      const bars = j?.bars || [];
+      L(`✓ Success — ${bars.length} AAPL bars received`, 'var(--green)');
+      if (bars.length) {
+        const b = bars[bars.length - 1];
+        L(`  Last bar: ${b.t?.split('T')[0]}  Close: $${b.c?.toFixed(2)}`, 'var(--accent)');
+      }
+      localStorage.setItem('alpaca_key', key);
+      localStorage.setItem('alpaca_secret', secret);
+      setStatus('Connected ✓', 'var(--green)');
+      L('✓ Keys saved — ready to scan', 'var(--green)');
+    } else {
+      L(`✗ HTTP ${r.status}: ${j.message || j.code || 'error'}`, 'var(--red)');
+      if (r.status === 401) L('  → Wrong Key ID or Secret', 'var(--orange)');
+      if (r.status === 403) L('  → Key lacks market data access', 'var(--orange)');
+      setStatus(`Error ${r.status}`, 'var(--red)');
+    }
+  } catch (e) {
+    L(`✗ ${e.message}`, 'var(--red)');
+    if (e.name === 'TypeError') {
+      L('  → CORS blocked — file must be served over http://', 'var(--orange)');
+      g('cors-warn').style.display = 'block';
+    }
+    setStatus('Failed', 'var(--red)');
+  }
+  L('── End ──────────────────────────────────');
+}
+
+// ─── CSV ─────────────────────────────────────────────────────────────────────
+function parseCSV(text, filename) {
+  const tickers = [];
+  for (const line of text.trim().split('\n')) {
+    for (const col of line.split(',')) {
+      const t = col.trim().replace(/^["']|["']$/g, '').toUpperCase();
+      if (/^[A-Z]{1,5}$/.test(t) &&
+          !['OPEN','HIGH','LOW','CLOSE','DATE','TIME','NAME','SYMBOL','TICKER','VOLUME'].includes(t))
+        tickers.push(t);
+    }
+  }
+  const unique = [...new Set(tickers)];
+  activeTickers = unique;
+  g('tickers-preview').innerHTML = unique.length
+    ? `<strong>${unique.length} tickers loaded</strong> from ${filename}: ${unique.slice(0,12).join(', ')}${unique.length>12?` +${unique.length-12} more`:''}`
+    : '⚠ No tickers found — check file format';
+}
+
+// ─── Manual tickers ───────────────────────────────────────────────────────────
+function parseTickers(raw) {
+  if (!raw || !raw.trim()) return [];
+  const seen = new Set(), out = [];
+  for (const p of raw.split(/[\s,;\|\n\r]+/)) {
+    const t = p.replace(/[$"']/g,'').replace(/^\.+|\.+$/g,'').trim().toUpperCase();
+    if (t.length >= 1 && t.length <= 7 && /^[A-Z][A-Z0-9./-]{0,6}$/.test(t) &&
+        !seen.has(t) && !['THE','AND','OR','IN','OF','TO','A','AN'].includes(t)) {
+      seen.add(t); out.push(t);
+    }
+  }
+  return out;
+}
+
+function useManual() {
+  const t = parseTickers(g('manual-tickers').value);
+  if (!t.length) { setInfo('⚠ No valid tickers found — try: <b>AAPL, NVDA, TSLA</b>'); return; }
+  activeTickers = t;
+  g('tickers-preview').innerHTML = `<strong>${t.length} tickers ready</strong>: ${t.slice(0,15).join(', ')}${t.length>15?` +${t.length-15} more`:''}`;
+  g('manual-count').textContent  = t.length + ' tickers';
+  g('manual-count').style.color  = 'var(--accent)';
+  setInfo(`<b>${t.length}</b> tickers queued — press <b>Run Scan</b>`);
+}
+
+// ─── Watchlists ───────────────────────────────────────────────────────────────
+const WL_KEY = 'apex_watchlists';
+
+function getAllWatchlists() {
+  try { return JSON.parse(localStorage.getItem(WL_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function saveAllWatchlists(wls) {
+  localStorage.setItem(WL_KEY, JSON.stringify(wls));
+}
+
+function refreshWatchlistDropdown(selectedName = '') {
+  const wls = getAllWatchlists();
+  const names = Object.keys(wls).sort();
+  const sel = g('wl-select');
+  if (!names.length) {
+    sel.innerHTML = '<option value="">— No saved watchlists —</option>';
+    return;
+  }
+  sel.innerHTML = names.map(n => {
+    const count = wls[n].length;
+    const isSel = n === selectedName ? ' selected' : '';
+    return `<option value="${n}"${isSel}>${n} (${count})</option>`;
+  }).join('');
+}
+
+function saveCurrentAsWatchlist() {
+  const tickers = parseTickers(g('manual-tickers').value);
+  if (!tickers.length) { setInfo('⚠ Enter tickers first, then save'); return; }
+
+  const wls = getAllWatchlists();
+  const existingNames = Object.keys(wls);
+  const defaultName = existingNames.length ? `Watchlist ${existingNames.length + 1}` : 'My Watchlist';
+  const name = prompt(`Save ${tickers.length} tickers as:`, defaultName);
+  if (!name || !name.trim()) return;
+
+  const trimmed = name.trim();
+  if (wls[trimmed] && !confirm(`"${trimmed}" already exists. Overwrite?`)) return;
+
+  wls[trimmed] = tickers;
+  saveAllWatchlists(wls);
+  refreshWatchlistDropdown(trimmed);
+  setInfo(`✓ Saved <b>"${trimmed}"</b> with <b>${tickers.length}</b> tickers`);
+}
+
+function loadSelectedWatchlist() {
+  const name = g('wl-select').value;
+  if (!name) { setInfo('⚠ Select a watchlist first'); return; }
+  const wls = getAllWatchlists();
+  const tickers = wls[name];
+  if (!tickers) return;
+
+  g('manual-tickers').value = tickers.join(', ');
+  g('manual-count').textContent = tickers.length + ' tickers';
+  g('manual-count').style.color = 'var(--accent)';
+  // Auto-activate so user can scan immediately
+  activeTickers = tickers;
+  g('tickers-preview').innerHTML = `<strong>Loaded "${name}"</strong>: ${tickers.slice(0,15).join(', ')}${tickers.length>15?` +${tickers.length-15} more`:''}`;
+  setInfo(`<b>${tickers.length}</b> tickers loaded from <b>"${name}"</b> — press <b>Run Scan</b>`);
+}
+
+function renameSelectedWatchlist() {
+  const oldName = g('wl-select').value;
+  if (!oldName) { setInfo('⚠ Select a watchlist to rename'); return; }
+  const newName = prompt(`Rename "${oldName}" to:`, oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+
+  const wls = getAllWatchlists();
+  const trimmed = newName.trim();
+  if (wls[trimmed] && !confirm(`"${trimmed}" already exists. Overwrite?`)) return;
+
+  wls[trimmed] = wls[oldName];
+  delete wls[oldName];
+  saveAllWatchlists(wls);
+  refreshWatchlistDropdown(trimmed);
+  setInfo(`✓ Renamed to <b>"${trimmed}"</b>`);
+}
+
+function deleteSelectedWatchlist() {
+  const name = g('wl-select').value;
+  if (!name) { setInfo('⚠ Select a watchlist to delete'); return; }
+  if (!confirm(`Delete watchlist "${name}"? This cannot be undone.`)) return;
+
+  const wls = getAllWatchlists();
+  delete wls[name];
+  saveAllWatchlists(wls);
+  refreshWatchlistDropdown();
+  setInfo(`✓ Deleted <b>"${name}"</b>`);
+}
+
+// ─── Alpaca fetch ─────────────────────────────────────────────────────────────
+async function fetchDaily(ticker) {
+  const {key, secret} = getKeys();
+  if (!key || !secret) throw new Error('No API keys — enter and save above');
+
+  const end   = new Date();
+  const start = new Date(); start.setDate(start.getDate() - 280);
+  const fmt   = d => d.toISOString().split('T')[0];
+  const url   = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars`
+              + `?timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=300&feed=iex&sort=asc`;
+
+  let resp;
+  try {
+    resp = await fetch(url, {
+      headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret, 'Accept': 'application/json' }
+    });
+  } catch (e) {
+    if (e.name === 'TypeError') throw new Error('CORS blocked — serve file over http://');
+    throw new Error(`Network: ${e.message}`);
+  }
+
+  if (resp.status === 401) throw new Error('Invalid API keys');
+  if (resp.status === 403) throw new Error('Access denied');
+  if (resp.status === 404) throw new Error(`Symbol not found: ${ticker}`);
+  if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.message || `HTTP ${resp.status}`); }
+
+  const j    = await resp.json();
+  const bars = j?.bars;
+  if (!bars || !bars.length) throw new Error('No data — may not be on IEX feed');
+  if (bars.length < 10)      throw new Error(`Only ${bars.length} bars returned`);
+
+  const data = bars
+    .map(b => ({ date: new Date(b.t), o: b.o, h: b.h, l: b.l, c: b.c, v: b.v }))
+    .filter(d => d.c > 0 && d.h > 0 && d.l > 0 && d.o > 0);
+  if (data.length < 10) throw new Error('Insufficient clean bars');
+  return data;
+}
+
+// ─── Indicators ───────────────────────────────────────────────────────────────
+const sma = (arr, n) => arr.length < n ? null : arr.slice(-n).reduce((a,b)=>a+b,0)/n;
+const avgVol = (data, n=20) => { const v=data.slice(-n-1,-1).map(d=>d.v).filter(Boolean); return v.length?v.reduce((a,b)=>a+b,0)/v.length:0; };
+
+const detectNR4 = data => { if(data.length<4) return false; const r=data.slice(-4).map(d=>d.h-d.l); return r[3]===Math.min(...r); };
+const detectNR7 = data => { if(data.length<7) return false; const r=data.slice(-7).map(d=>d.h-d.l); return r[6]===Math.min(...r); };
+
+function detectMACross(data) {
+  if (data.length < 55) return {signal: false};
+  const c = data.map(d=>d.c);
+  for (let ago = 1; ago <= 3; ago++) {
+    const s=c.slice(0,c.length-ago+1), ps=c.slice(0,c.length-ago);
+    const [m20,m50,pm20,pm50]=[sma(s,20),sma(s,50),sma(ps,20),sma(ps,50)];
+    if (m20&&m50&&pm20&&pm50&&pm20<=pm50&&m20>m50)
+      return {signal:true, barsAgo:ago, ma20:sma(c,20), ma50:sma(c,50)};
+  }
+  return {signal:false};
+}
+
+function detect50Pull(data) {
+  if (data.length < 60) return false;
+  const c=data.map(d=>d.c), ma50=sma(c,50);
+  if (!ma50) return false;
+  const cur=c[c.length-1];
+  if (!(cur >= ma50*0.98 && cur <= ma50*1.04)) return false;
+  return c.slice(-15,-3).every(x=>x>ma50*1.02) && Math.max(...data.slice(-30).map(d=>d.h)) > c[c.length-30]*1.05;
+}
+
+function detectFlatBase(data) {
+  if (data.length < 55) return false;
+  const c=data.map(d=>d.c), base=c.slice(-25);
+  const hi=Math.max(...base), lo=Math.min(...base);
+  if ((hi-lo)/hi > 0.05) return false;
+  return base.reduce((a,b)=>a+b,0)/base.length > Math.max(...c.slice(-55,-25))*0.9 && c[c.length-1]>=hi*0.98;
+}
+
+function detectCupHandle(data) {
+  if (data.length < 60) return false;
+  const c=data.map(d=>d.c), n=c.length;
+  const lh=Math.max(...c.slice(n-60,n-40)), bot=Math.min(...c.slice(n-40,n-15));
+  const rh=Math.max(...c.slice(n-15,n-5));
+  if (bot>lh*0.85||rh<lh*0.95||(rh-Math.min(...c.slice(n-5)))/(rh-bot)>0.35) return false;
+  return c[n-1]>=rh*0.97;
+}
+
+function detectVCP(data) {
+  if (data.length < 60) return false;
+  const n=data.length, hs=data.map(d=>d.h), ls=data.map(d=>d.l);
+  const depth=(s,l)=>{const hi=Math.max(...hs.slice(s,s+l)),lo=Math.min(...ls.slice(s,s+l));return(hi-lo)/hi;};
+  if (!(depth(n-60,20)>depth(n-40,15)&&depth(n-40,15)>depth(n-25,12)&&depth(n-25,12)>depth(n-12,10))) return false;
+  const av=avgVol(data,20), rv=data.slice(-5).map(d=>d.v).filter(Boolean);
+  return (rv.length?rv.reduce((a,b)=>a+b,0)/rv.length:av) < av*0.8;
+}
+
+function detectHVC(data) {
+  if (data.length < 23) return {signal:false};
+  const today=data[data.length-1], yest=data[data.length-2];
+  const vs=data.slice(-22,-2).map(d=>d.v).filter(Boolean);
+  if (vs.length < 10) return {signal:false};
+  const av=vs.reduce((a,b)=>a+b,0)/vs.length, range=yest.h-yest.l;
+  const topWick=range>0?(yest.h-yest.c)/range:1;
+  const body   =range>0?Math.abs(yest.c-yest.o)/range:0;
+  if (!(yest.c>yest.o) || yest.v<av*1.5 || topWick>0.20 || body<0.40) return {signal:false};
+  const triggered=today.h>=yest.c, near=!triggered&&today.c>=yest.c*0.995;
+  return {signal:triggered||near, triggered, triggerPrice:yest.c, volRatio:(yest.v/av), topWickPct:(topWick*100).toFixed(1)};
+}
+
+// ─── Analyze ──────────────────────────────────────────────────────────────────
+function analyzeStock(ticker, data) {
+  const c=data.map(d=>d.c), last=data[data.length-1], prev=data[data.length-2];
+  const price=last.c, changePct=prev?((price-prev.c)/prev.c)*100:0;
+  const av=avgVol(data,20), volRatio=av>0?last.v/av:0;
+  const signals=[], details=[];
+
+  if (detectNR4(data))       { signals.push('nr4');     details.push('Narrowest range of last 4 bars'); }
+  if (detectNR7(data))       { signals.push('nr7');     details.push('Narrowest range of last 7 bars'); }
+  const mac=detectMACross(data);
+  if (mac.signal)            { signals.push('macross'); details.push(`20 SMA crossed above 50 SMA ${mac.barsAgo===1?'today':mac.barsAgo+' bars ago'}`); }
+  if (detect50Pull(data))    { signals.push('pull50');  details.push('First pullback to 50 SMA after breakout'); }
+  if (detectFlatBase(data))  { signals.push('flat');    details.push('Flat base — <5% depth, 25 bars, near breakout'); }
+  if (detectCupHandle(data)) { signals.push('cup');     details.push('Cup & handle — near pivot point'); }
+  if (detectVCP(data))       { signals.push('vcp');     details.push('VCP — contracting swings + volume compression'); }
+  const hvc=detectHVC(data);
+  if (hvc.signal) {
+    signals.push('hvc');
+    details.push(`HVC ${hvc.triggered?'✅ TRIGGERED':'⏳ WATCH $'+hvc.triggerPrice.toFixed(2)} · vol ${hvc.volRatio.toFixed(1)}× · wick ${hvc.topWickPct}%`);
+  }
+  return {ticker, price, changePct, volRatio, signals, details, hvcTriggered:hvc.triggered||false, error:false};
+}
+
+// ─── Scan ─────────────────────────────────────────────────────────────────────
+async function runScan() {
+  if (scanning) return;
+  if (!activeTickers.length) { setInfo('⚠ No tickers loaded — add tickers above first'); return; }
+  const {key,secret}=getKeys();
+  if (!key||!secret) { setInfo('⚠ Enter Alpaca API keys above first'); return; }
+
+  scanning=true; results=[];
+  g('cors-warn').style.display='none';
+  const btn=g('btn-scan'); btn.disabled=true; btn.classList.add('running'); btn.textContent='⟳ Scanning...';
+  g('stats-strip').style.display='flex'; g('tbody').innerHTML='';
+  const prog=g('prog'); let done=0, corsHit=false;
+
+  for (const ticker of activeTickers) {
+    if (corsHit) {
+      results.push({ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:'Halted — fix CORS first'});
+      done++; continue;
+    }
+    setInfo(`Scanning <b>${ticker}</b>… (${done+1}/${activeTickers.length})`);
+    try {
+      const data = await fetchDaily(ticker);
+      results.push(analyzeStock(ticker, data));
+    } catch(e) {
+      if (e.message.includes('CORS')||e.message.includes('blocked')||e.name==='TypeError') {
+        corsHit=true; g('cors-warn').style.display='block';
+      }
+      results.push({ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:e.message});
+    }
+    done++;
+    prog.style.width=(done/activeTickers.length*100)+'%';
+    renderTable(); updateStats();
+  }
+
+  scanning=false; btn.disabled=false; btn.classList.remove('running'); btn.textContent='▶ Run Scan';
+  const hits=results.filter(r=>!r.error&&r.signals.some(s=>activeStrats.has(s))).length;
+  const fails=results.filter(r=>r.error).length;
+  setInfo(`Scan complete — <b>${activeTickers.length}</b> scanned, <b>${hits}</b> setups found${fails?`, <span style="color:var(--red)">${fails} failed</span>`:''}`);
+  g('btn-retry').style.display=fails?'inline-block':'none';
+  g('ts').textContent='Updated '+new Date().toLocaleTimeString();
+  setTimeout(()=>prog.style.width='0%',1200);
+}
+
+async function retrySingle(ticker) {
+  const idx=results.findIndex(r=>r.ticker===ticker); if(idx===-1) return;
+  results[idx]={ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:false};
+  renderTable();
+  try { results[idx]=analyzeStock(ticker, await fetchDaily(ticker)); }
+  catch(e) { results[idx]={ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:e.message}; }
+  renderTable(); updateStats();
+}
+
+async function retryFailed() {
+  const failed=results.filter(r=>r.error).map(r=>r.ticker);
+  if (!failed.length) return;
+  setInfo(`Retrying <b>${failed.length}</b> failed…`);
+  for (const t of failed) { await retrySingle(t); await new Promise(r=>setTimeout(r,300)); }
+  const still=results.filter(r=>r.error).length;
+  setInfo(still?`<b>${still}</b> still failing — likely OTC/delisted`:'All tickers fetched ✓');
+}
+
+function clearAll() {
+  results=[]; activeTickers=[];
+  g('tickers-preview').textContent='No file loaded.';
+  g('manual-tickers').value='';
+  g('manual-count').textContent='0 tickers'; g('manual-count').style.color='var(--muted)';
+  g('stats-strip').style.display='none'; g('btn-retry').style.display='none';
+  g('conn-log').style.display='none'; g('ts').textContent='—';
+  setInfo('Enter Alpaca keys, add tickers, then run scan.');
+  renderTable();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderTable() {
+  const sort=g('sort-sel').value;
+  let rows=results.filter(r=>r.error||r.signals.some(s=>activeStrats.has(s)));
+  rows.sort((a,b)=>{
+    const ma=a.signals.filter(s=>activeStrats.has(s)).length, mb=b.signals.filter(s=>activeStrats.has(s)).length;
+    if(sort==='signals-desc') return mb-ma;
+    if(sort==='change-desc')  return b.changePct-a.changePct;
+    if(sort==='change-asc')   return a.changePct-b.changePct;
+    if(sort==='vol-desc')     return b.volRatio-a.volRatio;
+    if(sort==='ticker-asc')   return a.ticker.localeCompare(b.ticker);
+    return mb-ma;
+  });
+
+  const tbody=g('tbody');
+  if (!results.length) {
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty-cell"><div class="ei">◈</div><div class="et">Awaiting Scan</div><div class="es">Enter keys, add tickers, press Run Scan</div></div></td></tr>`;
+    return;
+  }
+  if (!rows.length) {
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Setups Matched</div><div class="es">Enable more strategies or scan more tickers</div></div></td></tr>`;
+    return;
+  }
+
+  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC'};
+
+  tbody.innerHTML=rows.map((r,i)=>{
+    if (r.error) return `
+      <tr style="animation-delay:${i*35}ms">
+        <td class="td-tick">${r.ticker}</td>
+        <td colspan="5" style="color:var(--muted);font-size:10px">⚠ ${r.errMsg||'fetch failed'}</td>
+        <td><button class="retry-btn btn btn-cyan" data-ticker="${r.ticker}" style="padding:4px 10px;font-size:9px">↺ Retry</button></td>
+      </tr>`;
+
+    const ms=r.signals.filter(s=>activeStrats.has(s)), sc=ms.length;
+    const tags=ms.map(s=>`<span class="stag ${s}">${s==='hvc'?(r.hvcTriggered?'HVC ⚡ LIVE':'HVC ⏳ WATCH'):lbl[s]}</span>`).join('');
+    const dotCls=sc>=3?'l3':sc>=2?'l2':'l1';
+    const dots=Array(4).fill(0).map((_,di)=>`<div class="dot ${di<sc?dotCls:''}"></div>`).join('');
+    const vp=Math.min(100,r.volRatio*40), vc=r.volRatio>=2?'var(--green)':r.volRatio>=1.2?'var(--orange)':'var(--muted)';
+    const chC=r.changePct>=0?'up':'down', chS=(r.changePct>=0?'+':'')+r.changePct.toFixed(2)+'%';
+
+    return `
+      <tr style="animation-delay:${i*40}ms">
+        <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+        <td>$${r.price.toFixed(2)}</td>
+        <td class="${chC}">${chS}</td>
+        <td><div class="vbar-wrap"><div class="vbar"><div class="vfill" style="width:${vp}%;background:${vc}"></div></div><span class="vtxt">${r.volRatio.toFixed(1)}×</span></div></td>
+        <td><div class="strats-cell">${tags||'<span style="color:var(--border2);font-size:10px">—</span>'}</div></td>
+        <td><div class="conf-wrap"><div class="conf-dots">${dots}</div><span class="conf-score">${sc}</span></div></td>
+        <td style="font-size:10px;color:var(--muted);max-width:280px;white-space:normal;line-height:1.8">${r.details.join('<br>')||'—'}</td>
+      </tr>`;
+  }).join('');
+
+  // Wire retry buttons after render
+  tbody.querySelectorAll('.retry-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>retrySingle(btn.dataset.ticker));
+  });
+}
+
+function updateStats() {
+  const v=results.filter(r=>!r.error);
+  g('st-scanned').textContent=v.length;
+  g('st-hits').textContent=v.filter(r=>r.signals.some(s=>activeStrats.has(s))).length;
+  g('st-nr').textContent=v.filter(r=>r.signals.includes('nr4')||r.signals.includes('nr7')).length;
+  g('st-ma').textContent=v.filter(r=>r.signals.includes('macross')).length;
+  g('st-pull').textContent=v.filter(r=>r.signals.includes('pull50')).length;
+  g('st-pat').textContent=v.filter(r=>['flat','cup','vcp'].some(s=>r.signals.includes(s))).length;
+  g('st-hvc').textContent=v.filter(r=>r.signals.includes('hvc')).length;
+}
+
+// ─── Wire all event listeners (no inline onclick anywhere) ────────────────────
+g('btn-save').addEventListener('click',  saveKeys);
+g('btn-test').addEventListener('click',  testConnection);
+g('btn-scan').addEventListener('click',  runScan);
+g('btn-retry').addEventListener('click', retryFailed);
+g('btn-clear').addEventListener('click', clearAll);
+g('btn-use').addEventListener('click',   useManual);
+g('sort-sel').addEventListener('change', renderTable);
+
+g('btn-choose').addEventListener('click', e => { e.stopPropagation(); g('csv-file').click(); });
+g('csv-file').addEventListener('change', e => {
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=ev=>parseCSV(ev.target.result, f.name); r.readAsText(f);
+});
+
+const dz=g('drop-zone');
+dz.addEventListener('click', ()=>g('csv-file').click());
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=ev=>parseCSV(ev.target.result, f.name); r.readAsText(f);
+});
+
+g('manual-tickers').addEventListener('input', () => {
+  const t=parseTickers(g('manual-tickers').value);
+  g('manual-count').textContent=t.length+' tickers';
+  g('manual-count').style.color=t.length?'var(--accent)':'var(--muted)';
+});
+g('manual-tickers').addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter') useManual();
+});
+
+document.querySelectorAll('.strat-btn').forEach(btn=>{
+  btn.addEventListener('click', () => {
+    const s=btn.dataset.strat;
+    if (activeStrats.has(s)) { activeStrats.delete(s); btn.classList.remove('active'); }
+    else                     { activeStrats.add(s);    btn.classList.add('active'); }
+    renderTable();
+  });
+});
+
+// Watchlist buttons
+g('btn-save-wl').addEventListener('click',   saveCurrentAsWatchlist);
+g('btn-load-wl').addEventListener('click',   loadSelectedWatchlist);
+g('btn-rename-wl').addEventListener('click', renameSelectedWatchlist);
+g('btn-delete-wl').addEventListener('click', deleteSelectedWatchlist);
+// Double-click the select or just change it to auto-load
+g('wl-select').addEventListener('change', () => {
+  if (g('wl-select').value) loadSelectedWatchlist();
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ETF TRACKER
+// ═════════════════════════════════════════════════════════════════════════════
+
+const ETF_KEY = 'apex_etfs';            // array of ETF ticker symbols
+const ETF_HOLDINGS_KEY = 'apex_etf_holdings'; // { ETF: [tickers...] }
+let etfData = [];                       // per-ETF computed perf data
+let spyData = null;                     // SPY reference for RS calculation
+
+function getTrackedETFs() {
+  try { return JSON.parse(localStorage.getItem(ETF_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveTrackedETFs(list) {
+  localStorage.setItem(ETF_KEY, JSON.stringify(list));
+  g('etf-count').textContent = list.length + ' tracked';
+  g('etf-tab-count').textContent = list.length ? `(${list.length})` : '';
+}
+
+function getETFHoldings() {
+  try { return JSON.parse(localStorage.getItem(ETF_HOLDINGS_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function saveETFHoldings(map) {
+  localStorage.setItem(ETF_HOLDINGS_KEY, JSON.stringify(map));
+}
+
+async function addETFs() {
+  const raw = g('etf-input').value;
+  const newTickers = parseTickers(raw);
+  if (!newTickers.length) return;
+
+  const existing = getTrackedETFs();
+  const merged = [...new Set([...existing, ...newTickers])];
+  saveTrackedETFs(merged);
+  g('etf-input').value = '';
+
+  // Fetch fresh data only for the new ones
+  await refreshETFs();
+}
+
+async function refreshETFs() {
+  const list = getTrackedETFs();
+  if (!list.length) { renderETFs(); return; }
+
+  const {key, secret} = getKeys();
+  if (!key || !secret) {
+    g('etf-tbody').innerHTML = `<tr><td colspan="7"><div class="empty-cell"><div class="ei">⚠</div><div class="et">No API Keys</div><div class="es">Set your Alpaca keys in the Scanner tab first</div></div></td></tr>`;
+    return;
+  }
+
+  // Hide any previous CORS warning
+  g('cors-warn').style.display = 'none';
+
+  // Loading state
+  g('etf-tbody').innerHTML = list.map(t => `<tr><td class="etf-ticker">${t}</td><td colspan="6" style="color:var(--muted);font-size:10px">Loading…</td></tr>`).join('');
+
+  // Fetch SPY first for RS benchmark
+  let corsHit = false;
+  try {
+    const spyBars = await fetchDaily('SPY');
+    spyData = computePerformance(spyBars);
+  } catch(e) {
+    spyData = null;
+    if (e.message.includes('CORS') || e.message.includes('blocked') || e.name === 'TypeError') {
+      corsHit = true;
+    }
+  }
+
+  // If CORS failed, show warning banner and stop
+  if (corsHit) {
+    g('cors-warn').style.display = 'block';
+    g('cors-warn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    etfData = list.map(t => ({ ticker: t, error: true, errMsg: 'CORS blocked — see warning above' }));
+    renderETFs();
+    return;
+  }
+
+  // Fetch each ETF
+  etfData = [];
+  for (const ticker of list) {
+    try {
+      const bars = await fetchDaily(ticker);
+      etfData.push({ ticker, ...computePerformance(bars), error: false });
+    } catch(e) {
+      etfData.push({ ticker, error: true, errMsg: e.message });
+    }
+    renderETFs();
+  }
+}
+
+// Compute price % changes over 1W (5), 4W (20), 3M (63), 6M (126) trading days
+function computePerformance(bars) {
+  if (!bars || bars.length < 10) return { price: 0, perf: {w1:null, w4:null, m3:null, m6:null} };
+  const last = bars[bars.length - 1];
+  const closes = bars.map(b => b.c);
+  const cur = closes[closes.length - 1];
+
+  const pctBack = (n) => {
+    const idx = closes.length - 1 - n;
+    if (idx < 0) return null;
+    const past = closes[idx];
+    return past ? ((cur - past) / past) * 100 : null;
+  };
+
+  return {
+    price: last.c,
+    perf: {
+      w1: pctBack(5),
+      w4: pctBack(20),
+      m3: pctBack(63),
+      m6: pctBack(126),
+    }
+  };
+}
+
+function renderETFs() {
+  const list = getTrackedETFs();
+  const tbody = g('etf-tbody');
+  g('etf-count').textContent = list.length + ' tracked';
+  g('etf-tab-count').textContent = list.length ? `(${list.length})` : '';
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-cell"><div class="ei">▤</div><div class="et">No ETFs Tracked</div><div class="es">Add ETF tickers above to start tracking performance</div></div></td></tr>`;
+    return;
+  }
+
+  const spy = spyData?.perf || {w1:null, w4:null, m3:null, m6:null};
+
+  tbody.innerHTML = etfData.map((r, i) => {
+    if (r.error) return `<tr style="animation-delay:${i*30}ms">
+      <td class="etf-ticker">${r.ticker}</td>
+      <td colspan="5" style="color:var(--red);font-size:10px">⚠ ${r.errMsg || 'fetch failed'}</td>
+      <td><div class="etf-actions"><button class="etf-btn btn-del" data-del="${r.ticker}">✕</button></div></td>
+    </tr>`;
+
+    const perfCell = (val, spyVal) => {
+      if (val == null) return '<span style="color:var(--muted)">—</span>';
+      const absClass = val >= 0 ? 'up' : 'down';
+      const absStr = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+      let rsHtml = '';
+      if (spyVal != null) {
+        const rs = val - spyVal;
+        const rsClass = rs > 0.5 ? 'strong' : rs < -0.5 ? 'weak' : 'flat';
+        const rsStr = (rs >= 0 ? '+' : '') + rs.toFixed(1) + ' vs SPY';
+        rsHtml = `<span class="perf-rs ${rsClass}">${rsStr}</span>`;
+      }
+      return `<div class="perf-cell"><span class="perf-abs ${absClass}">${absStr}</span>${rsHtml}</div>`;
+    };
+
+    const holdings = getETFHoldings();
+    const hasHoldings = !!(holdings[r.ticker] && holdings[r.ticker].length);
+    const holdLabel = hasHoldings ? `🎯 Holdings (${holdings[r.ticker].length})` : '🎯 Holdings';
+
+    return `<tr style="animation-delay:${i*40}ms">
+      <td class="etf-ticker">
+        ${r.ticker}
+        <a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a>
+      </td>
+      <td class="num">$${r.price.toFixed(2)}</td>
+      <td class="num">${perfCell(r.perf.w1, spy.w1)}</td>
+      <td class="num">${perfCell(r.perf.w4, spy.w4)}</td>
+      <td class="num">${perfCell(r.perf.m3, spy.m3)}</td>
+      <td class="num">${perfCell(r.perf.m6, spy.m6)}</td>
+      <td><div class="etf-actions" style="justify-content:center">
+        <button class="etf-btn btn-hold" data-hold="${r.ticker}">${holdLabel}</button>
+        <button class="etf-btn btn-del" data-del="${r.ticker}">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // Wire dynamic buttons
+  tbody.querySelectorAll('[data-hold]').forEach(b => b.addEventListener('click', () => openHoldingsModal(b.dataset.hold)));
+  tbody.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteETF(b.dataset.del)));
+}
+
+function deleteETF(ticker) {
+  if (!confirm(`Stop tracking ${ticker}?`)) return;
+  const list = getTrackedETFs().filter(t => t !== ticker);
+  saveTrackedETFs(list);
+  etfData = etfData.filter(r => r.ticker !== ticker);
+  renderETFs();
+}
+
+// ─── Holdings modal ─────────────────────────────────────────────────────────
+let currentModalETF = null;
+
+function openHoldingsModal(ticker) {
+  currentModalETF = ticker;
+  g('modal-etf-name').textContent = ticker;
+  g('modal-wl-name').textContent = `${ticker} Holdings`;
+  const holdings = getETFHoldings();
+  g('modal-tickers').value = (holdings[ticker] || []).join(', ');
+  g('modal-holdings').classList.add('open');
+  setTimeout(() => g('modal-tickers').focus(), 100);
+}
+
+function closeHoldingsModal() {
+  g('modal-holdings').classList.remove('open');
+  currentModalETF = null;
+}
+
+function saveHoldingsFromModal(thenLoadToScanner = false) {
+  if (!currentModalETF) return;
+  const tickers = parseTickers(g('modal-tickers').value);
+  if (!tickers.length) { alert('Enter at least one ticker'); return; }
+
+  // Save to ETF holdings map
+  const holdings = getETFHoldings();
+  holdings[currentModalETF] = tickers;
+  saveETFHoldings(holdings);
+
+  // Also save as a scanner watchlist named "{ETF} Holdings"
+  const wlName = `${currentModalETF} Holdings`;
+  const wls = getAllWatchlists();
+  wls[wlName] = tickers;
+  saveAllWatchlists(wls);
+
+  closeHoldingsModal();
+  renderETFs();
+
+  if (thenLoadToScanner) {
+    // Switch to scanner tab and populate
+    switchTab('scanner');
+    refreshWatchlistDropdown(wlName);
+    g('manual-tickers').value = tickers.join(', ');
+    activeTickers = tickers;
+    g('manual-count').textContent = tickers.length + ' tickers';
+    g('manual-count').style.color = 'var(--accent)';
+    g('tickers-preview').innerHTML = `<strong>Loaded ${currentModalETF} Holdings</strong>: ${tickers.slice(0,15).join(', ')}${tickers.length>15?` +${tickers.length-15} more`:''}`;
+    setInfo(`<b>${tickers.length}</b> tickers from <b>${wlName}</b> — press <b>Run Scan</b>`);
+  }
+}
+
+// ─── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${name}`));
+  // Auto-refresh ETFs when switching to that tab if we have tickers but no data yet
+  if (name === 'etfs' && getTrackedETFs().length && !etfData.length) {
+    refreshETFs();
+  }
+}
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => switchTab(t.dataset.tab));
+});
+
+// ETF buttons
+g('btn-add-etfs').addEventListener('click', addETFs);
+g('btn-refresh-etfs').addEventListener('click', refreshETFs);
+g('etf-input').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') addETFs();
+});
+
+// Modal buttons
+g('modal-cancel').addEventListener('click', closeHoldingsModal);
+g('modal-save-only').addEventListener('click', () => saveHoldingsFromModal(false));
+g('modal-save-scan').addEventListener('click', () => saveHoldingsFromModal(true));
+g('modal-holdings').addEventListener('click', e => {
+  if (e.target === g('modal-holdings')) closeHoldingsModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && g('modal-holdings').classList.contains('open')) closeHoldingsModal();
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// JOURNAL
+// ═════════════════════════════════════════════════════════════════════════════
+
+const JOURNAL_KEY = 'apex_journal';
+let trades = [];
+let editingTradeId = null; // id of trade we're closing
+
+const STRAT_LABELS = {
+  nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 SMA Pull',
+  flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout',
+  other:'Other'
+};
+
+function getTrades() {
+  try { return JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveTrades(list) {
+  trades = list;
+  localStorage.setItem(JOURNAL_KEY, JSON.stringify(list));
+  const count = list.length;
+  g('journal-count').textContent = count + (count === 1 ? ' trade' : ' trades');
+  g('journal-tab-count').textContent = count ? `(${count})` : '';
+}
+
+function todayISO() {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
+// ─── Entry modal ──────────────────────────────────────────────────────────
+let entryStrat = null;
+
+function openEntryModal() {
+  entryStrat = null;
+  g('entry-modal-title').textContent = 'New Trade Entry';
+  g('entry-ticker').value = '';
+  g('entry-date').value = todayISO();
+  g('entry-price').value = '';
+  g('entry-size').value = '';
+  g('entry-notes').value = '';
+  document.querySelectorAll('.strat-chip').forEach(c => c.classList.remove('active'));
+  g('modal-entry').classList.add('open');
+  setTimeout(() => g('entry-ticker').focus(), 100);
+}
+
+function closeEntryModal() {
+  g('modal-entry').classList.remove('open');
+}
+
+function saveEntry() {
+  const ticker = g('entry-ticker').value.trim().toUpperCase();
+  const date = g('entry-date').value;
+  const price = parseFloat(g('entry-price').value);
+  const size = g('entry-size').value.trim();
+  const notes = g('entry-notes').value.trim();
+
+  if (!ticker) { alert('Enter a ticker'); return; }
+  if (!date) { alert('Pick an entry date'); return; }
+  if (isNaN(price) || price <= 0) { alert('Enter a valid entry price'); return; }
+  if (!entryStrat) { alert('Pick a strategy'); return; }
+
+  const newTrade = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2,8),
+    ticker, entryDate: date, entryPrice: price, size, entryNotes: notes,
+    strategy: entryStrat,
+    exitDate: null, exitPrice: null, plPct: null, exitReason: null, exitNotes: null,
+    status: 'open',
+    createdAt: new Date().toISOString()
+  };
+
+  const list = getTrades();
+  list.push(newTrade);
+  saveTrades(list);
+  closeEntryModal();
+  renderJournal();
+}
+
+// ─── Exit modal ──────────────────────────────────────────────────────────
+let exitReason = null;
+
+function openExitModal(tradeId) {
+  const t = getTrades().find(x => x.id === tradeId);
+  if (!t) return;
+  editingTradeId = tradeId;
+  exitReason = null;
+
+  g('exit-ticker-name').textContent = t.ticker;
+  g('exit-subtitle').textContent = `Entry: ${fmtDate(t.entryDate)} @ $${t.entryPrice.toFixed(2)} · ${STRAT_LABELS[t.strategy] || t.strategy}`;
+  g('exit-date').value = todayISO();
+  g('exit-price').value = '';
+  g('exit-pl').value = '';
+  g('exit-notes').value = '';
+  document.querySelectorAll('.reason-chip').forEach(c => c.classList.remove('active'));
+  g('modal-exit').classList.add('open');
+  setTimeout(() => g('exit-price').focus(), 100);
+}
+
+function closeExitModal() {
+  g('modal-exit').classList.remove('open');
+  editingTradeId = null;
+}
+
+// Auto-calc P/L when exit price is entered
+function autoCalcPL() {
+  if (!editingTradeId) return;
+  const t = getTrades().find(x => x.id === editingTradeId);
+  if (!t) return;
+  const exitPx = parseFloat(g('exit-price').value);
+  if (isNaN(exitPx) || exitPx <= 0) return;
+  const pl = ((exitPx - t.entryPrice) / t.entryPrice) * 100;
+  g('exit-pl').value = pl.toFixed(2);
+}
+
+function saveExit() {
+  if (!editingTradeId) return;
+  const list = getTrades();
+  const idx = list.findIndex(x => x.id === editingTradeId);
+  if (idx === -1) return;
+
+  const date = g('exit-date').value;
+  const exitPriceRaw = g('exit-price').value.trim();
+  const plRaw = g('exit-pl').value.trim();
+  const notes = g('exit-notes').value.trim();
+
+  if (!date) { alert('Pick an exit date'); return; }
+  if (plRaw === '' || isNaN(parseFloat(plRaw))) { alert('Enter P/L % (or enter exit price to auto-calc)'); return; }
+  if (!exitReason) { alert('Pick an exit reason'); return; }
+
+  const pl = parseFloat(plRaw);
+  list[idx] = {
+    ...list[idx],
+    exitDate: date,
+    exitPrice: exitPriceRaw ? parseFloat(exitPriceRaw) : null,
+    plPct: pl,
+    exitReason,
+    exitNotes: notes,
+    status: pl > 0.1 ? 'win' : pl < -0.1 ? 'loss' : 'be',
+    closedAt: new Date().toISOString()
+  };
+  saveTrades(list);
+  closeExitModal();
+  renderJournal();
+}
+
+function deleteTrade(tradeId) {
+  const t = getTrades().find(x => x.id === tradeId);
+  if (!t) return;
+  if (!confirm(`Delete trade: ${t.ticker} (${fmtDate(t.entryDate)})?\nThis cannot be undone.`)) return;
+  saveTrades(getTrades().filter(x => x.id !== tradeId));
+  renderJournal();
+}
+
+// ─── Stats / Dashboard ────────────────────────────────────────────────────
+function calcStats(tradeList) {
+  const closed = tradeList.filter(t => t.status !== 'open' && t.plPct != null);
+  const wins   = closed.filter(t => t.plPct > 0.1);
+  const losses = closed.filter(t => t.plPct < -0.1);
+  const winPct = closed.length ? (wins.length / closed.length) * 100 : 0;
+  const avgWin = wins.length ? wins.reduce((a,b)=>a+b.plPct,0) / wins.length : 0;
+  const avgLoss = losses.length ? losses.reduce((a,b)=>a+b.plPct,0) / losses.length : 0;
+  const total = closed.reduce((a,b)=>a+b.plPct,0);
+  // Expectancy = (WinRate × AvgWin) + (LossRate × AvgLoss)  [avgLoss is negative]
+  const expectancy = closed.length ? ((winPct/100) * avgWin) + (((100-winPct)/100) * avgLoss) : 0;
+  return {
+    total: tradeList.length,
+    open: tradeList.filter(t => t.status === 'open').length,
+    closed: closed.length,
+    wins: wins.length,
+    losses: losses.length,
+    winPct, avgWin, avgLoss, expectancy,
+    totalPct: total,
+  };
+}
+
+function renderDashboard() {
+  const s = calcStats(trades);
+  const plColor = s.totalPct > 0 ? 'cg' : s.totalPct < 0 ? 'co' : 'cm';
+  const expColor = s.expectancy > 0 ? 'cg' : s.expectancy < 0 ? 'co' : 'cm';
+  g('jdash').innerHTML = `
+    <div class="stat-box cm"><div class="stat-n">${s.total}</div><div class="stat-lbl">Total Trades</div></div>
+    <div class="stat-box co"><div class="stat-n co">${s.open}</div><div class="stat-lbl">Open</div></div>
+    <div class="stat-box cm"><div class="stat-n">${s.closed}</div><div class="stat-lbl">Closed</div></div>
+    <div class="stat-box cg"><div class="stat-n cg">${s.wins}</div><div class="stat-lbl">Wins</div></div>
+    <div class="stat-box co"><div class="stat-n" style="color:var(--red)">${s.losses}</div><div class="stat-lbl">Losses</div></div>
+    <div class="stat-box ca"><div class="stat-n ca">${s.winPct.toFixed(1)}%</div><div class="stat-lbl">Win Rate</div></div>
+    <div class="stat-box cg"><div class="stat-n cg">${s.avgWin >= 0 ? '+' : ''}${s.avgWin.toFixed(2)}%</div><div class="stat-lbl">Avg Win</div></div>
+    <div class="stat-box cm"><div class="stat-n" style="color:var(--red)">${s.avgLoss.toFixed(2)}%</div><div class="stat-lbl">Avg Loss</div></div>
+    <div class="stat-box ${expColor}"><div class="stat-n ${expColor}">${s.expectancy >= 0 ? '+' : ''}${s.expectancy.toFixed(2)}%</div><div class="stat-lbl">Expectancy</div></div>
+    <div class="stat-box ${plColor}"><div class="stat-n ${plColor}">${s.totalPct >= 0 ? '+' : ''}${s.totalPct.toFixed(2)}%</div><div class="stat-lbl">Total P/L</div></div>
+  `;
+}
+
+function renderStrategyPerf() {
+  const byStrat = {};
+  for (const t of trades) {
+    if (t.status === 'open' || t.plPct == null) continue;
+    if (!byStrat[t.strategy]) byStrat[t.strategy] = [];
+    byStrat[t.strategy].push(t);
+  }
+
+  const rows = Object.entries(byStrat)
+    .map(([strat, list]) => ({ strat, ...calcStats(list), trades: list.length }))
+    .sort((a,b) => b.expectancy - a.expectancy);
+
+  const tbody = g('perf-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-cell" style="padding:40px 20px"><div class="es">No closed trades yet — strategy breakdown appears once you close trades</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const wrColor = r.winPct >= 60 ? 'var(--green)' : r.winPct >= 40 ? 'var(--accent)' : r.winPct >= 25 ? 'var(--orange)' : 'var(--red)';
+    const expCls = r.expectancy > 0 ? 'pl-up' : r.expectancy < 0 ? 'pl-down' : '';
+    const totCls = r.totalPct > 0 ? 'pl-up' : r.totalPct < 0 ? 'pl-down' : '';
+    const stagCls = r.strat === 'other' ? 'flat' : r.strat;
+    return `<tr>
+      <td><span class="strat-pill stag ${stagCls}">${STRAT_LABELS[r.strat] || r.strat}</span></td>
+      <td class="num">${r.closed}</td>
+      <td class="num pl-up">${r.wins}</td>
+      <td class="num pl-down">${r.losses}</td>
+      <td class="num"><div class="wr-bar-wrap"><div class="wr-bar"><div class="wr-fill" style="width:${Math.min(100,r.winPct)}%;background:${wrColor}"></div></div><span class="wr-txt">${r.winPct.toFixed(0)}%</span></div></td>
+      <td class="num pl-up">+${r.avgWin.toFixed(2)}%</td>
+      <td class="num pl-down">${r.avgLoss.toFixed(2)}%</td>
+      <td class="num ${expCls}">${r.expectancy >= 0 ? '+' : ''}${r.expectancy.toFixed(2)}%</td>
+      <td class="num ${totCls}">${r.totalPct >= 0 ? '+' : ''}${r.totalPct.toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Trade log table ──────────────────────────────────────────────────────
+function renderTradeLog() {
+  const status = g('trade-filter-status').value;
+  const strat  = g('trade-filter-strat').value;
+  const sort   = g('trade-sort').value;
+
+  let filtered = [...trades];
+  if (status !== 'all') {
+    if (status === 'open') filtered = filtered.filter(t => t.status === 'open');
+    else if (status === 'closed') filtered = filtered.filter(t => t.status !== 'open');
+    else filtered = filtered.filter(t => t.status === status);
+  }
+  if (strat !== 'all') filtered = filtered.filter(t => t.strategy === strat);
+
+  filtered.sort((a,b) => {
+    if (sort === 'date-desc') return (b.entryDate || '').localeCompare(a.entryDate || '');
+    if (sort === 'date-asc')  return (a.entryDate || '').localeCompare(b.entryDate || '');
+    if (sort === 'pl-desc')   return (b.plPct ?? -Infinity) - (a.plPct ?? -Infinity);
+    if (sort === 'pl-asc')    return (a.plPct ??  Infinity) - (b.plPct ??  Infinity);
+    return 0;
+  });
+
+  const tbody = g('trade-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = trades.length
+      ? `<tr><td colspan="10"><div class="empty-cell"><div class="ei">◌</div><div class="et">No matches</div><div class="es">Adjust filters above</div></div></td></tr>`
+      : `<tr><td colspan="10"><div class="empty-cell"><div class="ei">◷</div><div class="et">No Trades Logged</div><div class="es">Click "+ Log New Trade" above to add your first entry</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((t, i) => {
+    const plCls = t.plPct == null ? '' : t.plPct > 0 ? 'pl-up' : t.plPct < 0 ? 'pl-down' : '';
+    const plStr = t.plPct == null ? '—' : (t.plPct >= 0 ? '+' : '') + t.plPct.toFixed(2) + '%';
+    const exitPxStr = t.exitPrice != null ? '$' + t.exitPrice.toFixed(2) : '—';
+    const stagCls = t.strategy === 'other' ? 'flat' : t.strategy;
+    const statusLbl = t.status === 'open' ? 'Open' : t.status === 'win' ? 'Win' : t.status === 'loss' ? 'Loss' : 'BE';
+    const titleNotes = [t.entryNotes && `Entry: ${t.entryNotes}`, t.exitNotes && `Exit: ${t.exitNotes}`].filter(Boolean).join(' | ');
+    return `<tr style="animation-delay:${i*30}ms" ${titleNotes ? `title="${titleNotes.replace(/"/g,'&quot;')}"` : ''}>
+      <td class="td-tick">${t.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${t.ticker}" target="_blank">TV ↗</a></td>
+      <td class="trade-date">${fmtDate(t.entryDate)}</td>
+      <td class="num">$${t.entryPrice.toFixed(2)}</td>
+      <td><span class="strat-pill stag ${stagCls}">${STRAT_LABELS[t.strategy] || t.strategy}</span></td>
+      <td class="trade-date">${fmtDate(t.exitDate)}</td>
+      <td class="num">${exitPxStr}</td>
+      <td class="num ${plCls}">${plStr}</td>
+      <td style="font-size:10px;color:var(--muted)">${t.exitReason || '—'}</td>
+      <td class="ctr"><span class="trade-status ${t.status}">${statusLbl}</span></td>
+      <td class="ctr"><div class="td-act">
+        ${t.status === 'open' ? `<button class="act-btn exit" data-exit="${t.id}">Close →</button>` : ''}
+        <button class="act-btn del" data-del-trade="${t.id}">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('[data-exit]').forEach(b => b.addEventListener('click', () => openExitModal(b.dataset.exit)));
+  tbody.querySelectorAll('[data-del-trade]').forEach(b => b.addEventListener('click', () => deleteTrade(b.dataset.delTrade)));
+}
+
+function renderJournal() {
+  trades = getTrades();
+  g('journal-count').textContent = trades.length + (trades.length === 1 ? ' trade' : ' trades');
+  g('journal-tab-count').textContent = trades.length ? `(${trades.length})` : '';
+  renderDashboard();
+  renderStrategyPerf();
+  renderTradeLog();
+}
+
+// ─── Import / export ──────────────────────────────────────────────────────
+function exportJournal() {
+  const data = JSON.stringify(trades, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `apex-journal-${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJournal(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error('not an array');
+      if (!confirm(`Import ${imported.length} trades?\n\n"Replace" overwrites existing, "Cancel" aborts.\nClick OK to MERGE (add to existing).`)) {
+        // User clicked cancel — do nothing
+        return;
+      }
+      const existing = getTrades();
+      const existingIds = new Set(existing.map(t => t.id));
+      const merged = [...existing, ...imported.filter(t => !existingIds.has(t.id))];
+      saveTrades(merged);
+      renderJournal();
+      alert(`Imported ${imported.length} trades (${merged.length - existing.length} new).`);
+    } catch(e) {
+      alert('Failed to import: ' + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ─── Wire Journal events ──────────────────────────────────────────────────
+g('btn-new-trade').addEventListener('click', openEntryModal);
+g('btn-export-journal').addEventListener('click', exportJournal);
+g('btn-import-journal').addEventListener('click', () => g('journal-file').click());
+g('journal-file').addEventListener('change', e => { if (e.target.files[0]) importJournal(e.target.files[0]); });
+
+g('entry-cancel').addEventListener('click', closeEntryModal);
+g('entry-save').addEventListener('click', saveEntry);
+g('modal-entry').addEventListener('click', e => { if (e.target === g('modal-entry')) closeEntryModal(); });
+
+g('exit-cancel').addEventListener('click', closeExitModal);
+g('exit-save').addEventListener('click', saveExit);
+g('exit-price').addEventListener('input', autoCalcPL);
+g('modal-exit').addEventListener('click', e => { if (e.target === g('modal-exit')) closeExitModal(); });
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (g('modal-entry').classList.contains('open')) closeEntryModal();
+    if (g('modal-exit').classList.contains('open'))  closeExitModal();
+  }
+});
+
+// Strategy chips
+document.querySelectorAll('.strat-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.strat-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    entryStrat = chip.dataset.strat;
+  });
+});
+
+// Reason chips
+document.querySelectorAll('.reason-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.reason-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    exitReason = chip.dataset.reason;
+  });
+});
+
+// Filters
+['trade-filter-status', 'trade-filter-strat', 'trade-sort'].forEach(id => {
+  g(id).addEventListener('change', renderTradeLog);
+});
+
+// Initial render
+renderJournal();
+
+// Initial ETF render (shows empty state or loads existing)
+renderETFs();
+
+// Load saved keys and watchlists on page ready
+loadKeys();
+refreshWatchlistDropdown();
+</script>
+</body>
+</html>
