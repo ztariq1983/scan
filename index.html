@@ -732,15 +732,19 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
   <div class="results-panel">
     <div class="res-header">
       <div class="res-title">Scan Results</div>
-      <div class="sort-row">
-        <span class="sort-lbl">Sort by</span>
-        <select id="sort-sel">
-          <option value="signals-desc">Signal Count ↓</option>
-          <option value="change-desc">Change % ↓</option>
-          <option value="change-asc">Change % ↑</option>
-          <option value="vol-desc">Volume Ratio ↓</option>
-          <option value="ticker-asc">Ticker A–Z</option>
-        </select>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="sort-row">
+          <span class="sort-lbl">Sort by</span>
+          <select id="sort-sel">
+            <option value="signals-desc">Signal Count ↓</option>
+            <option value="change-desc">Change % ↓</option>
+            <option value="change-asc">Change % ↑</option>
+            <option value="vol-desc">Volume Ratio ↓</option>
+            <option value="ticker-asc">Ticker A–Z</option>
+          </select>
+        </div>
+        <button id="btn-scan-save-wl" style="display:none;background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;padding:7px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--green)';this.style.color='#000'" onmouseout="this.style.background='var(--green-dim)';this.style.color='var(--green)'">💾 Save as Watchlist</button>
+        <button id="btn-scan-to-orb" style="display:none;background:var(--accent);border:none;color:#000;font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:1.5px;padding:7px 16px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.boxShadow='0 0 16px var(--accent-glow)'" onmouseout="this.style.boxShadow='none'">→ Send to ORB</button>
       </div>
     </div>
     <div class="tbl-wrap">
@@ -2060,6 +2064,7 @@ function clearAll() {
   g('manual-tickers').value='';
   g('manual-count').textContent='0 tickers'; g('manual-count').style.color='var(--muted)';
   g('stats-strip').style.display='none'; g('btn-retry').style.display='none';
+  g('btn-scan-save-wl').style.display='none'; g('btn-scan-to-orb').style.display='none';
   g('conn-log').style.display='none'; g('ts').textContent='—';
   setInfo('Enter Alpaca keys, add tickers, then run scan.');
   renderTable();
@@ -2145,6 +2150,9 @@ function renderTable() {
   tbody.querySelectorAll('.retry-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>retrySingle(btn.dataset.ticker));
   });
+
+  // Show/hide ORB send buttons based on whether results exist
+  if (typeof updateScanActionButtons === 'function') updateScanActionButtons();
 }
 
 function updateStats() {
@@ -4416,6 +4424,61 @@ g('btn-stop-alerts').addEventListener('click', () => {
   g('alerts-prog-label').textContent = 'Scan stopped by user.';
 });
 g('alerts-sort').addEventListener('change', renderAlerts);
+
+function scanResultsSaveWL() {
+  // Grab currently visible (filtered + sorted) tickers from results
+  const tickers = getFilteredScanTickers();
+  if (!tickers.length) { alert('No results to save.'); return; }
+  const date = new Date();
+  const defaultName = `Scan ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  const name = prompt(`Save ${tickers.length} scan results as watchlist:`, defaultName);
+  if (!name || !name.trim()) return;
+  const wls = getAllWatchlists();
+  const trimmed = name.trim();
+  if (wls[trimmed] && !confirm(`"${trimmed}" already exists. Overwrite?`)) return;
+  wls[trimmed] = tickers;
+  saveAllWatchlists(wls);
+  refreshWatchlistDropdown(trimmed);
+  setInfo(`✓ Saved <b>"${trimmed}"</b> with <b>${tickers.length}</b> tickers`);
+}
+
+function scanResultsToORB() {
+  const tickers = getFilteredScanTickers();
+  if (!tickers.length) { alert('No results to send.'); return; }
+  // Auto-save as a named watchlist so ORB dropdown can find it
+  const date = new Date();
+  const autoName = `ORB Ready ${date.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  const wls = getAllWatchlists();
+  wls[autoName] = tickers;
+  saveAllWatchlists(wls);
+  // Switch to ORB tab and pre-select it
+  switchTab('orb');
+  refreshORBWatchlistDropdown();
+  setTimeout(() => {
+    const sel = g('orb-wl-select');
+    sel.value = autoName;
+    sel.style.borderColor = 'var(--green)';
+    setTimeout(() => sel.style.borderColor = '', 2000);
+  }, 120);
+}
+
+function getFilteredScanTickers() {
+  // Return tickers from the currently rendered (filtered + sorted) scan table rows
+  // excludes error rows
+  return results
+    .filter(r => !r.error && r.signals.some(s => activeStrats.has(s)))
+    .map(r => r.ticker);
+}
+
+// Show/hide scan action buttons based on whether there are results
+function updateScanActionButtons() {
+  const hasResults = results.filter(r => !r.error && r.signals.some(s => activeStrats.has(s))).length > 0;
+  g('btn-scan-save-wl').style.display = hasResults ? 'inline-block' : 'none';
+  g('btn-scan-to-orb').style.display  = hasResults ? 'inline-block' : 'none';
+}
+
+g('btn-scan-save-wl').addEventListener('click', scanResultsSaveWL);
+g('btn-scan-to-orb').addEventListener('click',  scanResultsToORB);
 
 // ─── Wire Smart Money events ───────────────────────────────────────────────
 g('btn-fetch-insider').addEventListener('click', fetchInsider);
