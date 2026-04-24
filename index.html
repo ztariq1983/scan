@@ -508,7 +508,12 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <div class="brand-sub">Scanner · ETFs · Journal</div>
     </div>
     <div class="header-meta">
-      <div class="live-ind"><div class="live-dot"></div>Live</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="btn-backup" title="Download all your data as JSON file" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">⬇ Backup</button>
+        <button id="btn-restore" title="Restore data from backup JSON file" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted)'">⬆ Restore</button>
+        <input type="file" id="backup-file" accept=".json" style="display:none">
+        <div class="live-ind" style="margin-left:6px"><div class="live-dot"></div>Live</div>
+      </div>
       <div class="ts" id="ts">—</div>
     </div>
   </header>
@@ -4134,6 +4139,201 @@ document.body.addEventListener('click', e => {
 const styleHint = document.createElement('style');
 styleHint.textContent = `.td-tick:not(#modal-detail .td-tick){cursor:pointer;transition:color .15s} .td-tick:not(#modal-detail .td-tick):hover{color:var(--accent)}`;
 document.head.appendChild(styleHint);
+
+// ═════════════════════════════════════════════════════════════════════════════
+// BACKUP / RESTORE — full data export + import
+// ═════════════════════════════════════════════════════════════════════════════
+
+// Keys we back up. Note: we exclude API keys by default to avoid accidentally
+// sharing them when emailing/AirDropping a backup file. User can opt in.
+const BACKUP_KEYS_DATA = [
+  'apex_watchlists',     // saved watchlists
+  'apex_etfs',           // tracked ETFs
+  'apex_etf_holdings',   // ETF holdings map
+  'apex_journal',        // trade journal entries
+];
+const BACKUP_KEYS_SECRETS = [
+  'alpaca_key', 'alpaca_secret', 'apex_finnhub_key',
+];
+
+function buildBackup(includeKeys = false) {
+  const data = {
+    _format: 'apex-scanner-backup',
+    _version: 1,
+    _exportedAt: new Date().toISOString(),
+    _includesKeys: includeKeys,
+    data: {},
+  };
+  for (const k of BACKUP_KEYS_DATA) {
+    const v = localStorage.getItem(k);
+    if (v != null) data.data[k] = v;
+  }
+  if (includeKeys) {
+    for (const k of BACKUP_KEYS_SECRETS) {
+      const v = localStorage.getItem(k);
+      if (v != null) data.data[k] = v;
+    }
+  }
+  return data;
+}
+
+function exportBackup() {
+  // Ask user whether to include API keys
+  const includeKeys = confirm(
+    'Include your API keys in the backup?\n\n' +
+    '✓ OK = Include keys (convenient — no need to re-enter on other devices, but file is sensitive)\n' +
+    '✗ Cancel = Exclude keys (safer — you re-enter keys after restoring)\n\n' +
+    'Either way: watchlists, ETFs, holdings, journal trades, all included.'
+  );
+
+  const backup = buildBackup(includeKeys);
+  const counts = {
+    watchlists:  Object.keys(JSON.parse(backup.data.apex_watchlists || '{}')).length,
+    etfs:        JSON.parse(backup.data.apex_etfs || '[]').length,
+    holdings:    Object.keys(JSON.parse(backup.data.apex_etf_holdings || '{}')).length,
+    trades:      JSON.parse(backup.data.apex_journal || '[]').length,
+  };
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `apex-backup-${today}${includeKeys ? '-with-keys' : ''}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Brief confirmation
+  alert(
+    `✓ Backup downloaded!\n\n` +
+    `📋 ${counts.watchlists} watchlists\n` +
+    `📊 ${counts.etfs} tracked ETFs\n` +
+    `🎯 ${counts.holdings} ETF holdings lists\n` +
+    `📔 ${counts.trades} journal trades\n` +
+    `🔑 API keys: ${includeKeys ? 'INCLUDED ⚠' : 'excluded'}\n\n` +
+    `Save this file to Dropbox / iCloud / Google Drive to access from other devices.`
+  );
+}
+
+function restoreBackup(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const backup = JSON.parse(ev.target.result);
+
+      // Validate
+      if (backup._format !== 'apex-scanner-backup') {
+        throw new Error('Not an APEX backup file');
+      }
+      if (!backup.data || typeof backup.data !== 'object') {
+        throw new Error('Invalid backup structure');
+      }
+
+      // Build summary for confirmation
+      const summary = [];
+      let wlNew = 0, wlExisting = 0;
+      if (backup.data.apex_watchlists) {
+        const incoming = JSON.parse(backup.data.apex_watchlists);
+        const existing = getAllWatchlists();
+        for (const name of Object.keys(incoming)) {
+          if (existing[name]) wlExisting++;
+          else wlNew++;
+        }
+        summary.push(`📋 Watchlists: ${Object.keys(incoming).length} (${wlNew} new, ${wlExisting} would overwrite existing)`);
+      }
+      if (backup.data.apex_etfs) {
+        const incoming = JSON.parse(backup.data.apex_etfs);
+        summary.push(`📊 Tracked ETFs: ${incoming.length}`);
+      }
+      if (backup.data.apex_etf_holdings) {
+        const incoming = JSON.parse(backup.data.apex_etf_holdings);
+        summary.push(`🎯 ETF holdings: ${Object.keys(incoming).length} ETFs`);
+      }
+      if (backup.data.apex_journal) {
+        const incoming = JSON.parse(backup.data.apex_journal);
+        summary.push(`📔 Journal trades: ${incoming.length}`);
+      }
+      if (backup._includesKeys) {
+        summary.push(`🔑 API keys: included`);
+      }
+
+      const exportedAt = backup._exportedAt
+        ? new Date(backup._exportedAt).toLocaleString()
+        : 'unknown date';
+
+      const choice = prompt(
+        `Backup file from ${exportedAt}\n\n` +
+        summary.join('\n') + '\n\n' +
+        `Type one of:\n` +
+        `  MERGE   — keep your current data, add new items only\n` +
+        `  REPLACE — wipe current data and restore from backup\n` +
+        `  CANCEL  — abort\n\n` +
+        `(case-insensitive)`,
+        'MERGE'
+      );
+
+      if (!choice) return;
+      const mode = choice.trim().toUpperCase();
+      if (mode === 'CANCEL' || (mode !== 'MERGE' && mode !== 'REPLACE')) {
+        if (mode !== 'CANCEL') alert('Restore cancelled — please type MERGE, REPLACE, or CANCEL.');
+        return;
+      }
+
+      // Apply each backed-up key
+      for (const key of [...BACKUP_KEYS_DATA, ...BACKUP_KEYS_SECRETS]) {
+        if (backup.data[key] == null) continue;
+
+        if (mode === 'REPLACE') {
+          localStorage.setItem(key, backup.data[key]);
+          continue;
+        }
+
+        // MERGE mode — combine intelligently per data type
+        if (key === 'apex_watchlists' || key === 'apex_etf_holdings') {
+          const incoming = JSON.parse(backup.data[key]);
+          const existing = JSON.parse(localStorage.getItem(key) || '{}');
+          // Incoming takes precedence on conflict
+          const merged = { ...existing, ...incoming };
+          localStorage.setItem(key, JSON.stringify(merged));
+        } else if (key === 'apex_etfs') {
+          const incoming = JSON.parse(backup.data[key]);
+          const existing = JSON.parse(localStorage.getItem(key) || '[]');
+          const merged = [...new Set([...existing, ...incoming])];
+          localStorage.setItem(key, JSON.stringify(merged));
+        } else if (key === 'apex_journal') {
+          const incoming = JSON.parse(backup.data[key]);
+          const existing = JSON.parse(localStorage.getItem(key) || '[]');
+          const existingIds = new Set(existing.map(t => t.id));
+          const newOnes = incoming.filter(t => !existingIds.has(t.id));
+          localStorage.setItem(key, JSON.stringify([...existing, ...newOnes]));
+        } else {
+          // API keys: only set if not already present (don't overwrite existing keys in merge)
+          if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, backup.data[key]);
+          }
+        }
+      }
+
+      alert(`✓ Restore complete (${mode} mode)\n\nReloading the app to apply changes...`);
+      // Reload to refresh all UI from the new localStorage state
+      window.location.reload();
+
+    } catch(e) {
+      alert(`✗ Restore failed: ${e.message}`);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Wire backup/restore
+g('btn-backup').addEventListener('click', exportBackup);
+g('btn-restore').addEventListener('click', () => g('backup-file').click());
+g('backup-file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) restoreBackup(f);
+  // Reset so the same file can be selected again later
+  e.target.value = '';
+});
 
 // Load saved keys and watchlists on page ready
 loadKeys();
