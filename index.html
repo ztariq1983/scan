@@ -3409,6 +3409,29 @@ function renderCongress(data) {
 }
 
 // ─── 13F (SEC EDGAR) ────────────────────────────────────────────────────────
+// Helper: SEC requires User-Agent identification. Browser fetch can't set User-Agent
+// directly, but going through public CORS proxies works. Try several in order.
+async function secFetch(url) {
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+  let lastErr = '';
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) { lastErr = `HTTP ${r.status} via ${proxy.name||'proxy'}`; continue; }
+      const text = await r.text();
+      if (!text || text.length < 20) { lastErr = 'empty response'; continue; }
+      return text;
+    } catch(e) {
+      lastErr = e.message;
+    }
+  }
+  throw new Error(`SEC fetch failed: ${lastErr}`);
+}
+
 async function fetch13F() {
   const input = g('thirteenf-input').value.trim();
   if (!input) {
@@ -3416,7 +3439,7 @@ async function fetch13F() {
     return;
   }
 
-  const cik = input.replace(/^0+/, ''); // strip leading zeros
+  const cik = input.replace(/^0+/, '');
   if (!/^\d+$/.test(cik)) {
     g('thirteenf-status').innerHTML = '<span style="color:var(--red)">⚠ CIK must be numeric (e.g. 1067983 for Berkshire)</span>';
     return;
@@ -3424,17 +3447,16 @@ async function fetch13F() {
 
   const btn = g('btn-fetch-13f');
   btn.disabled = true; btn.textContent = '⟳ Loading...';
-  g('thirteenf-status').textContent = 'Fetching latest 13F-HR filing from SEC EDGAR…';
-  g('thirteenf-tbody').innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--muted)">Loading…</td></tr>`;
+  g('thirteenf-status').textContent = 'Fetching latest 13F-HR filing from SEC EDGAR (via proxy)…';
+  g('thirteenf-tbody').innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--muted)">Loading… (SEC requires proxy from browsers, can take 5–10s)</td></tr>`;
 
   try {
-    // Step 1: Find latest 13F-HR filing from SEC submissions API
+    // Step 1: Get list of filings
     const cikPadded = cik.padStart(10, '0');
-    const subResp = await fetch(`https://data.sec.gov/submissions/CIK${cikPadded}.json`, {
-      headers: { 'Accept': 'application/json' }
-    });
-    if (!subResp.ok) throw new Error(`SEC API: HTTP ${subResp.status} (CIK may be invalid)`);
-    const subData = await subResp.json();
+    const subText = await secFetch(`https://data.sec.gov/submissions/CIK${cikPadded}.json`);
+    let subData;
+    try { subData = JSON.parse(subText); }
+    catch { throw new Error('SEC returned non-JSON (CIK may be invalid)'); }
 
     const recent = subData.filings?.recent;
     if (!recent) throw new Error('No filings found for this CIK');
@@ -3450,30 +3472,30 @@ async function fetch13F() {
     const filingDate = recent.filingDate[filingIdx];
     const filingHref = `https://www.sec.gov/Archives/edgar/data/${cik}/${accession}/`;
 
-    // Step 2: Get filing index to find the holdings .xml file
-    const idxResp = await fetch(`${filingHref}index.json`);
-    if (!idxResp.ok) throw new Error('Filing index fetch failed');
-    const idx = await idxResp.json();
+    g('thirteenf-status').textContent = `Loading filing from ${fmtSmDate(filingDate)}…`;
 
-    // Look for the informationtable.xml or similar
+    // Step 2: Get index of files in this filing
+    const idxText = await secFetch(`${filingHref}index.json`);
+    let idx;
+    try { idx = JSON.parse(idxText); }
+    catch { throw new Error('Filing index returned non-JSON'); }
+
     const items = idx.directory?.item || [];
-    const xmlFile = items.find(f =>
-      f.name.toLowerCase().includes('infotable') ||
-      f.name.toLowerCase().includes('informationtable') ||
-      (f.name.endsWith('.xml') && !f.name.includes('primary'))
-    );
-    if (!xmlFile) throw new Error('Could not locate holdings XML in filing');
+    // Find the holdings table XML — try several name patterns
+    let xmlFile = items.find(f => /infotable.*\.xml$/i.test(f.name))
+              || items.find(f => /informationtable.*\.xml$/i.test(f.name))
+              || items.find(f => f.name.toLowerCase().endsWith('.xml') && !/primary/i.test(f.name) && !/header/i.test(f.name));
 
-    const xmlResp = await fetch(`${filingHref}${xmlFile.name}`);
-    if (!xmlResp.ok) throw new Error('Holdings XML fetch failed');
-    const xmlText = await xmlResp.text();
+    if (!xmlFile) throw new Error('Could not locate holdings XML in this filing');
 
-    // Step 3: Parse holdings
+    g('thirteenf-status').textContent = `Parsing holdings…`;
+    const xmlText = await secFetch(`${filingHref}${xmlFile.name}`);
+
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlText, 'application/xml');
     const infoTables = doc.getElementsByTagNameNS('*', 'infoTable');
 
-    if (!infoTables.length) throw new Error('No holdings found in XML');
+    if (!infoTables.length) throw new Error('No <infoTable> elements found in holdings XML');
 
     const holdings = [];
     let totalValue = 0;
@@ -3485,14 +3507,13 @@ async function fetch13F() {
       };
       const name = get('nameOfIssuer');
       const cusip = get('cusip');
-      const value = parseFloat(get('value')) * 1000; // SEC reports in $1000s post-2022
+      const value = parseFloat(get('value')) * 1000; // SEC reports in $1000s
       const shares = parseFloat(t.getElementsByTagNameNS('*', 'sshPrnamt')[0]?.textContent || '0');
       const cls = get('titleOfClass');
       holdings.push({ name, cusip, value, shares, cls });
       totalValue += value;
     }
 
-    // Sort by value descending
     holdings.sort((a,b) => b.value - a.value);
 
     const subtitle = subData.name || `CIK ${cik}`;
