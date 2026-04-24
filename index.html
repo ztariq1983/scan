@@ -239,6 +239,73 @@ table.orb-tbl tbody tr.flash{animation:flashRow 1.2s ease}
 .btn-save-shortlist{background:var(--green-dim);color:var(--green);border:1px solid var(--green);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 16px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
 .btn-save-shortlist:hover{background:var(--green);color:#000}
 
+/* ─── Stock Detail Modal ──────────────────────────────────────────── */
+.modal-detail{background:var(--surface);border:1px solid var(--border);max-width:1200px;width:100%;max-height:92vh;overflow-y:auto;position:relative}
+.modal-detail::before{content:'';position:absolute;top:0;left:0;width:100px;height:3px;background:linear-gradient(90deg,var(--purple),var(--accent),var(--green))}
+.detail-header{padding:20px 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.detail-ticker{display:flex;align-items:baseline;gap:14px}
+.detail-ticker-name{font-family:var(--font-display);font-size:32px;font-weight:800;color:#fff;letter-spacing:1px;line-height:1}
+.detail-price{font-family:var(--font-mono);font-size:18px;color:var(--text);font-weight:500}
+.detail-change{font-size:13px;font-weight:500}
+.detail-change.up{color:var(--green)} .detail-change.down{color:var(--red)}
+.detail-meta{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.detail-tv-link{font-size:10px;color:var(--cyan);text-decoration:none;letter-spacing:1.5px;border:1px solid var(--cyan);padding:6px 12px;text-transform:uppercase;transition:all .15s}
+.detail-tv-link:hover{background:var(--cyan);color:#000}
+.detail-close{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:14px;width:36px;height:36px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.detail-close:hover{border-color:var(--red);color:var(--red)}
+
+/* Detail body grid */
+.detail-body{padding:24px 28px}
+.detail-section{margin-bottom:28px}
+.detail-section:last-child{margin-bottom:0}
+.detail-section-title{font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.detail-section-title .src-badge{font-size:8px;color:var(--muted);font-weight:400;letter-spacing:1px}
+
+/* TV chart */
+.tv-chart-wrap{height:480px;background:var(--bg);border:1px solid var(--border2);position:relative;overflow:hidden}
+#tradingview-widget{width:100%;height:100%}
+
+/* Strategy match cards */
+.strat-match-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.strat-match-card{padding:12px 14px;background:var(--bg);border:1px solid var(--border2);position:relative}
+.strat-match-card.matched{border-color:var(--green);background:linear-gradient(135deg,rgba(61,255,160,.05),transparent)}
+.strat-match-card.matched::before{content:'✓';position:absolute;top:8px;right:10px;color:var(--green);font-size:14px;font-weight:700}
+.strat-match-card.no-match{opacity:.4}
+.strat-match-name{font-family:var(--font-display);font-size:11px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+.strat-match-card.matched .strat-match-name{color:var(--green)}
+.strat-match-detail{font-size:10px;color:var(--muted);line-height:1.5}
+
+/* 2-column row for institutional + insider */
+.detail-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.detail-2col{grid-template-columns:1fr}}
+
+/* Mini stat tiles */
+.detail-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:16px}
+.detail-tile{padding:12px 14px;background:var(--bg);border:1px solid var(--border2)}
+.detail-tile-lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.detail-tile-val{font-family:var(--font-display);font-size:18px;font-weight:700;color:#fff}
+.detail-tile-val.green{color:var(--green)} .detail-tile-val.red{color:var(--red)} .detail-tile-val.amber{color:var(--orange)}
+.detail-tile-sub{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* Mini tables in detail modal */
+.mini-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.mini-tbl thead tr{border-bottom:1px solid var(--border2)}
+.mini-tbl th{padding:8px 10px;text-align:left;font-size:8px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:400;white-space:nowrap}
+.mini-tbl th.num{text-align:right}
+.mini-tbl td{padding:8px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mini-tbl td.num{text-align:right}
+.mini-tbl tbody tr{border-bottom:1px solid var(--border)}
+.mini-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+
+/* Loading skeleton */
+.detail-loading{padding:40px 20px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:1px}
+.detail-loading::after{content:'';display:inline-block;width:14px;animation:dots 1.2s steps(4,end) infinite}
+@keyframes dots{0%,20%{content:''}40%{content:'.'}60%{content:'..'}80%,100%{content:'...'}}
+
+/* Clickable ticker style */
+.ticker-clickable{cursor:pointer;transition:color .15s}
+.ticker-clickable:hover{color:var(--accent)}
+
 /* ─── Smart Money ─────────────────────────────────────────────────── */
 .sm-subtabs{display:flex;gap:8px;margin-bottom:18px}
 .sm-subtab{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;padding:10px 18px;cursor:pointer;text-transform:uppercase;transition:all .15s}
@@ -1247,6 +1314,101 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <button class="btn btn-ghost" id="exit-cancel">Cancel</button>
       <button class="btn btn-green" id="exit-save">Close Trade</button>
     </div>
+  </div>
+</div>
+
+<!-- Stock Detail modal -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal-detail">
+    <div class="detail-header">
+      <div class="detail-ticker">
+        <div class="detail-ticker-name" id="detail-ticker-name">—</div>
+        <div class="detail-price" id="detail-price">—</div>
+        <div class="detail-change" id="detail-change">—</div>
+      </div>
+      <div class="detail-meta">
+        <a class="detail-tv-link" id="detail-tv-link" href="#" target="_blank">View on TradingView ↗</a>
+        <button class="detail-close" id="detail-close" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <!-- Chart -->
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <span>📈 Live Chart</span>
+          <span class="src-badge">via TradingView</span>
+        </div>
+        <div class="tv-chart-wrap">
+          <div id="tradingview-widget"></div>
+        </div>
+      </div>
+
+      <!-- Strategy matches -->
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <span>🎯 Strategy Matches</span>
+          <span class="src-badge" id="detail-strat-summary">—</span>
+        </div>
+        <div class="strat-match-grid" id="detail-strat-grid">
+          <div class="detail-loading">Analyzing strategies</div>
+        </div>
+      </div>
+
+      <!-- Two columns: Insider | Institutional -->
+      <div class="detail-2col">
+        <!-- Insider section -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <span>📋 Insider Activity (90d)</span>
+            <span class="src-badge">via Finnhub</span>
+          </div>
+          <div class="detail-tiles" id="detail-insider-tiles"></div>
+          <div style="overflow-x:auto">
+            <table class="mini-tbl" id="detail-insider-tbl">
+              <thead><tr>
+                <th>Date</th><th>Name</th><th class="num">Shares</th><th class="num">Value</th>
+              </tr></thead>
+              <tbody><tr><td colspan="4"><div class="detail-loading">Loading insider data</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Institutional section -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <span>🏦 Institutional Holders</span>
+            <span class="src-badge">via Finnhub</span>
+          </div>
+          <div class="detail-tiles" id="detail-instit-tiles"></div>
+          <div style="overflow-x:auto">
+            <table class="mini-tbl" id="detail-instit-tbl">
+              <thead><tr>
+                <th>Fund</th><th class="num">Shares</th><th class="num">% Held</th><th class="num">Δ Quarter</th>
+              </tr></thead>
+              <tbody><tr><td colspan="4"><div class="detail-loading">Loading institutional data</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Congressional section -->
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <span>🏛 Congressional Trades (1y)</span>
+          <span class="src-badge">via Stock Watcher</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="mini-tbl" id="detail-congress-tbl">
+            <thead><tr>
+              <th>Date</th><th>Politician</th><th>Type</th><th class="num">Amount</th><th>Disclosed</th>
+            </tr></thead>
+            <tbody><tr><td colspan="5"><div class="detail-loading">Loading congressional data</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /detail-body -->
   </div>
 </div>
 
@@ -3570,6 +3732,360 @@ document.querySelectorAll('.fund-chip').forEach(chip => {
     fetch13F();
   });
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// STOCK DETAIL MODAL — chart, strategies, insider, institutional, congress
+// ═════════════════════════════════════════════════════════════════════════════
+
+let currentDetailTicker = null;
+let tvScriptLoaded = false;
+
+const STRAT_NAMES = {
+  nr4:'NR4', nr7:'NR7', macross:'MA Cross 20/50', pull50:'50 SMA Pullback',
+  flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout'
+};
+
+function openDetailModal(ticker) {
+  if (!ticker) return;
+  currentDetailTicker = ticker.toUpperCase();
+  g('detail-ticker-name').textContent = currentDetailTicker;
+  g('detail-tv-link').href = `https://www.tradingview.com/chart/?symbol=${currentDetailTicker}`;
+  g('detail-price').textContent = '—';
+  g('detail-change').textContent = '';
+  g('detail-change').className = 'detail-change';
+  g('detail-strat-summary').textContent = 'analyzing…';
+  g('detail-strat-grid').innerHTML = '<div class="detail-loading">Analyzing strategies</div>';
+  g('detail-insider-tiles').innerHTML = '';
+  g('detail-insider-tbl').querySelector('tbody').innerHTML = '<tr><td colspan="4"><div class="detail-loading">Loading insider data</div></td></tr>';
+  g('detail-instit-tiles').innerHTML = '';
+  g('detail-instit-tbl').querySelector('tbody').innerHTML = '<tr><td colspan="4"><div class="detail-loading">Loading institutional data</div></td></tr>';
+  g('detail-congress-tbl').querySelector('tbody').innerHTML = '<tr><td colspan="5"><div class="detail-loading">Loading congressional data</div></td></tr>';
+
+  g('modal-detail').classList.add('open');
+
+  // Load TradingView widget
+  loadTradingViewChart(currentDetailTicker);
+
+  // Fire all data fetches in parallel
+  loadDetailStrategies(currentDetailTicker);
+  loadDetailInsider(currentDetailTicker);
+  loadDetailInstitutional(currentDetailTicker);
+  loadDetailCongress(currentDetailTicker);
+}
+
+function closeDetailModal() {
+  g('modal-detail').classList.remove('open');
+  // Clear the chart container so it reloads fresh next time
+  g('tradingview-widget').innerHTML = '';
+  currentDetailTicker = null;
+}
+
+// ─── TradingView chart embed ────────────────────────────────────────────────
+function loadTradingViewChart(ticker) {
+  const container = g('tradingview-widget');
+  container.innerHTML = '';
+
+  const widgetDiv = document.createElement('div');
+  widgetDiv.className = 'tradingview-widget-container';
+  widgetDiv.style.height = '100%';
+  widgetDiv.style.width = '100%';
+
+  const innerDiv = document.createElement('div');
+  innerDiv.className = 'tradingview-widget-container__widget';
+  innerDiv.style.height = '100%';
+  innerDiv.style.width = '100%';
+  widgetDiv.appendChild(innerDiv);
+
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  script.async = true;
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: `NASDAQ:${ticker}`,  // Will fallback to other exchanges automatically
+    interval: 'D',
+    timezone: 'America/New_York',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    toolbar_bg: '#0f0f17',
+    enable_publishing: false,
+    hide_legend: false,
+    allow_symbol_change: true,
+    studies: ['MASimple@tv-basicstudies', 'MAExp@tv-basicstudies'],
+    container_id: 'tradingview-widget'
+  });
+  widgetDiv.appendChild(script);
+  container.appendChild(widgetDiv);
+}
+
+// ─── Strategy analysis (uses existing analyzeStock from scanner) ────────────
+async function loadDetailStrategies(ticker) {
+  try {
+    const data = await fetchDaily(ticker);
+    const result = analyzeStock(ticker, data);
+
+    // Update price display in header
+    g('detail-price').textContent = `$${result.price.toFixed(2)}`;
+    const chCls = result.changePct >= 0 ? 'up' : 'down';
+    const chStr = (result.changePct >= 0 ? '+' : '') + result.changePct.toFixed(2) + '%';
+    g('detail-change').textContent = chStr;
+    g('detail-change').className = `detail-change ${chCls}`;
+
+    // Render strategy match grid
+    const matched = new Set(result.signals);
+    const detailMap = {};
+    result.details.forEach((det, i) => {
+      const sig = result.signals[i];
+      detailMap[sig] = det;
+    });
+
+    const matchCount = matched.size;
+    g('detail-strat-summary').textContent = matchCount
+      ? `${matchCount} of 8 strategies match`
+      : 'No strategy matches today';
+    g('detail-strat-summary').style.color = matchCount >= 2 ? 'var(--green)' : matchCount >= 1 ? 'var(--accent)' : 'var(--muted)';
+
+    g('detail-strat-grid').innerHTML = Object.entries(STRAT_NAMES).map(([key, name]) => {
+      const isMatch = matched.has(key);
+      const detail = detailMap[key] || (isMatch ? 'Matched today' : 'No signal');
+      const cls = isMatch ? 'matched' : 'no-match';
+      return `<div class="strat-match-card ${cls}">
+        <div class="strat-match-name">${name}</div>
+        <div class="strat-match-detail">${detail}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    g('detail-strat-grid').innerHTML = `<div style="color:var(--red);font-size:11px;padding:14px">⚠ Could not load strategy analysis: ${e.message}</div>`;
+    g('detail-strat-summary').textContent = 'error';
+  }
+}
+
+// ─── Insider data (Finnhub) ─────────────────────────────────────────────────
+async function loadDetailInsider(ticker) {
+  const key = getFinnhubKey();
+  if (!key) {
+    g('detail-insider-tbl').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="color:var(--orange);font-size:10px;padding:14px">⚠ Finnhub key not set — see ORB Live tab</td></tr>';
+    return;
+  }
+  try {
+    const end = new Date();
+    const start = new Date(); start.setMonth(start.getMonth() - 3);
+    const fmt = d => d.toISOString().split('T')[0];
+    const r = await fetch(`https://finnhub.io/api/v1/stock/insider-transactions?symbol=${ticker}&from=${fmt(start)}&to=${fmt(end)}&token=${encodeURIComponent(key)}`);
+    const j = await r.json();
+    if (!r.ok || j?.error) throw new Error(j?.error || `HTTP ${r.status}`);
+
+    const data = (j.data || []).sort((a,b) => (b.transactionDate||'').localeCompare(a.transactionDate||''));
+
+    // Tiles
+    const buys = data.filter(d => d.change > 0);
+    const sells = data.filter(d => d.change < 0);
+    const buyValue = buys.reduce((s,d) => s + ((d.share || Math.abs(d.change||0)) * (d.transactionPrice || 0)), 0);
+    const sellValue = sells.reduce((s,d) => s + ((d.share || Math.abs(d.change||0)) * (d.transactionPrice || 0)), 0);
+    const netCls = buyValue >= sellValue ? 'green' : 'red';
+
+    g('detail-insider-tiles').innerHTML = `
+      <div class="detail-tile"><div class="detail-tile-lbl">Total Filings</div><div class="detail-tile-val">${data.length}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Buys</div><div class="detail-tile-val green">${buys.length}</div><div class="detail-tile-sub">${fmtMoney(buyValue)}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Sells</div><div class="detail-tile-val red">${sells.length}</div><div class="detail-tile-sub">${fmtMoney(sellValue)}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Net Sentiment</div><div class="detail-tile-val ${netCls}">${buyValue >= sellValue ? '↑ Buying' : '↓ Selling'}</div></div>
+    `;
+
+    const tbody = g('detail-insider-tbl').querySelector('tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No insider activity in last 90 days</td></tr>';
+      return;
+    }
+
+    // Show top 10 by absolute value
+    const top = data.slice(0, 10);
+    tbody.innerHTML = top.map(d => {
+      const isBuy = d.change > 0;
+      const shares = d.share != null ? d.share : Math.abs(d.change || 0);
+      const value = shares * (d.transactionPrice || 0);
+      return `<tr>
+        <td>${fmtSmDate(d.transactionDate)}</td>
+        <td class="sm-name" style="font-size:10px">${d.name || '—'}<br><span class="sm-role" style="margin:0">${d.position || ''}</span></td>
+        <td class="num" style="color:${isBuy?'var(--green)':'var(--red)'}">${isBuy?'+':'-'}${fmtNum(shares)}</td>
+        <td class="num">${fmtMoney(value)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    g('detail-insider-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ ${e.message}</td></tr>`;
+  }
+}
+
+// ─── Institutional ownership (Finnhub) ──────────────────────────────────────
+async function loadDetailInstitutional(ticker) {
+  const key = getFinnhubKey();
+  if (!key) {
+    g('detail-instit-tbl').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="color:var(--orange);font-size:10px;padding:14px">⚠ Finnhub key not set — see ORB Live tab</td></tr>';
+    return;
+  }
+  try {
+    // Finnhub fund ownership endpoint
+    const r = await fetch(`https://finnhub.io/api/v1/stock/fund-ownership?symbol=${ticker}&limit=20&token=${encodeURIComponent(key)}`);
+    const j = await r.json();
+    if (!r.ok || j?.error) throw new Error(j?.error || `HTTP ${r.status}`);
+
+    const owners = j.ownership || [];
+
+    // Sort by share count
+    owners.sort((a,b) => (b.share || 0) - (a.share || 0));
+
+    // Tiles: total holders count, total % held, biggest holder, recent buyers
+    const totalShares = owners.reduce((s,o) => s + (o.share || 0), 0);
+    const buyers = owners.filter(o => o.change > 0).length;
+    const sellers = owners.filter(o => o.change < 0).length;
+    const newPositions = owners.filter(o => o.change && o.share && Math.abs(o.change) >= o.share * 0.99).length;
+
+    g('detail-instit-tiles').innerHTML = `
+      <div class="detail-tile"><div class="detail-tile-lbl">Funds Holding</div><div class="detail-tile-val">${owners.length}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Increased</div><div class="detail-tile-val green">${buyers}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Decreased</div><div class="detail-tile-val red">${sellers}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">New Positions</div><div class="detail-tile-val amber">${newPositions}</div></div>
+    `;
+
+    const tbody = g('detail-instit-tbl').querySelector('tbody');
+    if (!owners.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No institutional ownership data available</td></tr>';
+      return;
+    }
+
+    // Top 5 holders
+    const top5 = owners.slice(0, 5);
+    tbody.innerHTML = top5.map(o => {
+      const change = o.change || 0;
+      const changeCls = change > 0 ? 'green' : change < 0 ? 'red' : 'muted';
+      const changeStr = change > 0 ? `+${fmtNum(change)}` : change < 0 ? `${fmtNum(change)}` : '0';
+      const pctHeld = o.portfolioPercent ? o.portfolioPercent.toFixed(2) + '%' : '—';
+      return `<tr>
+        <td class="sm-name" style="font-size:11px;white-space:normal;max-width:200px;line-height:1.4">${o.name || '—'}</td>
+        <td class="num">${fmtNum(o.share || 0)}</td>
+        <td class="num">${pctHeld}</td>
+        <td class="num" style="color:var(--${changeCls})">${changeStr}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    g('detail-instit-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ ${e.message}<br><span style="color:var(--muted)">(this endpoint may require Finnhub paid tier)</span></td></tr>`;
+  }
+}
+
+// ─── Congressional (cached from earlier fetch if available, else fetch fresh) ───
+let _congressCache = null;
+let _congressCacheTime = 0;
+
+async function loadDetailCongress(ticker) {
+  try {
+    // Use cache if < 30 min old
+    if (!_congressCache || (Date.now() - _congressCacheTime) > 30 * 60 * 1000) {
+      const all = [];
+      try {
+        const r1 = await fetch('https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json');
+        if (r1.ok) {
+          const data = await r1.json();
+          for (const d of data) {
+            all.push({
+              date: d.transaction_date, name: d.representative, ticker: d.ticker,
+              type: d.type, amount: d.amount, disclosed: d.disclosure_date, chamber: 'House'
+            });
+          }
+        }
+      } catch(e) {}
+      try {
+        const r2 = await fetch('https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json');
+        if (r2.ok) {
+          const data = await r2.json();
+          for (const d of data) {
+            all.push({
+              date: d.transaction_date,
+              name: (d.first_name && d.last_name) ? `${d.first_name} ${d.last_name}` : (d.senator || '—'),
+              ticker: d.ticker, type: d.type, amount: d.amount, disclosed: d.disclosure_date,
+              chamber: 'Senate', party: d.party
+            });
+          }
+        }
+      } catch(e) {}
+      _congressCache = all;
+      _congressCacheTime = Date.now();
+    }
+
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+    const filtered = _congressCache.filter(t => {
+      if (!t.date || !t.ticker) return false;
+      if (t.ticker.toUpperCase() !== ticker.toUpperCase()) return false;
+      const d = new Date(t.date);
+      return !isNaN(d.getTime()) && d >= cutoff;
+    });
+    filtered.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+
+    const tbody = g('detail-congress-tbl').querySelector('tbody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No congressional trades for ${ticker} in last year</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.slice(0, 15).map(d => {
+      const t = (d.type || '').toLowerCase();
+      const isBuy = t.includes('purchase') || t.includes('buy');
+      const isSell = t.includes('sale') || t.includes('sell');
+      const txCls = isBuy ? 'tx-buy' : isSell ? 'tx-sell' : 'tx-other';
+      const txLbl = isBuy ? '↑ Buy' : isSell ? '↓ Sell' : (d.type || '—');
+      return `<tr>
+        <td>${fmtSmDate(d.date)}</td>
+        <td class="sm-name" style="font-size:11px">${d.name || '—'} <span class="sm-role">${d.chamber}</span></td>
+        <td><span class="${txCls}">${txLbl}</span></td>
+        <td class="num">${d.amount || '—'}</td>
+        <td style="font-size:10px;color:var(--muted)">${fmtSmDate(d.disclosed)}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    g('detail-congress-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="5" style="color:var(--red);font-size:10px;padding:14px">⚠ ${e.message}</td></tr>`;
+  }
+}
+
+// ─── Wire up modal close + delegated ticker click handler ───────────────────
+g('detail-close').addEventListener('click', closeDetailModal);
+g('modal-detail').addEventListener('click', e => {
+  if (e.target === g('modal-detail')) closeDetailModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && g('modal-detail').classList.contains('open')) closeDetailModal();
+});
+
+// Delegate ticker clicks across the document — any element with class .td-tick
+// becomes clickable to open the detail modal for that ticker. We exclude the
+// "TV ↗" link inside it since that opens TradingView in a new tab.
+document.body.addEventListener('click', e => {
+  // Don't intercept clicks on the TV link itself or any anchor
+  if (e.target.closest('a')) return;
+  // Don't intercept clicks inside any modal except the data tables
+  // Find a .td-tick ancestor
+  const cell = e.target.closest('.td-tick');
+  if (!cell) return;
+  // Don't trigger inside the detail modal itself (avoid recursion)
+  if (cell.closest('#modal-detail')) return;
+  // Extract the ticker symbol — it's the first text node, but cells have
+  // child nodes. Pull from the first non-link text content.
+  const cloned = cell.cloneNode(true);
+  // Strip out anchor children
+  cloned.querySelectorAll('a').forEach(a => a.remove());
+  // Strip strategic prefixes like "🚀 LIVE "
+  const text = cloned.textContent.trim().replace(/^🚀\s*LIVE\s*/i, '').trim();
+  // Get just the first whitespace-separated token (the ticker)
+  const ticker = text.split(/\s+/)[0].toUpperCase().replace(/[^A-Z0-9.]/g, '');
+  if (ticker && /^[A-Z][A-Z0-9.]{0,5}$/.test(ticker)) {
+    e.preventDefault();
+    openDetailModal(ticker);
+  }
+});
+
+// Add a hover style hint to all td-tick cells (CSS class injected)
+const styleHint = document.createElement('style');
+styleHint.textContent = `.td-tick:not(#modal-detail .td-tick){cursor:pointer;transition:color .15s} .td-tick:not(#modal-detail .td-tick):hover{color:var(--accent)}`;
+document.head.appendChild(styleHint);
 
 // Load saved keys and watchlists on page ready
 loadKeys();
