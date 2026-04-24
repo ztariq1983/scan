@@ -353,6 +353,32 @@ table.sm-tbl td.wrap{white-space:normal;max-width:280px;line-height:1.5}
 .fund-chip:hover{border-color:var(--purple);color:var(--purple)}
 .fund-chip.active{background:var(--purple-dim);border-color:var(--purple);color:var(--purple);font-weight:600}
 
+/* ─── Smart Alerts ────────────────────────────────────────────────── */
+.alerts-progress{background:var(--bg);border:1px solid var(--border2);padding:16px 18px;margin-bottom:16px}
+.alerts-prog-label{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px}
+.alerts-prog-bar-wrap{height:3px;background:var(--border2);margin-bottom:10px;overflow:hidden}
+.alerts-prog-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--accent));transition:width .3s ease;width:0%}
+.alerts-prog-steps{display:flex;gap:6px;flex-wrap:wrap}
+.alerts-prog-step{font-size:9px;padding:3px 8px;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--border2);color:var(--muted)}
+.alerts-prog-step.running{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.alerts-prog-step.done{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.alerts-prog-step.err{border-color:var(--red);color:var(--red)}
+.alerts-counters{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.alerts-counter{font-size:11px;color:var(--muted);letter-spacing:.5px}
+.alerts-counter b{font-family:var(--font-display);font-size:16px;margin-right:4px}
+.alerts-counter.has-hits b{color:var(--green)}
+
+.alert-type{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap}
+.alert-type.insider-buy{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.4)}
+.alert-type.f13-new{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.4)}
+.alert-type.f13-up{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(78,232,255,.4)}
+.alert-value{font-weight:600;color:var(--accent);font-family:var(--font-display)}
+.alert-value.huge{color:var(--green);font-size:13px}
+.inst-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.inst-badge{font-size:9px;padding:3px 8px;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--border2);color:var(--muted)}
+.inst-badge.whale{border-color:rgba(180,125,255,.3);color:var(--purple);background:var(--purple-dim)}
+.inst-badge.sponsor{border-color:rgba(78,232,255,.3);color:var(--cyan);background:var(--cyan-dim)}
+
 /* Panel base */
 .panel{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:20px;position:relative}
 .panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px}
@@ -932,6 +958,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <button class="sm-subtab active" data-sm="insider">📋 Insider Trades</button>
       <button class="sm-subtab" data-sm="congress">🏛 Congressional</button>
       <button class="sm-subtab" data-sm="13f">🐋 13F Whales</button>
+      <button class="sm-subtab" data-sm="alerts">🔔 Smart Alerts <span class="sm-count" id="alerts-badge"></span></button>
     </div>
 
     <!-- ─── INSIDER sub-panel ─── -->
@@ -1083,6 +1110,100 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
             </tr></thead>
             <tbody id="thirteenf-tbody">
               <tr><td colspan="5"><div class="empty-cell"><div class="ei">🐋</div><div class="et">No Filing Loaded</div><div class="es">Click a famous whale above, or enter a CIK</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SMART ALERTS sub-panel ─── -->
+    <div class="sm-panel" id="sm-panel-alerts" style="display:none">
+      <div class="sm-info">
+        Automated signal scan: <b>CEO/CFO insider purchases ≥ $250K</b> (Finnhub) + <b>13F new/increased positions ≥ $1M</b> across <b>17 major institutions</b> (12 famous whales + 5 ETF sponsors). Scans every ticker in your selected watchlist. Results appear in real-time as each institution is checked.
+      </div>
+
+      <div class="sm-controls">
+        <div class="creds-field" style="min-width:200px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Watchlist to scan</label>
+          <select id="alerts-wl-select" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;cursor:pointer">
+            <option value="">— Select watchlist —</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:160px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Insider lookback</label>
+          <select id="alerts-ins-months" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;cursor:pointer">
+            <option value="1">1 month</option>
+            <option value="3" selected>3 months</option>
+            <option value="6">6 months</option>
+          </select>
+        </div>
+        <button class="btn btn-purple" id="btn-run-alerts" style="align-self:flex-end">🔔 Run Smart Alerts</button>
+        <button class="btn btn-ghost" id="btn-stop-alerts" style="align-self:flex-end;display:none">⏹ Stop</button>
+      </div>
+
+      <!-- Institution badges -->
+      <div style="margin-top:10px">
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Scanning institutions (17)</div>
+        <div class="inst-badges">
+          <span class="inst-badge whale">Berkshire</span>
+          <span class="inst-badge whale">Pershing Sq</span>
+          <span class="inst-badge whale">Renaissance</span>
+          <span class="inst-badge whale">Bridgewater</span>
+          <span class="inst-badge whale">Scion (Burry)</span>
+          <span class="inst-badge whale">Tiger Global</span>
+          <span class="inst-badge whale">Coatue</span>
+          <span class="inst-badge whale">Citadel</span>
+          <span class="inst-badge whale">Greenlight</span>
+          <span class="inst-badge whale">Third Point</span>
+          <span class="inst-badge whale">Appaloosa</span>
+          <span class="inst-badge whale">Gates Fdn</span>
+          <span class="inst-badge sponsor">BlackRock</span>
+          <span class="inst-badge sponsor">Vanguard</span>
+          <span class="inst-badge sponsor">State Street</span>
+          <span class="inst-badge sponsor">Invesco</span>
+          <span class="inst-badge sponsor">Fidelity</span>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="alerts-progress" id="alerts-progress" style="display:none;margin-top:14px">
+        <div class="alerts-prog-label" id="alerts-prog-label">Initialising…</div>
+        <div class="alerts-prog-bar-wrap"><div class="alerts-prog-bar" id="alerts-prog-bar"></div></div>
+        <div class="alerts-prog-steps" id="alerts-prog-steps"></div>
+        <div class="alerts-counters">
+          <div class="alerts-counter" id="alerts-ctr-insider"><b id="alerts-ctr-ins-n">0</b>Insider alerts</div>
+          <div class="alerts-counter" id="alerts-ctr-13f"><b id="alerts-ctr-13f-n">0</b>13F alerts</div>
+          <div class="alerts-counter" style="margin-left:auto;font-size:10px" id="alerts-eta"></div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="results-panel" id="alerts-results-panel" style="display:none;margin-top:14px">
+        <div class="res-header">
+          <div class="res-title">🔔 Smart Alerts</div>
+          <div class="sort-row">
+            <span class="sort-lbl">Sort</span>
+            <select id="alerts-sort" class="sort-sel" style="background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;outline:none;cursor:pointer">
+              <option value="value-desc">Value ↓</option>
+              <option value="ticker-asc">Ticker A–Z</option>
+              <option value="type">Type</option>
+              <option value="date-desc">Date ↓</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="sm-tbl">
+            <thead><tr>
+              <th>Ticker</th>
+              <th class="ctr">Signal</th>
+              <th>Who</th>
+              <th>Role / Fund</th>
+              <th class="num">Value</th>
+              <th class="num">Change vs Prior</th>
+              <th>Date / Quarter</th>
+            </tr></thead>
+            <tbody id="alerts-tbody">
+              <tr><td colspan="7"><div class="empty-cell"><div class="ei">🔔</div><div class="et">No Alerts Yet</div><div class="es">Select a watchlist and run the scan</div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1568,8 +1689,8 @@ function getAllWatchlists() {
 
 function saveAllWatchlists(wls) {
   localStorage.setItem(WL_KEY, JSON.stringify(wls));
-  // Refresh pipeline UI if it exists
   if (typeof refreshPipelineUI === 'function') refreshPipelineUI();
+  if (typeof refreshAlertsWatchlistDropdown === 'function') refreshAlertsWatchlistDropdown();
 }
 
 function refreshWatchlistDropdown(selectedName = '') {
@@ -2225,6 +2346,10 @@ function switchTab(name) {
   // Refresh pipeline UI when returning to scanner tab
   if (name === 'scanner' && typeof refreshPipelineUI === 'function') {
     refreshPipelineUI();
+  }
+  // Refresh alerts watchlist dropdown when entering smart tab
+  if (name === 'smart' && typeof refreshAlertsWatchlistDropdown === 'function') {
+    refreshAlertsWatchlistDropdown();
   }
 }
 
@@ -3718,6 +3843,388 @@ function render13F(holdings, totalValue) {
   }).join('') + (holdings.length > 100 ? `<tr><td colspan="5" style="padding:14px;text-align:center;color:var(--muted);font-size:10px">Showing top 100 of ${holdings.length}</td></tr>` : '');
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// SMART ALERTS — CEO/CFO buys ≥ $250K + 13F new/increased positions ≥ $1M
+// ═════════════════════════════════════════════════════════════════════════════
+
+const ALERT_INSTITUTIONS = [
+  // Famous 12 Whales
+  {cik:'1067983', name:'Berkshire (Buffett)',    group:'whale'},
+  {cik:'1336528', name:'Pershing Sq (Ackman)',   group:'whale'},
+  {cik:'1037389', name:'Renaissance Tech',        group:'whale'},
+  {cik:'1029160', name:'Bridgewater (Dalio)',     group:'whale'},
+  {cik:'1167483', name:'Scion (Burry)',           group:'whale'},
+  {cik:'1709323', name:'Tiger Global',            group:'whale'},
+  {cik:'1650173', name:'Coatue',                  group:'whale'},
+  {cik:'1364742', name:'Citadel',                 group:'whale'},
+  {cik:'1112520', name:'Greenlight (Einhorn)',    group:'whale'},
+  {cik:'1418814', name:'Third Point (Loeb)',      group:'whale'},
+  {cik:'884144',  name:'Appaloosa (Tepper)',      group:'whale'},
+  {cik:'1364604', name:'Gates Foundation',        group:'whale'},
+  // Major ETF-sponsor institutions
+  {cik:'1086364', name:'BlackRock / iShares',     group:'sponsor'},
+  {cik:'102909',  name:'Vanguard Group',           group:'sponsor'},
+  {cik:'93751',   name:'State Street / SPDR',     group:'sponsor'},
+  {cik:'703361',  name:'Invesco',                  group:'sponsor'},
+  {cik:'315066',  name:'Fidelity (FMR)',           group:'sponsor'},
+];
+
+let alertsRunning = false;
+let alertsStop = false;
+let alertResults = [];
+
+function normalizeCompanyName(name) {
+  return (name || '')
+    .toUpperCase()
+    .replace(/\b(CORPORATION|CORP|INCORPORATED|INC|LIMITED|LTD|COMPANY|CO(?:M)?|GROUP|HOLDINGS?|CLASS [A-Z]|COMMON|STOCK|STK|SHARES?|PLC|LLC|LP|NV|SA|AG|SE)\b/g, '')
+    .replace(/[^A-Z0-9]/g, '')
+    .trim();
+}
+
+function refreshAlertsWatchlistDropdown() {
+  const wls = getAllWatchlists();
+  const names = Object.keys(wls).sort();
+  const sel = g('alerts-wl-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select watchlist —</option>' +
+    names.map(n => `<option value="${n}"${n===cur?' selected':''}>${n} (${wls[n].length})</option>`).join('');
+}
+
+// ─── Fetch Finnhub company profile for name resolution ─────────────────────
+async function finnhubProfile(ticker, key) {
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(key)}`, {signal: AbortSignal.timeout(8000)});
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+// ─── Parse 13F XML into normalized name → {value, shares} map ───────────────
+function parse13FXMLtoMap(xmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  const tables = doc.getElementsByTagNameNS('*', 'infoTable');
+  const map = {};
+  for (let i = 0; i < tables.length; i++) {
+    const t = tables[i];
+    const get = tag => t.getElementsByTagNameNS('*', tag)[0]?.textContent?.trim() || '';
+    const issuer = normalizeCompanyName(get('nameOfIssuer'));
+    const value = parseFloat(get('value') || '0') * 1000; // SEC reports in $1000s
+    const shares = parseFloat(t.getElementsByTagNameNS('*', 'sshPrnamt')[0]?.textContent || '0');
+    if (issuer && value > 0) map[issuer] = { value, shares };
+  }
+  return map;
+}
+
+// ─── Fetch 2 most recent 13F-HR XMLs for a given institution CIK ────────────
+async function fetchTwoFilings(cik) {
+  const cikPad = cik.padStart(10, '0');
+  const subText = await secFetch(`https://data.sec.gov/submissions/CIK${cikPad}.json`);
+  let sub;
+  try { sub = JSON.parse(subText); } catch { throw new Error('submissions parse fail'); }
+
+  const recent = sub.filings?.recent;
+  if (!recent) throw new Error('no filings');
+
+  // Find 2 most recent 13F-HR indices
+  const idxs = [];
+  for (let i = 0; i < recent.form.length && idxs.length < 2; i++) {
+    if (recent.form[i] === '13F-HR') idxs.push(i);
+  }
+  if (!idxs.length) throw new Error('no 13F-HR found');
+
+  const fetchOneFiling = async (idx) => {
+    const accNum = recent.accessionNumber[idx].replace(/-/g, '');
+    const filingDate = recent.filingDate[idx];
+    const href = `https://www.sec.gov/Archives/edgar/data/${cik.replace(/^0+/,'')}/${accNum}/`;
+
+    const idxText = await secFetch(`${href}index.json`);
+    let idxData;
+    try { idxData = JSON.parse(idxText); } catch { throw new Error('index parse fail'); }
+
+    const items = idxData.directory?.item || [];
+    const xmlFile = items.find(f => /infotable.*\.xml$/i.test(f.name))
+                 || items.find(f => /informationtable.*\.xml$/i.test(f.name))
+                 || items.find(f => f.name.toLowerCase().endsWith('.xml') && !/primary|header/i.test(f.name));
+    if (!xmlFile) throw new Error('XML not found in filing');
+
+    const xmlText = await secFetch(`${href}${xmlFile.name}`);
+    return { map: parse13FXMLtoMap(xmlText), date: filingDate };
+  };
+
+  const latest = await fetchOneFiling(idxs[0]);
+  const prev = idxs.length > 1 ? await fetchOneFiling(idxs[1]).catch(() => null) : null;
+  return { latest, prev };
+}
+
+// ─── Main scan ───────────────────────────────────────────────────────────────
+async function runSmartAlerts() {
+  const wlName = g('alerts-wl-select').value;
+  if (!wlName) { alert('Select a watchlist first'); return; }
+  const wls = getAllWatchlists();
+  const tickers = wls[wlName];
+  if (!tickers?.length) { alert('Watchlist is empty'); return; }
+
+  const finnKey = getFinnhubKey();
+  if (!finnKey) { alert('Finnhub key required — set it on the ORB Live tab'); return; }
+
+  const alpKey = getKeys();
+  if (!alpKey.key) { alert('Alpaca keys required for price data'); return; }
+
+  alertsRunning = true;
+  alertsStop = false;
+  alertResults = [];
+
+  const btn = g('btn-run-alerts');
+  btn.disabled = true; btn.textContent = '⟳ Scanning…';
+  g('btn-stop-alerts').style.display = 'inline-block';
+  g('alerts-progress').style.display = 'block';
+  g('alerts-results-panel').style.display = 'block';
+  g('alerts-ctr-ins-n').textContent = '0';
+  g('alerts-ctr-13f-n').textContent = '0';
+  g('alerts-badge').textContent = '';
+
+  const totalSteps = 1 + ALERT_INSTITUTIONS.length; // 1 for insider + N for 13F
+  let stepsDone = 0;
+
+  function updateProgress(label, pct) {
+    g('alerts-prog-label').textContent = label;
+    g('alerts-prog-bar').style.width = pct + '%';
+  }
+
+  function setStepState(id, state) {
+    const el = document.querySelector(`.alerts-prog-step[data-step="${id}"]`);
+    if (el) { el.classList.remove('running','done','err'); if (state) el.classList.add(state); }
+  }
+
+  // Build progress step indicators
+  const steps = [{id:'insider', label:'Insider Scan'}, ...ALERT_INSTITUTIONS.map(i => ({id:i.cik, label:i.name}))];
+  g('alerts-prog-steps').innerHTML = steps.map(s => `<span class="alerts-prog-step" data-step="${s.id}">${s.label}</span>`).join('');
+
+  function addAlert(alert) {
+    alertResults.push(alert);
+    const ins = alertResults.filter(a => a.type === 'insider-buy').length;
+    const f13 = alertResults.filter(a => a.type !== 'insider-buy').length;
+    g('alerts-ctr-ins-n').textContent = ins;
+    g('alerts-ctr-13f-n').textContent = f13;
+    if (ins > 0) g('alerts-ctr-insider').classList.add('has-hits');
+    if (f13 > 0) g('alerts-ctr-13f').classList.add('has-hits');
+    g('alerts-badge').textContent = alertResults.length ? `(${alertResults.length})` : '';
+    renderAlerts();
+  }
+
+  // ── PHASE 1: Build ticker → normalized company name map via Finnhub ────────
+  updateProgress(`Loading company profiles for ${tickers.length} tickers…`, 2);
+  const tickerNameMap = {}; // ticker → normalizedName
+  for (const ticker of tickers) {
+    if (alertsStop) break;
+    const p = await finnhubProfile(ticker, finnKey);
+    tickerNameMap[ticker] = p?.name ? normalizeCompanyName(p.name) : normalizeCompanyName(ticker);
+    await new Promise(r => setTimeout(r, 80)); // ~12/sec, under free limit
+  }
+
+  // ── PHASE 2: Insider scan ──────────────────────────────────────────────────
+  if (!alertsStop) {
+    setStepState('insider', 'running');
+    updateProgress(`Scanning insider trades for ${tickers.length} tickers…`, 5);
+
+    const insMonths = parseInt(g('alerts-ins-months').value, 10);
+    const end = new Date();
+    const start = new Date(); start.setMonth(start.getMonth() - insMonths);
+    const fmt = d => d.toISOString().split('T')[0];
+
+    for (const ticker of tickers) {
+      if (alertsStop) break;
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/stock/insider-transactions?symbol=${encodeURIComponent(ticker)}&from=${fmt(start)}&to=${fmt(end)}&token=${encodeURIComponent(finnKey)}`, {signal: AbortSignal.timeout(8000)});
+        const j = await r.json();
+        if (!r.ok || j?.error) throw new Error(j?.error || `HTTP ${r.status}`);
+        for (const d of (j.data || [])) {
+          if (alertsStop) break;
+          // Role check
+          const role = (d.position || d.title || '').toUpperCase();
+          const isCEO = role.includes('CEO') || role.includes('CHIEF EXECUTIVE');
+          const isCFO = role.includes('CFO') || role.includes('CHIEF FINANCIAL');
+          if (!isCEO && !isCFO) continue;
+          // Buy check
+          const isBuy = (d.change || 0) > 0;
+          if (!isBuy) continue;
+          // Value check
+          const shares = d.share != null ? d.share : Math.abs(d.change || 0);
+          const value = shares * (d.transactionPrice || 0);
+          if (value < 250_000) continue;
+          addAlert({
+            type: 'insider-buy',
+            ticker,
+            who: d.name || '—',
+            role: role.includes('CEO') ? 'CEO' : 'CFO',
+            value,
+            shares,
+            price: d.transactionPrice,
+            date: d.transactionDate,
+            changeVal: null,
+          });
+        }
+        await new Promise(r => setTimeout(r, 100));
+      } catch(e) { /* skip individual ticker errors silently */ }
+    }
+    setStepState('insider', 'done');
+    stepsDone++;
+    updateProgress('Insider scan complete. Starting 13F analysis…', 8);
+  }
+
+  // ── PHASE 3: 13F scan per institution ──────────────────────────────────────
+  for (const inst of ALERT_INSTITUTIONS) {
+    if (alertsStop) break;
+    setStepState(inst.cik, 'running');
+    const pct = 8 + ((stepsDone / totalSteps) * 90);
+    updateProgress(`13F: checking ${inst.name}…`, pct);
+
+    try {
+      const { latest, prev } = await fetchTwoFilings(inst.cik);
+      const latestMap = latest.map;
+      const prevMap = prev?.map || null;
+      const quarter = formatQuarter(latest.date);
+
+      for (const ticker of tickers) {
+        if (alertsStop) break;
+        const normName = tickerNameMap[ticker];
+        if (!normName) continue;
+
+        // Try exact match first, then try partial match (first 6+ chars)
+        let latestPos = latestMap[normName];
+        if (!latestPos) {
+          // Fuzzy: find any key in latestMap that starts with the normalized name (min 5 chars)
+          if (normName.length >= 5) {
+            const fuzzyKey = Object.keys(latestMap).find(k => k.startsWith(normName.slice(0,6)) || normName.startsWith(k.slice(0,6)));
+            if (fuzzyKey) latestPos = latestMap[fuzzyKey];
+          }
+        }
+        if (!latestPos || latestPos.value < 1_000_000) continue;
+
+        let prevPos = prevMap ? prevMap[normName] : null;
+        if (!prevPos && prevMap && normName.length >= 5) {
+          const fuzzyKey = Object.keys(prevMap).find(k => k.startsWith(normName.slice(0,6)) || normName.startsWith(k.slice(0,6)));
+          if (fuzzyKey) prevPos = prevMap[fuzzyKey];
+        }
+
+        const isNew = !prevPos;
+        const increase = prevPos ? latestPos.value - prevPos.value : latestPos.value;
+
+        if (isNew && latestPos.value >= 1_000_000) {
+          addAlert({
+            type: 'f13-new',
+            ticker,
+            who: inst.name,
+            role: inst.group === 'whale' ? '🐋 Whale' : '🏦 Sponsor',
+            value: latestPos.value,
+            shares: latestPos.shares,
+            date: latest.date,
+            quarter,
+            changeVal: latestPos.value,
+            isNew: true,
+          });
+        } else if (!isNew && increase >= 1_000_000) {
+          addAlert({
+            type: 'f13-up',
+            ticker,
+            who: inst.name,
+            role: inst.group === 'whale' ? '🐋 Whale' : '🏦 Sponsor',
+            value: latestPos.value,
+            shares: latestPos.shares,
+            date: latest.date,
+            quarter,
+            changeVal: increase,
+            isNew: false,
+          });
+        }
+      }
+      setStepState(inst.cik, 'done');
+    } catch(e) {
+      setStepState(inst.cik, 'err');
+    }
+    stepsDone++;
+  }
+
+  // Done
+  alertsRunning = false;
+  btn.disabled = false;
+  btn.textContent = '🔔 Run Smart Alerts';
+  g('btn-stop-alerts').style.display = 'none';
+  const total = alertResults.length;
+  updateProgress(`✓ Scan complete — ${total} alert${total !== 1 ? 's' : ''} found`, 100);
+  g('alerts-prog-bar').style.background = total ? 'var(--green)' : 'var(--muted)';
+  g('alerts-eta').textContent = '';
+}
+
+function formatQuarter(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const q = Math.floor(d.getMonth() / 3) + 1;
+  return `Q${q} ${d.getFullYear()}`;
+}
+
+function renderAlerts() {
+  const sort = g('alerts-sort')?.value || 'value-desc';
+  let rows = [...alertResults];
+  rows.sort((a,b) => {
+    if (sort === 'value-desc') return b.value - a.value;
+    if (sort === 'ticker-asc') return a.ticker.localeCompare(b.ticker);
+    if (sort === 'date-desc') return (b.date||'').localeCompare(a.date||'');
+    if (sort === 'type') {
+      const order = {'insider-buy':0,'f13-new':1,'f13-up':2};
+      return (order[a.type]??9) - (order[b.type]??9);
+    }
+    return b.value - a.value;
+  });
+
+  const tbody = g('alerts-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-cell"><div class="ei">🔔</div><div class="et">No Alerts Found Yet</div><div class="es">${alertsRunning ? 'Scan in progress…' : 'No matches for current criteria'}</div></div></td></tr>`;
+    return;
+  }
+
+  const typeBadge = {
+    'insider-buy': '<span class="alert-type insider-buy">🔑 CEO/CFO Buy</span>',
+    'f13-new':     '<span class="alert-type f13-new">🐋 New Position</span>',
+    'f13-up':      '<span class="alert-type f13-up">↑ Increased</span>',
+  };
+
+  tbody.innerHTML = rows.map((a, i) => {
+    const valCls = a.value >= 5_000_000 ? 'huge' : '';
+    const changeStr = a.changeVal != null && a.type !== 'insider-buy'
+      ? `<span style="color:var(--green)">+${fmtMoney(a.changeVal)}</span>`
+      : a.type === 'insider-buy'
+        ? `<span style="font-size:10px;color:var(--muted)">${fmtNum(a.shares)} sh @ $${a.price?.toFixed(2)||'—'}</span>`
+        : '—';
+    const dateStr = a.quarter
+      ? `<span style="color:var(--muted);font-size:10px">${a.quarter}</span>`
+      : fmtSmDate(a.date);
+    return `<tr style="animation-delay:${i*20}ms">
+      <td class="td-tick">${a.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${a.ticker}" target="_blank">TV ↗</a></td>
+      <td class="ctr">${typeBadge[a.type] || '—'}</td>
+      <td class="sm-name" style="font-size:11px">${a.who}</td>
+      <td style="font-size:10px;color:var(--muted)">${a.role}</td>
+      <td class="num"><span class="alert-value ${valCls}">${fmtMoney(a.value)}</span></td>
+      <td class="num">${changeStr}</td>
+      <td>${dateStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Wire alerts events
+g('btn-run-alerts').addEventListener('click', runSmartAlerts);
+g('btn-stop-alerts').addEventListener('click', () => {
+  alertsStop = true;
+  alertsRunning = false;
+  g('btn-stop-alerts').style.display = 'none';
+  g('btn-run-alerts').disabled = false;
+  g('btn-run-alerts').textContent = '🔔 Run Smart Alerts';
+  g('alerts-prog-label').textContent = 'Scan stopped by user.';
+});
+g('alerts-sort').addEventListener('change', renderAlerts);
+
 // ─── Wire Smart Money events ───────────────────────────────────────────────
 g('btn-fetch-insider').addEventListener('click', fetchInsider);
 g('ins-ticker').addEventListener('keydown', e => { if (e.key === 'Enter') fetchInsider(); });
@@ -4338,6 +4845,7 @@ g('backup-file').addEventListener('change', e => {
 // Load saved keys and watchlists on page ready
 loadKeys();
 refreshWatchlistDropdown();
+refreshAlertsWatchlistDropdown();
 </script>
 </body>
 </html>
