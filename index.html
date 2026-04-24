@@ -503,6 +503,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .stag.cup{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(78,232,255,.3)}
 .stag.vcp{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
 .stag.hvc{background:rgba(61,255,160,.14);color:var(--green);border:1px solid rgba(61,255,160,.4);font-weight:600}
+.stag.hvc4{background:rgba(61,255,160,.07);color:#3dffa0cc;border:1px solid rgba(61,255,160,.25);font-weight:500}
 .conf-wrap{display:flex;align-items:center;gap:8px}
 .conf-dots{display:flex;gap:3px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--border2)}
@@ -640,7 +641,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <button class="btn-pipeline" id="btn-pipeline">🚀 Run Full Pipeline</button>
     </div>
     <div class="pipeline-desc">
-      One-click automation: <b>ranks your ETFs by 1-week relative strength</b> → pulls holdings from top 5 strongest → merges with your <b>custom watchlist</b> (below) → runs <b>all 8 strategies</b> → shortlists anything with <b>HVC live OR 2+ setup matches</b> → ready to <b>load into ORB tab</b> for market open.
+      One-click automation: <b>ranks your ETFs by 1-week relative strength</b> → pulls holdings from top 5 strongest → merges with your <b>custom watchlist</b> (below) → runs <b>all 9 strategies</b> → shortlists anything with <b>HVC live / HVC 2–4d confirmed OR 2+ setup matches</b> → ready to <b>load into ORB tab</b> for market open.
     </div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px">
       <div class="creds-field" style="min-width:220px;max-width:280px;margin:0">
@@ -694,6 +695,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="strat-btn active" data-strat="cup"     data-color="cyan">Cup &amp; Handle</button>
     <button class="strat-btn active" data-strat="vcp"     data-color="red">VCP</button>
     <button class="strat-btn active" data-strat="hvc"     data-color="green">HVC Breakout</button>
+    <button class="strat-btn active" data-strat="hvc4"    data-color="green">HVC 2–4 Day</button>
   </div>
 
   <!-- Action bar -->
@@ -713,6 +715,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <div class="stat-box cg"><div class="stat-n cg" id="st-pull">0</div><div class="stat-lbl">50 Pullback</div></div>
     <div class="stat-box cp"><div class="stat-n cp" id="st-pat">0</div><div class="stat-lbl">Patterns</div></div>
     <div class="stat-box cc"><div class="stat-n cc" id="st-hvc">0</div><div class="stat-lbl">HVC</div></div>
+    <div class="stat-box cg"><div class="stat-n cg" id="st-hvc4">0</div><div class="stat-lbl">HVC 2–4d</div></div>
   </div>
 
   <!-- Results -->
@@ -1284,6 +1287,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <option value="cup">Cup &amp; Handle</option>
           <option value="vcp">VCP</option>
           <option value="hvc">HVC Breakout</option>
+          <option value="hvc4">HVC 2–4 Day</option>
           <option value="other">Other</option>
         </select>
         <select id="trade-sort">
@@ -1381,6 +1385,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
             <button class="strat-chip" data-strat="cup">Cup &amp; Handle</button>
             <button class="strat-chip" data-strat="vcp">VCP</button>
             <button class="strat-chip" data-strat="hvc">HVC Breakout</button>
+            <button class="strat-chip" data-strat="hvc4">HVC 2–4 Day</button>
             <button class="strat-chip" data-strat="other">Other</button>
           </div>
         </div>
@@ -1544,7 +1549,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 // State
 let activeTickers = [];
 let results       = [];
-let activeStrats  = new Set(['nr4','nr7','macross','pull50','flat','cup','vcp','hvc']);
+let activeStrats  = new Set(['nr4','nr7','macross','pull50','flat','cup','vcp','hvc','hvc4']);
 let scanning      = false;
 
 // Shorthand
@@ -1865,6 +1870,7 @@ function detectVCP(data) {
 }
 
 function detectHVC(data) {
+  // Strict: HVC candle MUST be yesterday (data[n-2]). Today (data[n-1]) triggers.
   if (data.length < 23) return {signal:false};
   const today=data[data.length-1], yest=data[data.length-2];
   const vs=data.slice(-22,-2).map(d=>d.v).filter(Boolean);
@@ -1875,6 +1881,40 @@ function detectHVC(data) {
   if (!(yest.c>yest.o) || yest.v<av*1.5 || topWick>0.20 || body<0.40) return {signal:false};
   const triggered=today.h>=yest.c, near=!triggered&&today.c>=yest.c*0.995;
   return {signal:triggered||near, triggered, triggerPrice:yest.c, volRatio:(yest.v/av), topWickPct:(topWick*100).toFixed(1)};
+}
+
+function detectHVCExtended(data) {
+  // Extended: HVC candle was 2–4 trading days ago. Price still above/near that close = continuation.
+  if (data.length < 26) return {signal:false};
+  const today = data[data.length-1];
+  // Avg vol using bars 3–23 days back (fair — excludes recent 2 days)
+  const vs = data.slice(-24,-2).map(d=>d.v).filter(Boolean);
+  if (vs.length < 10) return {signal:false};
+  const av = vs.reduce((a,b)=>a+b,0)/vs.length;
+
+  // Check bars 2, 3, 4 days ago (offset 3, 4, 5 from end; offset 2 = yesterday = strict HVC)
+  for (let offset = 3; offset <= 5; offset++) {
+    const bar = data[data.length - offset];
+    if (!bar) continue;
+    const range = bar.h - bar.l;
+    if (range <= 0) continue;
+    const topWick = (bar.h - bar.c) / range;
+    const body    = Math.abs(bar.c - bar.o) / range;
+    if (!(bar.c > bar.o) || bar.v < av*1.5 || topWick > 0.20 || body < 0.40) continue;
+    // Qualifying HVC candle found — check continuation
+    const daysAgo     = offset - 1;
+    const aboveClose  = today.c >= bar.c;
+    const nearClose   = !aboveClose && today.c >= bar.c * 0.97;
+    const notTooFar   = today.c <= bar.c * 1.15; // hasn't run >15% — still early enough
+    if ((aboveClose || nearClose) && notTooFar) {
+      return {
+        signal: true, triggered: aboveClose, nearClose, daysAgo,
+        triggerPrice: bar.c, volRatio: bar.v/av, topWickPct: (topWick*100).toFixed(1),
+      };
+    }
+    break; // use only the most recent qualifying bar
+  }
+  return {signal:false};
 }
 
 // ─── Analyze ──────────────────────────────────────────────────────────────────
@@ -1892,12 +1932,26 @@ function analyzeStock(ticker, data) {
   if (detectFlatBase(data))  { signals.push('flat');    details.push('Flat base — <5% depth, 25 bars, near breakout'); }
   if (detectCupHandle(data)) { signals.push('cup');     details.push('Cup & handle — near pivot point'); }
   if (detectVCP(data))       { signals.push('vcp');     details.push('VCP — contracting swings + volume compression'); }
-  const hvc=detectHVC(data);
+
+  // HVC Strict — yesterday only
+  const hvc = detectHVC(data);
   if (hvc.signal) {
     signals.push('hvc');
-    details.push(`HVC ${hvc.triggered?'✅ TRIGGERED':'⏳ WATCH $'+hvc.triggerPrice.toFixed(2)} · vol ${hvc.volRatio.toFixed(1)}× · wick ${hvc.topWickPct}%`);
+    details.push(`HVC Yesterday ${hvc.triggered?'✅ TRIGGERED':'⏳ WATCH'} · trigger $${hvc.triggerPrice.toFixed(2)} · vol ${hvc.volRatio.toFixed(1)}× · wick ${hvc.topWickPct}%`);
   }
-  return {ticker, price, changePct, volRatio, signals, details, hvcTriggered:hvc.triggered||false, error:false};
+
+  // HVC Extended — 2–4 days ago, continuation (only if strict didn't fire)
+  const hvc4 = !hvc.signal ? detectHVCExtended(data) : {signal:false};
+  if (hvc4.signal) {
+    signals.push('hvc4');
+    const st = hvc4.triggered ? '✅ Above close' : '⏳ Consolidating';
+    details.push(`HVC ${hvc4.daysAgo}d ago ${st} · candle close $${hvc4.triggerPrice.toFixed(2)} · vol ${hvc4.volRatio.toFixed(1)}× · wick ${hvc4.topWickPct}%`);
+  }
+
+  return {ticker, price, changePct, volRatio, signals, details,
+          hvcTriggered: hvc.triggered||false,
+          hvc4Triggered: hvc4.triggered||false,
+          error:false};
 }
 
 // ─── Scan ─────────────────────────────────────────────────────────────────────
@@ -1995,7 +2049,7 @@ function renderTable() {
     return;
   }
 
-  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC'};
+  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d'};
 
   tbody.innerHTML=rows.map((r,i)=>{
     if (r.error) return `
@@ -2006,7 +2060,11 @@ function renderTable() {
       </tr>`;
 
     const ms=r.signals.filter(s=>activeStrats.has(s)), sc=ms.length;
-    const tags=ms.map(s=>`<span class="stag ${s}">${s==='hvc'?(r.hvcTriggered?'HVC ⚡ LIVE':'HVC ⏳ WATCH'):lbl[s]}</span>`).join('');
+    const tags=ms.map(s=>{
+      if(s==='hvc')  return `<span class="stag hvc">${r.hvcTriggered?'HVC ⚡ LIVE':'HVC ⏳ WATCH'}</span>`;
+      if(s==='hvc4') return `<span class="stag hvc4">${r.hvc4Triggered?'HVC 2–4d ✅':'HVC 2–4d 〜'}</span>`;
+      return `<span class="stag ${s}">${lbl[s]}</span>`;
+    }).join('');
     const dotCls=sc>=3?'l3':sc>=2?'l2':'l1';
     const dots=Array(4).fill(0).map((_,di)=>`<div class="dot ${di<sc?dotCls:''}"></div>`).join('');
     const vp=Math.min(100,r.volRatio*40), vc=r.volRatio>=2?'var(--green)':r.volRatio>=1.2?'var(--orange)':'var(--muted)';
@@ -2039,6 +2097,7 @@ function updateStats() {
   g('st-pull').textContent=v.filter(r=>r.signals.includes('pull50')).length;
   g('st-pat').textContent=v.filter(r=>['flat','cup','vcp'].some(s=>r.signals.includes(s))).length;
   g('st-hvc').textContent=v.filter(r=>r.signals.includes('hvc')).length;
+  g('st-hvc4').textContent=v.filter(r=>r.signals.includes('hvc4')).length;
 }
 
 // ─── Wire all event listeners (no inline onclick anywhere) ────────────────────
@@ -3368,17 +3427,22 @@ async function runPipeline() {
     setPipelineStep(5, 'active');
     shortlistResults = scanResults.filter(r => {
       if (!r.signals || !r.signals.length) return false;
-      // HVC triggered (live)?
+      // HVC strict triggered (live yesterday)?
       if (r.signals.includes('hvc') && r.hvcTriggered) return true;
+      // HVC Extended confirmed above close?
+      if (r.signals.includes('hvc4') && r.hvc4Triggered) return true;
       // 2+ strategy matches?
       return r.signals.length >= 2;
     });
 
-    // Sort: HVC triggered first, then by signal count
+    // Sort: HVC triggered first, then hvc4 triggered, then by signal count
     shortlistResults.sort((a,b) => {
-      const aHvc = a.signals.includes('hvc') && a.hvcTriggered ? 1 : 0;
-      const bHvc = b.signals.includes('hvc') && b.hvcTriggered ? 1 : 0;
-      if (aHvc !== bHvc) return bHvc - aHvc;
+      const aHvc  = a.signals.includes('hvc')  && a.hvcTriggered  ? 2 : 0;
+      const bHvc  = b.signals.includes('hvc')  && b.hvcTriggered  ? 2 : 0;
+      const aHvc4 = a.signals.includes('hvc4') && a.hvc4Triggered ? 1 : 0;
+      const bHvc4 = b.signals.includes('hvc4') && b.hvc4Triggered ? 1 : 0;
+      const aScore = aHvc + aHvc4, bScore = bHvc + bHvc4;
+      if (aScore !== bScore) return bScore - aScore;
       return b.signals.length - a.signals.length;
     });
 
@@ -3413,14 +3477,17 @@ function renderShortlist(topETFs, totalScanned) {
   const topEtfNames = topETFs.map(e => `${e.ticker} (+${e.pct1w.toFixed(1)}%)`).join(', ');
   g('shortlist-subtitle').innerHTML = `${shortlistResults.length} candidates from ${totalScanned} scanned · Top ETFs: <b style="color:var(--accent)">${topEtfNames || 'none'}</b>`;
 
-  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC' };
+  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d' };
 
   g('shortlist-tbody').innerHTML = shortlistResults.map((r, i) => {
     const tags = r.signals.map(s => `<span class="stag ${s}">${s==='hvc'?(r.hvcTriggered?'HVC ⚡':'HVC ⏳'):lbl[s]}</span>`).join('');
     const chCls = r.changePct >= 0 ? 'up' : 'down';
     const chStr = (r.changePct >= 0 ? '+' : '') + r.changePct.toFixed(2) + '%';
-    const isHvcLive = r.signals.includes('hvc') && r.hvcTriggered;
-    const priority = isHvcLive ? '<span style="color:var(--green);font-weight:700;font-size:10px;letter-spacing:1px">🚀 LIVE</span> ' : '';
+    const isHvcLive  = r.signals.includes('hvc')  && r.hvcTriggered;
+    const isHvc4Live = r.signals.includes('hvc4') && r.hvc4Triggered;
+    const priority = isHvcLive  ? '<span style="color:var(--green);font-weight:700;font-size:10px;letter-spacing:1px">🚀 LIVE</span> '
+                   : isHvc4Live ? '<span style="color:#3dffa0cc;font-weight:700;font-size:10px;letter-spacing:1px">📈 CONT</span> '
+                   : '';
 
     return `<tr style="animation-delay:${i*25}ms">
       <td class="td-tick">${priority}${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
@@ -4254,7 +4321,8 @@ let tvScriptLoaded = false;
 
 const STRAT_NAMES = {
   nr4:'NR4', nr7:'NR7', macross:'MA Cross 20/50', pull50:'50 SMA Pullback',
-  flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout'
+  flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout (Yesterday)',
+  hvc4:'HVC Continuation (2–4d)',
 };
 
 function openDetailModal(ticker) {
