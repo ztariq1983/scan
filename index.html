@@ -239,6 +239,53 @@ table.orb-tbl tbody tr.flash{animation:flashRow 1.2s ease}
 .btn-save-shortlist{background:var(--green-dim);color:var(--green);border:1px solid var(--green);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px 16px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
 .btn-save-shortlist:hover{background:var(--green);color:#000}
 
+/* ─── Smart Money ─────────────────────────────────────────────────── */
+.sm-subtabs{display:flex;gap:8px;margin-bottom:18px}
+.sm-subtab{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;padding:10px 18px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.sm-subtab.active{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+.sm-subtab .sm-count{font-size:9px;opacity:.7;margin-left:6px}
+
+.sm-controls{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:14px 20px;background:var(--surface);border:1px solid var(--border);margin-bottom:16px;position:relative}
+.sm-controls::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px;background:var(--purple)}
+.sm-controls .creds-field{margin:0;flex:1;min-width:160px}
+.sm-controls input,.sm-controls select{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;letter-spacing:1px;transition:border-color .2s}
+.sm-controls input:focus,.sm-controls select:focus{border-color:var(--purple)}
+.sm-controls input[type=text]{text-transform:uppercase}
+
+.sm-info{font-size:10px;color:var(--muted);letter-spacing:.5px;line-height:1.7;padding:12px 16px;background:rgba(180,125,255,0.04);border-left:2px solid var(--purple);margin-bottom:16px}
+.sm-info b{color:var(--purple)}
+.sm-info a{color:var(--cyan);text-decoration:none;border-bottom:1px solid var(--cyan-dim)}
+
+table.sm-tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.sm-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.sm-tbl th{padding:11px 14px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+table.sm-tbl th.num{text-align:right}
+table.sm-tbl th.ctr{text-align:center}
+table.sm-tbl td{padding:11px 14px;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums}
+table.sm-tbl td.num{text-align:right}
+table.sm-tbl td.ctr{text-align:center}
+table.sm-tbl tbody tr{border-bottom:1px solid var(--border);animation:fi .3s ease forwards;opacity:0;transition:background .1s}
+table.sm-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+table.sm-tbl td.wrap{white-space:normal;max-width:280px;line-height:1.5}
+
+.tx-buy{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.3)}
+.tx-sell{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.tx-other{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;background:rgba(74,85,104,.2);color:var(--muted);border:1px solid var(--border2)}
+.party-D{color:#58a6ff;font-weight:500}
+.party-R{color:#ff6868;font-weight:500}
+.party-I{color:var(--muted);font-weight:500}
+.sm-amount{font-weight:500;color:var(--text)}
+.sm-amount.big{color:var(--accent)}
+.sm-amount.huge{color:var(--green);font-weight:600}
+.sm-name{font-weight:500;color:#fff}
+.sm-role{font-size:9px;color:var(--muted);letter-spacing:.5px;margin-left:6px}
+
+/* Famous funds picker */
+.fund-chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fund-chip{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:1px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.fund-chip:hover{border-color:var(--purple);color:var(--purple)}
+.fund-chip.active{background:var(--purple-dim);border-color:var(--purple);color:var(--purple);font-weight:600}
+
 /* Panel base */
 .panel{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:20px;position:relative}
 .panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px}
@@ -404,6 +451,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab active" data-tab="scanner">Scanner</button>
     <button class="tab" data-tab="etfs">ETFs <span class="tab-count" id="etf-tab-count"></span></button>
     <button class="tab" data-tab="orb">ORB Live <span class="tab-count" id="orb-tab-count"></span></button>
+    <button class="tab" data-tab="smart">Smart Money</button>
     <button class="tab" data-tab="journal">Journal <span class="tab-count" id="journal-tab-count"></span></button>
   </div>
 
@@ -803,6 +851,173 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     </div>
 
   </div><!-- /tab-orb -->
+
+  <!-- ═══ SMART MONEY TAB ═══ -->
+  <div class="tab-panel" id="tab-smart">
+
+    <!-- Sub-tab navigation -->
+    <div class="sm-subtabs">
+      <button class="sm-subtab active" data-sm="insider">📋 Insider Trades</button>
+      <button class="sm-subtab" data-sm="congress">🏛 Congressional</button>
+      <button class="sm-subtab" data-sm="13f">🐋 13F Whales</button>
+    </div>
+
+    <!-- ─── INSIDER sub-panel ─── -->
+    <div class="sm-panel" id="sm-panel-insider">
+      <div class="sm-info">
+        <b>Insider trades</b> = SEC Form 4 filings — corporate executives, directors, and 10%+ owners reporting their own trades in their company's stock.
+        Source: <b>Finnhub</b> (uses your existing Finnhub key from the ORB tab).<br>
+        Filter by ticker to see only relevant transactions, or leave blank for the latest activity across the market (limited).
+      </div>
+
+      <div class="sm-controls">
+        <div class="creds-field">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Ticker (required)</label>
+          <input type="text" id="ins-ticker" placeholder="AAPL, NVDA, etc." autocomplete="off">
+        </div>
+        <div class="creds-field" style="max-width:140px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">From (months ago)</label>
+          <select id="ins-months">
+            <option value="1">1 month</option>
+            <option value="3" selected>3 months</option>
+            <option value="6">6 months</option>
+            <option value="12">12 months</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:140px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Filter</label>
+          <select id="ins-filter">
+            <option value="all">All transactions</option>
+            <option value="buy">Buys only</option>
+            <option value="sell">Sells only</option>
+          </select>
+        </div>
+        <button class="btn btn-purple" id="btn-fetch-insider">Fetch</button>
+      </div>
+
+      <div id="ins-status" style="font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;min-height:14px"></div>
+
+      <div class="results-panel">
+        <div class="tbl-wrap">
+          <table class="sm-tbl">
+            <thead><tr>
+              <th>Date</th><th>Insider</th><th>Role</th><th class="ctr">Type</th>
+              <th class="num">Shares</th><th class="num">Price</th><th class="num">Value</th>
+            </tr></thead>
+            <tbody id="ins-tbody">
+              <tr><td colspan="7"><div class="empty-cell"><div class="ei">📋</div><div class="et">No Data</div><div class="es">Enter a ticker and click Fetch</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CONGRESSIONAL sub-panel ─── -->
+    <div class="sm-panel" id="sm-panel-congress" style="display:none">
+      <div class="sm-info">
+        <b>Congressional trades</b> = US senators and representatives reporting trades under the STOCK Act.
+        Source: <b>House Stock Watcher</b> + <b>Senate Stock Watcher</b> (open-source datasets, free, no key required).<br>
+        Disclosed 1–45 days after trade. Watch for repeated patterns from the same politician — that's the signal.
+      </div>
+
+      <div class="sm-controls">
+        <div class="creds-field">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Filter Ticker (optional)</label>
+          <input type="text" id="con-ticker" placeholder="Leave blank for all" autocomplete="off">
+        </div>
+        <div class="creds-field">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Filter Politician (optional)</label>
+          <input type="text" id="con-politician" placeholder="e.g. Pelosi" style="text-transform:none">
+        </div>
+        <div class="creds-field" style="max-width:140px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Chamber</label>
+          <select id="con-chamber">
+            <option value="both">Both</option>
+            <option value="house">House only</option>
+            <option value="senate">Senate only</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:140px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Days back</label>
+          <select id="con-days">
+            <option value="30">30 days</option>
+            <option value="90" selected>90 days</option>
+            <option value="180">180 days</option>
+            <option value="365">1 year</option>
+          </select>
+        </div>
+        <button class="btn btn-purple" id="btn-fetch-congress">Fetch</button>
+      </div>
+
+      <div id="con-status" style="font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;min-height:14px"></div>
+
+      <div class="results-panel">
+        <div class="tbl-wrap">
+          <table class="sm-tbl">
+            <thead><tr>
+              <th>Date</th><th>Politician</th><th>Ticker</th><th class="ctr">Type</th>
+              <th class="num">Amount</th><th>Disclosed</th>
+            </tr></thead>
+            <tbody id="con-tbody">
+              <tr><td colspan="6"><div class="empty-cell"><div class="ei">🏛</div><div class="et">No Data</div><div class="es">Click Fetch to load recent disclosures</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 13F sub-panel ─── -->
+    <div class="sm-panel" id="sm-panel-13f" style="display:none">
+      <div class="sm-info">
+        <b>13F filings</b> = quarterly snapshots of holdings from institutional managers with $100M+ AUM.
+        Source: <b>SEC EDGAR</b> (official, free, no key required).<br>
+        ⚠️ <b>45-day delay baked in</b> — these show what funds owned at quarter-end, filed up to 45 days later. Useful for trend-spotting and "what is X buying/selling", not real-time signals.
+      </div>
+
+      <div class="sm-controls" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;width:100%">
+          <div class="creds-field">
+            <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Manager CIK or Name</label>
+            <input type="text" id="thirteenf-input" placeholder="Pick from list below or enter CIK" style="text-transform:none">
+          </div>
+          <button class="btn btn-purple" id="btn-fetch-13f">Fetch Filing</button>
+        </div>
+        <div style="margin-top:6px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px">Famous Whales (click to load)</label>
+          <div class="fund-chip-row" id="fund-chips">
+            <button class="fund-chip" data-cik="1067983" data-name="Berkshire Hathaway (Buffett)">Berkshire Hathaway</button>
+            <button class="fund-chip" data-cik="1336528" data-name="Pershing Square (Ackman)">Pershing Square</button>
+            <button class="fund-chip" data-cik="1037389" data-name="Renaissance Tech (Simons)">Renaissance Tech</button>
+            <button class="fund-chip" data-cik="1029160" data-name="Bridgewater (Dalio)">Bridgewater</button>
+            <button class="fund-chip" data-cik="1167483" data-name="Scion Asset Mgmt (Burry)">Scion (Burry)</button>
+            <button class="fund-chip" data-cik="1709323" data-name="Tiger Global">Tiger Global</button>
+            <button class="fund-chip" data-cik="1650173" data-name="Coatue Management">Coatue</button>
+            <button class="fund-chip" data-cik="1364742" data-name="Citadel Advisors">Citadel</button>
+            <button class="fund-chip" data-cik="1112520" data-name="Greenlight Capital (Einhorn)">Greenlight (Einhorn)</button>
+            <button class="fund-chip" data-cik="1418814" data-name="Third Point (Loeb)">Third Point</button>
+            <button class="fund-chip" data-cik="884144" data-name="Appaloosa (Tepper)">Appaloosa (Tepper)</button>
+            <button class="fund-chip" data-cik="1364604" data-name="Bill & Melinda Gates Foundation">Gates Foundation</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="thirteenf-status" style="font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:.5px;min-height:14px"></div>
+
+      <div class="results-panel">
+        <div class="tbl-wrap">
+          <table class="sm-tbl">
+            <thead><tr>
+              <th>Ticker</th><th>Holding</th><th class="num">Shares</th><th class="num">Value ($)</th><th class="num">% of Portfolio</th>
+            </tr></thead>
+            <tbody id="thirteenf-tbody">
+              <tr><td colspan="5"><div class="empty-cell"><div class="ei">🐋</div><div class="et">No Filing Loaded</div><div class="es">Click a famous whale above, or enter a CIK</div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-smart -->
 
   <!-- ═══ JOURNAL TAB ═══ -->
   <div class="tab-panel" id="tab-journal">
@@ -2973,6 +3188,367 @@ g('btn-send-orb').addEventListener('click', sendShortlistToORB);
 
 // Initial pipeline UI load
 refreshPipelineUI();
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SMART MONEY (Insider, Congressional, 13F)
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ─── Sub-tab switcher ──────────────────────────────────────────────────────
+function switchSmartSubtab(name) {
+  document.querySelectorAll('.sm-subtab').forEach(b => b.classList.toggle('active', b.dataset.sm === name));
+  document.querySelectorAll('.sm-panel').forEach(p => p.style.display = (p.id === `sm-panel-${name}`) ? 'block' : 'none');
+}
+document.querySelectorAll('.sm-subtab').forEach(b => {
+  b.addEventListener('click', () => switchSmartSubtab(b.dataset.sm));
+});
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function fmtMoney(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  if (Math.abs(n) >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K';
+  return '$' + n.toFixed(2);
+}
+function fmtNum(n) {
+  if (n == null || isNaN(n)) return '—';
+  return n.toLocaleString('en-US');
+}
+function fmtSmDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
+// ─── INSIDER (Finnhub) ──────────────────────────────────────────────────────
+async function fetchInsider() {
+  const key = getFinnhubKey();
+  if (!key) {
+    g('ins-status').innerHTML = '<span style="color:var(--red)">⚠ Finnhub key required — set it on the ORB Live tab first</span>';
+    return;
+  }
+  const ticker = g('ins-ticker').value.trim().toUpperCase();
+  if (!ticker) {
+    g('ins-status').innerHTML = '<span style="color:var(--red)">⚠ Enter a ticker first</span>';
+    return;
+  }
+  const months = parseInt(g('ins-months').value, 10);
+  const filter = g('ins-filter').value;
+
+  const end = new Date();
+  const start = new Date();
+  start.setMonth(start.getMonth() - months);
+  const fmt = d => d.toISOString().split('T')[0];
+
+  const btn = g('btn-fetch-insider');
+  btn.disabled = true; btn.textContent = '⟳ Loading...';
+  g('ins-status').textContent = `Fetching ${ticker} insider transactions…`;
+  g('ins-tbody').innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--muted)">Loading…</td></tr>`;
+
+  try {
+    const url = `https://finnhub.io/api/v1/stock/insider-transactions?symbol=${encodeURIComponent(ticker)}&from=${fmt(start)}&to=${fmt(end)}&token=${encodeURIComponent(key)}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (!r.ok || j?.error) throw new Error(j?.error || `HTTP ${r.status}`);
+
+    let data = j.data || [];
+    // Apply filter
+    if (filter === 'buy')  data = data.filter(d => (d.transactionCode || '').toLowerCase().includes('p') || d.change > 0);
+    if (filter === 'sell') data = data.filter(d => (d.transactionCode || '').toLowerCase().includes('s') || d.change < 0);
+    // Sort newest first
+    data.sort((a,b) => (b.transactionDate || '').localeCompare(a.transactionDate || ''));
+
+    g('ins-status').innerHTML = `Found <b style="color:var(--purple)">${data.length}</b> transactions for <b>${ticker}</b> in last ${months} month${months>1?'s':''}`;
+    renderInsider(data);
+  } catch(e) {
+    g('ins-status').innerHTML = `<span style="color:var(--red)">✗ ${e.message}</span>`;
+    g('ins-tbody').innerHTML = `<tr><td colspan="7"><div class="empty-cell"><div class="ei">⚠</div><div class="et">Fetch Failed</div><div class="es">${e.message}</div></div></td></tr>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Fetch';
+  }
+}
+
+function renderInsider(data) {
+  const tbody = g('ins-tbody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Transactions</div><div class="es">Try a different filter or longer date range</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map((d, i) => {
+    const isBuy = d.change > 0;
+    const isSell = d.change < 0;
+    const txCls = isBuy ? 'tx-buy' : isSell ? 'tx-sell' : 'tx-other';
+    const txLbl = isBuy ? '↑ Buy' : isSell ? '↓ Sell' : (d.transactionCode || 'Other');
+    const value = (d.share || Math.abs(d.change||0)) * (d.transactionPrice || 0);
+    const valueCls = value >= 1e6 ? 'huge' : value >= 1e5 ? 'big' : '';
+    const shares = d.share != null ? d.share : Math.abs(d.change || 0);
+
+    return `<tr style="animation-delay:${i*20}ms">
+      <td>${fmtSmDate(d.transactionDate)}</td>
+      <td class="sm-name">${d.name || '—'}</td>
+      <td style="font-size:10px;color:var(--muted)">${d.position || d.title || '—'}</td>
+      <td class="ctr"><span class="${txCls}">${txLbl}</span></td>
+      <td class="num">${fmtNum(shares)}</td>
+      <td class="num">${d.transactionPrice ? '$'+d.transactionPrice.toFixed(2) : '—'}</td>
+      <td class="num sm-amount ${valueCls}">${fmtMoney(value)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── CONGRESSIONAL (House Stock Watcher + Senate Stock Watcher) ─────────────
+async function fetchCongress() {
+  const tickerFilter = g('con-ticker').value.trim().toUpperCase();
+  const polFilter = g('con-politician').value.trim().toLowerCase();
+  const chamber = g('con-chamber').value;
+  const days = parseInt(g('con-days').value, 10);
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+
+  const btn = g('btn-fetch-congress');
+  btn.disabled = true; btn.textContent = '⟳ Loading...';
+  g('con-status').textContent = 'Fetching congressional disclosures…';
+  g('con-tbody').innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--muted)">Loading… (this dataset is ~5MB, takes a few seconds)</td></tr>`;
+
+  try {
+    const all = [];
+    if (chamber === 'house' || chamber === 'both') {
+      try {
+        const r = await fetch('https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json');
+        if (r.ok) {
+          const data = await r.json();
+          for (const d of data) {
+            all.push({
+              date: d.transaction_date,
+              name: d.representative,
+              ticker: d.ticker,
+              type: d.type,
+              amount: d.amount,
+              disclosed: d.disclosure_date,
+              chamber: 'House',
+              party: null
+            });
+          }
+        }
+      } catch(e) { /* graceful: senate may still work */ }
+    }
+    if (chamber === 'senate' || chamber === 'both') {
+      try {
+        const r = await fetch('https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json');
+        if (r.ok) {
+          const data = await r.json();
+          for (const d of data) {
+            all.push({
+              date: d.transaction_date,
+              name: (d.first_name && d.last_name) ? `${d.first_name} ${d.last_name}` : (d.senator || '—'),
+              ticker: d.ticker,
+              type: d.type,
+              amount: d.amount,
+              disclosed: d.disclosure_date,
+              chamber: 'Senate',
+              party: d.party
+            });
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Filter
+    let filtered = all.filter(t => {
+      if (!t.date) return false;
+      const d = new Date(t.date);
+      if (isNaN(d.getTime()) || d < cutoffDate) return false;
+      if (tickerFilter && (t.ticker || '').toUpperCase() !== tickerFilter) return false;
+      if (polFilter && !(t.name || '').toLowerCase().includes(polFilter)) return false;
+      return true;
+    });
+    filtered.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+
+    g('con-status').innerHTML = `Found <b style="color:var(--purple)">${filtered.length}</b> disclosures (from ${all.length} total in last ${days} days)`;
+    renderCongress(filtered);
+  } catch(e) {
+    g('con-status').innerHTML = `<span style="color:var(--red)">✗ ${e.message}</span>`;
+    g('con-tbody').innerHTML = `<tr><td colspan="6"><div class="empty-cell"><div class="ei">⚠</div><div class="et">Fetch Failed</div><div class="es">${e.message}</div></div></td></tr>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Fetch';
+  }
+}
+
+function renderCongress(data) {
+  const tbody = g('con-tbody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Matches</div><div class="es">Try widening the date range or removing filters</div></div></td></tr>`;
+    return;
+  }
+
+  // Cap display to first 200 rows for performance
+  const display = data.slice(0, 200);
+
+  tbody.innerHTML = display.map((d, i) => {
+    const t = (d.type || '').toLowerCase();
+    const isBuy = t.includes('purchase') || t.includes('buy');
+    const isSell = t.includes('sale') || t.includes('sell');
+    const txCls = isBuy ? 'tx-buy' : isSell ? 'tx-sell' : 'tx-other';
+    const txLbl = isBuy ? '↑ Buy' : isSell ? '↓ Sell' : (d.type || '—');
+    const partyCls = d.party === 'Democrat' || d.party === 'D' ? 'party-D'
+                    : d.party === 'Republican' || d.party === 'R' ? 'party-R'
+                    : 'party-I';
+    const partyTag = d.party ? `<span class="${partyCls}" style="font-size:9px;margin-left:6px">[${(d.party[0]||'').toUpperCase()}]</span>` : '';
+    const tvLink = d.ticker ? `<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${d.ticker}" target="_blank">TV ↗</a>` : '';
+
+    return `<tr style="animation-delay:${i*15}ms">
+      <td>${fmtSmDate(d.date)}</td>
+      <td class="sm-name">${d.name || '—'}${partyTag}<span class="sm-role">${d.chamber}</span></td>
+      <td class="td-tick">${d.ticker || '—'} ${tvLink}</td>
+      <td class="ctr"><span class="${txCls}">${txLbl}</span></td>
+      <td class="num sm-amount">${d.amount || '—'}</td>
+      <td style="font-size:10px;color:var(--muted)">${fmtSmDate(d.disclosed)}</td>
+    </tr>`;
+  }).join('') + (data.length > 200 ? `<tr><td colspan="6" style="padding:14px;text-align:center;color:var(--muted);font-size:10px">Showing first 200 of ${data.length} — narrow filters to see more</td></tr>` : '');
+}
+
+// ─── 13F (SEC EDGAR) ────────────────────────────────────────────────────────
+async function fetch13F() {
+  const input = g('thirteenf-input').value.trim();
+  if (!input) {
+    g('thirteenf-status').innerHTML = '<span style="color:var(--red)">⚠ Enter a CIK number or pick a famous whale below</span>';
+    return;
+  }
+
+  const cik = input.replace(/^0+/, ''); // strip leading zeros
+  if (!/^\d+$/.test(cik)) {
+    g('thirteenf-status').innerHTML = '<span style="color:var(--red)">⚠ CIK must be numeric (e.g. 1067983 for Berkshire)</span>';
+    return;
+  }
+
+  const btn = g('btn-fetch-13f');
+  btn.disabled = true; btn.textContent = '⟳ Loading...';
+  g('thirteenf-status').textContent = 'Fetching latest 13F-HR filing from SEC EDGAR…';
+  g('thirteenf-tbody').innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--muted)">Loading…</td></tr>`;
+
+  try {
+    // Step 1: Find latest 13F-HR filing from SEC submissions API
+    const cikPadded = cik.padStart(10, '0');
+    const subResp = await fetch(`https://data.sec.gov/submissions/CIK${cikPadded}.json`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!subResp.ok) throw new Error(`SEC API: HTTP ${subResp.status} (CIK may be invalid)`);
+    const subData = await subResp.json();
+
+    const recent = subData.filings?.recent;
+    if (!recent) throw new Error('No filings found for this CIK');
+
+    // Find latest 13F-HR
+    let filingIdx = -1;
+    for (let i = 0; i < recent.form.length; i++) {
+      if (recent.form[i] === '13F-HR') { filingIdx = i; break; }
+    }
+    if (filingIdx === -1) throw new Error('No 13F-HR filings found for this entity');
+
+    const accession = recent.accessionNumber[filingIdx].replace(/-/g, '');
+    const filingDate = recent.filingDate[filingIdx];
+    const filingHref = `https://www.sec.gov/Archives/edgar/data/${cik}/${accession}/`;
+
+    // Step 2: Get filing index to find the holdings .xml file
+    const idxResp = await fetch(`${filingHref}index.json`);
+    if (!idxResp.ok) throw new Error('Filing index fetch failed');
+    const idx = await idxResp.json();
+
+    // Look for the informationtable.xml or similar
+    const items = idx.directory?.item || [];
+    const xmlFile = items.find(f =>
+      f.name.toLowerCase().includes('infotable') ||
+      f.name.toLowerCase().includes('informationtable') ||
+      (f.name.endsWith('.xml') && !f.name.includes('primary'))
+    );
+    if (!xmlFile) throw new Error('Could not locate holdings XML in filing');
+
+    const xmlResp = await fetch(`${filingHref}${xmlFile.name}`);
+    if (!xmlResp.ok) throw new Error('Holdings XML fetch failed');
+    const xmlText = await xmlResp.text();
+
+    // Step 3: Parse holdings
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'application/xml');
+    const infoTables = doc.getElementsByTagNameNS('*', 'infoTable');
+
+    if (!infoTables.length) throw new Error('No holdings found in XML');
+
+    const holdings = [];
+    let totalValue = 0;
+    for (let i = 0; i < infoTables.length; i++) {
+      const t = infoTables[i];
+      const get = tag => {
+        const el = t.getElementsByTagNameNS('*', tag)[0];
+        return el ? el.textContent.trim() : '';
+      };
+      const name = get('nameOfIssuer');
+      const cusip = get('cusip');
+      const value = parseFloat(get('value')) * 1000; // SEC reports in $1000s post-2022
+      const shares = parseFloat(t.getElementsByTagNameNS('*', 'sshPrnamt')[0]?.textContent || '0');
+      const cls = get('titleOfClass');
+      holdings.push({ name, cusip, value, shares, cls });
+      totalValue += value;
+    }
+
+    // Sort by value descending
+    holdings.sort((a,b) => b.value - a.value);
+
+    const subtitle = subData.name || `CIK ${cik}`;
+    g('thirteenf-status').innerHTML = `<b style="color:var(--purple)">${subtitle}</b> · Filed ${fmtSmDate(filingDate)} · <b>${holdings.length}</b> positions · Total: <b>${fmtMoney(totalValue)}</b> · <a href="${filingHref}" target="_blank" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid">View on SEC ↗</a>`;
+    render13F(holdings, totalValue);
+
+  } catch(e) {
+    g('thirteenf-status').innerHTML = `<span style="color:var(--red)">✗ ${e.message}</span>`;
+    g('thirteenf-tbody').innerHTML = `<tr><td colspan="5"><div class="empty-cell"><div class="ei">⚠</div><div class="et">Fetch Failed</div><div class="es">${e.message}</div></div></td></tr>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Fetch Filing';
+  }
+}
+
+function render13F(holdings, totalValue) {
+  const tbody = g('thirteenf-tbody');
+  if (!holdings.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Holdings</div></div></td></tr>`;
+    return;
+  }
+
+  // Show top 100 to keep DOM manageable
+  const display = holdings.slice(0, 100);
+
+  tbody.innerHTML = display.map((h, i) => {
+    const pct = totalValue > 0 ? (h.value / totalValue * 100) : 0;
+    const pctCls = pct >= 5 ? 'huge' : pct >= 1 ? 'big' : '';
+    return `<tr style="animation-delay:${i*15}ms">
+      <td class="td-tick" style="font-size:11px;letter-spacing:.5px">${h.cusip ? h.cusip.slice(0,5)+'…' : '—'}</td>
+      <td class="sm-name wrap" style="white-space:normal;font-size:11px">${h.name || '—'} <span class="sm-role">${h.cls || ''}</span></td>
+      <td class="num">${fmtNum(h.shares)}</td>
+      <td class="num sm-amount">${fmtMoney(h.value)}</td>
+      <td class="num sm-amount ${pctCls}">${pct.toFixed(2)}%</td>
+    </tr>`;
+  }).join('') + (holdings.length > 100 ? `<tr><td colspan="5" style="padding:14px;text-align:center;color:var(--muted);font-size:10px">Showing top 100 of ${holdings.length}</td></tr>` : '');
+}
+
+// ─── Wire Smart Money events ───────────────────────────────────────────────
+g('btn-fetch-insider').addEventListener('click', fetchInsider);
+g('ins-ticker').addEventListener('keydown', e => { if (e.key === 'Enter') fetchInsider(); });
+
+g('btn-fetch-congress').addEventListener('click', fetchCongress);
+g('con-ticker').addEventListener('keydown', e => { if (e.key === 'Enter') fetchCongress(); });
+g('con-politician').addEventListener('keydown', e => { if (e.key === 'Enter') fetchCongress(); });
+
+g('btn-fetch-13f').addEventListener('click', fetch13F);
+g('thirteenf-input').addEventListener('keydown', e => { if (e.key === 'Enter') fetch13F(); });
+document.querySelectorAll('.fund-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.fund-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    g('thirteenf-input').value = chip.dataset.cik;
+    g('thirteenf-status').textContent = `Selected: ${chip.dataset.name} (CIK ${chip.dataset.cik})`;
+    fetch13F();
+  });
+});
 
 // Load saved keys and watchlists on page ready
 loadKeys();
