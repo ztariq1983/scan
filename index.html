@@ -606,7 +606,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <div class="upload-icon">📋</div>
       <div>
         <div class="upload-title">Import TradingView Watchlist</div>
-        <div class="upload-hint">Drag &amp; drop a <code>.csv</code> export here, or click Choose File</div>
+        <div class="upload-hint">Drag &amp; drop a TradingView watchlist export (<code>.txt</code> or <code>.csv</code>) here, or click Choose File.<br>Handles <code>NASDAQ:NVDA</code> format, <code>###SECTION</code> headers, and plain ticker lists automatically.</div>
       </div>
       <button class="btn btn-ghost" id="btn-choose">Choose File</button>
     </div>
@@ -1662,40 +1662,61 @@ async function testConnection() {
 }
 
 // ─── CSV ─────────────────────────────────────────────────────────────────────
-function parseCSV(text, filename) {
-  const tickers = [];
-  for (const line of text.trim().split('\n')) {
-    for (const col of line.split(',')) {
-      const t = col.trim().replace(/^["']|["']$/g, '').toUpperCase();
-      if (/^[A-Z]{1,5}$/.test(t) &&
-          !['OPEN','HIGH','LOW','CLOSE','DATE','TIME','NAME','SYMBOL','TICKER','VOLUME'].includes(t))
-        tickers.push(t);
+// ─── Core ticker extractor — handles all formats ──────────────────────────────
+// Handles:
+//   • TradingView export:  NASDAQ:NVDA, NYSE:AAPL, AMEX:SPY  (strips exchange prefix)
+//   • TradingView sections: ###SECTION 1, ###HVC              (skipped)
+//   • Plain tickers:        NVDA, AAPL, SPY
+//   • Comma / newline / space separated
+function extractTickers(raw) {
+  if (!raw || !raw.trim()) return [];
+  const seen = new Set(), out = [];
+  // Split on commas, newlines, semicolons, pipes — keep tokens intact
+  const tokens = raw.split(/[,\n\r;|]+/);
+  for (const token of tokens) {
+    let t = token.trim().replace(/^["'\s]+|["'\s]+$/g, '');
+    // Skip section headers (### prefix) and empty tokens
+    if (!t || t.startsWith('#')) continue;
+    // Strip TradingView exchange prefix: NASDAQ:NVDA → NVDA, NYSE:AA → AA
+    // Also handle formats like BITSTAMP:BTCUSD, CME_MINI:MES1!, COINBASE:ETHUSD
+    if (t.includes(':')) {
+      t = t.split(':').pop(); // take everything after the last colon
     }
+    // Normalise: uppercase, strip $ signs
+    t = t.replace(/[$]/g, '').toUpperCase().trim();
+    // Strip trailing ! (futures like MES1!)
+    t = t.replace(/!$/, '');
+    // Validate: 1–7 chars, starts with a letter, letters/digits/dots only
+    if (!t || t.length < 1 || t.length > 7) continue;
+    if (!/^[A-Z][A-Z0-9.]{0,6}$/.test(t)) continue;
+    // Skip common header/noise words
+    if (['OPEN','HIGH','LOW','CLOSE','DATE','TIME','NAME','SYMBOL','TICKER',
+         'VOLUME','THE','AND','OR','IN','OF','TO','A','AN','SECTION'].includes(t)) continue;
+    if (!seen.has(t)) { seen.add(t); out.push(t); }
   }
-  const unique = [...new Set(tickers)];
-  activeTickers = unique;
-  g('tickers-preview').innerHTML = unique.length
-    ? `<strong>${unique.length} tickers loaded</strong> from ${filename}: ${unique.slice(0,12).join(', ')}${unique.length>12?` +${unique.length-12} more`:''}`
+  return out;
+}
+
+function parseCSV(text, filename) {
+  const tickers = extractTickers(text);
+  activeTickers = tickers;
+
+  // Count how many came from TradingView EXCHANGE:TICKER format
+  const tvFormat = (text.match(/[A-Z_]+:[A-Z0-9]+/g) || []).length > 0;
+
+  g('tickers-preview').innerHTML = tickers.length
+    ? `<strong>${tickers.length} tickers loaded</strong> from ${filename}${tvFormat ? ' (TradingView format ✓)' : ''}: ${tickers.slice(0,12).join(', ')}${tickers.length>12 ? ` +${tickers.length-12} more` : ''}`
     : '⚠ No tickers found — check file format';
 }
 
 // ─── Manual tickers ───────────────────────────────────────────────────────────
 function parseTickers(raw) {
-  if (!raw || !raw.trim()) return [];
-  const seen = new Set(), out = [];
-  for (const p of raw.split(/[\s,;\|\n\r]+/)) {
-    const t = p.replace(/[$"']/g,'').replace(/^\.+|\.+$/g,'').trim().toUpperCase();
-    if (t.length >= 1 && t.length <= 7 && /^[A-Z][A-Z0-9./-]{0,6}$/.test(t) &&
-        !seen.has(t) && !['THE','AND','OR','IN','OF','TO','A','AN'].includes(t)) {
-      seen.add(t); out.push(t);
-    }
-  }
-  return out;
+  return extractTickers(raw);
 }
 
 function useManual() {
   const t = parseTickers(g('manual-tickers').value);
-  if (!t.length) { setInfo('⚠ No valid tickers found — try: <b>AAPL, NVDA, TSLA</b>'); return; }
+  if (!t.length) { setInfo('⚠ No valid tickers found — try: <b>AAPL, NVDA</b> or paste TradingView watchlist'); return; }
   activeTickers = t;
   g('tickers-preview').innerHTML = `<strong>${t.length} tickers ready</strong>: ${t.slice(0,15).join(', ')}${t.length>15?` +${t.length-15} more`:''}`;
   g('manual-count').textContent  = t.length + ' tickers';
