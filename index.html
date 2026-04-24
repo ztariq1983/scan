@@ -450,8 +450,6 @@ table.rs-tbl tbody tr.rs-top{background:rgba(232,255,71,.03)}
 .learn-nav-btn{background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;padding:8px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap}
 .learn-nav-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .learn-panel{display:none} .learn-panel.active{display:block}
-.learn-hero{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;align-items:start}
-@media(max-width:900px){.learn-hero{grid-template-columns:1fr}}
 .learn-content h2{font-family:var(--font-display);font-size:22px;font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:8px}
 .learn-content h2 em{color:var(--accent);font-style:normal}
 .learn-content .tagline{font-size:12px;color:var(--muted);letter-spacing:.5px;line-height:1.8;margin-bottom:16px}
@@ -460,7 +458,6 @@ table.rs-tbl tbody tr.rs-top{background:rgba(232,255,71,.03)}
 .learn-rules li b{color:var(--accent)}
 .learn-rules li.red-rule{border-left-color:var(--red)} .learn-rules li.red-rule b{color:var(--red)}
 .learn-rules li.green-rule{border-left-color:var(--green)} .learn-rules li.green-rule b{color:var(--green)}
-.learn-chart-wrap{background:var(--bg);border:1px solid var(--border2);padding:16px;display:flex;align-items:center;justify-content:center}
 .learn-stats-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .learn-stat{padding:10px 16px;background:var(--bg);border:1px solid var(--border2);flex:1;min-width:100px;text-align:center}
 .learn-stat-n{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--accent)}
@@ -471,23 +468,6 @@ table.rs-tbl tbody tr.rs-top{background:rgba(232,255,71,.03)}
 .wt-step-body h4{font-family:var(--font-display);font-size:12px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
 .wt-step-body p{font-size:11px;color:var(--muted);line-height:1.7;letter-spacing:.3px}
 .wt-step-body code{color:var(--cyan);background:var(--cyan-dim);padding:1px 5px;font-size:10px}
-.quiz-wrap{background:var(--surface);border:1px solid var(--border);padding:20px;margin-top:6px}
-.quiz-title{font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:14px}
-.quiz-q{font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.6}
-.quiz-chart-wrap{margin-bottom:16px;background:var(--bg);border:1px solid var(--border2);padding:12px;display:flex;justify-content:center}
-.quiz-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.quiz-opt{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;letter-spacing:1px;padding:9px 16px;cursor:pointer;text-transform:uppercase;transition:all .15s;flex:1;min-width:120px;text-align:center}
-.quiz-opt:hover{border-color:var(--purple);color:var(--purple)}
-.quiz-opt.correct{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-.quiz-opt.wrong{background:var(--red-dim);border-color:var(--red);color:var(--red)}
-.quiz-opt.revealed{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-.quiz-opt:disabled{cursor:not-allowed}
-.quiz-feedback{font-size:12px;line-height:1.7;padding:12px 14px;border-left:3px solid var(--green);background:var(--green-dim);color:var(--text);display:none}
-.quiz-feedback.show{display:block}
-.quiz-feedback.wrong{border-color:var(--red);background:var(--red-dim)}
-.quiz-next{margin-top:10px;background:var(--purple);color:#000;border:none;font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:2px;padding:10px 22px;cursor:pointer;text-transform:uppercase;display:none}
-.quiz-next.show{display:inline-block}
-.quiz-score{font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:8px}
 .personal-stats{background:var(--purple-dim);border:1px solid rgba(180,125,255,.2);padding:14px 16px;margin-bottom:16px}
 .personal-stats-title{font-size:9px;color:var(--purple);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
 .personal-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
@@ -1540,6 +1520,9 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <button class="learn-nav-btn" data-learn="hvc">HVC</button>
       <button class="learn-nav-btn" data-learn="hvc4">HVC 2–4d</button>
       <button class="learn-nav-btn" data-learn="orb" style="border-color:var(--orange);color:var(--muted)">ORB</button>
+      <button class="learn-nav-btn" data-learn="canslim" style="border-color:var(--purple);color:var(--muted)">CANSLIM</button>
+      <button class="learn-nav-btn" data-learn="leaders" style="border-color:var(--cyan);color:var(--muted)">Spotting Leaders</button>
+      <button class="learn-nav-btn" data-learn="sectors" style="border-color:var(--green);color:var(--muted)">Sector Transitions</button>
     </div>
 
     <!-- Each strategy panel inserted by JS -->
@@ -5720,115 +5703,46 @@ g('btn-rs-save-wl').addEventListener('click', ()=>{
 // LEARNING MODE — guides, walkthroughs, quizzes for all 9 strategies + ORB
 // ═════════════════════════════════════════════════════════════════════════════
 
-// SVG Candlestick helpers
-function svgCandle(x, o, h, l, c, w=10) {
-  const green = c >= o;
-  const color = green ? '#3dffa0' : '#ff5277';
-  const bodyTop    = Math.min(o, c);
-  const bodyBottom = Math.max(o, c);
-  const bodyH = Math.max(2, bodyBottom - bodyTop);
-  return `
-    <line x1="${x+w/2}" y1="${h}" x2="${x+w/2}" y2="${bodyTop}" stroke="${color}" stroke-width="1.5"/>
-    <rect x="${x}" y="${bodyTop}" width="${w}" height="${bodyH}" fill="${color}" rx="1"/>
-    <line x1="${x+w/2}" y1="${bodyBottom}" x2="${x+w/2}" y2="${l}" stroke="${color}" stroke-width="1.5"/>
-  `;
-}
-function svgLine(points, color='#e8ff47', width=1.5) {
-  const d = points.map((p,i)=>`${i===0?'M':'L'}${p[0]},${p[1]}`).join(' ');
-  return `<path d="${d}" stroke="${color}" stroke-width="${width}" fill="none"/>`;
-}
-function svgLabel(x,y,txt,color='#52526e',size=9) {
-  return `<text x="${x}" y="${y}" fill="${color}" font-size="${size}" font-family="Fira Code,monospace" letter-spacing="1">${txt}</text>`;
-}
-
 const LEARN_DATA = {
   nr4: {
-    title:'NR4 — Narrow Range 4',
-    subtitle:'Volatility compression before the next move',
-    color:'var(--accent)',
-    svg: () => {
-      const bars = [[20,60,15,70],[34,55,10,75],[48,62,18,72],[62,68,64,70]];
-      let c = ''; bars.forEach((b,i)=>{ c+=svgCandle(14+i*16,b[0],b[2],b[3],b[1],12); });
-      c += svgLabel(62,95,'NR4','#e8ff47',8);
-      c += `<rect x="60" y="63" width="16" height="9" fill="none" stroke="#e8ff47" stroke-width="1" stroke-dasharray="2"/>`;
-      return `<svg viewBox="0 0 140 110" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'NR4 — Narrow Range 4', subtitle:'Volatility compression before the next move', color:'var(--accent)',
     rules: [
-      {t:'<b>Today\'s range</b> (high − low) must be the <b>smallest of the last 4 bars</b>',cls:''},
+      {t:'<b>Today's range</b> (high − low) must be the <b>smallest of the last 4 bars</b>',cls:''},
       {t:'Best in an <b>uptrend</b> — NR4 in a downtrend is just consolidation before more selling',cls:'green-rule'},
       {t:'<b>Volume should dry up</b> alongside the range — compression in both is the strongest signal',cls:'green-rule'},
       {t:'<b>False signals increase</b> in choppy/sideways markets — requires trend context',cls:'red-rule'},
     ],
-    entry: 'Buy on break above NR4 high + 1–2¢ on the following day',
-    stop: 'Below the NR4 low',
-    target: '1:2 R/R minimum, or next resistance level',
-    stats: [{n:'Setup frequency',v:'Weekly on liquid stocks'},{n:'Works best',v:'Uptrending stocks'},{n:'Timeframe',v:'Daily'},{n:'Combine with',v:'VCP, HVC'}],
-    walkthrough: [
+    entry:'Buy on break above NR4 high + 1–2¢ on the following day', stop:'Below the NR4 low', target:'1:2 R/R minimum, or next resistance level',
+    stats:[{n:'Setup frequency',v:'Weekly on liquid stocks'},{n:'Works best',v:'Uptrending stocks'},{n:'Timeframe',v:'Daily'},{n:'Combine with',v:'VCP, HVC'}],
+    walkthrough:[
       {h:'Identify the trend', b:'NR4 is a <code>continuation setup</code>. First confirm the stock is in an uptrend: price above 20 SMA, which is above 50 SMA. NR4 in a downtrend is low probability.'},
       {h:'Spot the compression', b:"Look at the last 4 daily bars. Today's high−low range must be narrower than the previous 3. This shows the market is pausing, not reversing."},
       {h:'Check volume', b:'Volume should be below its 20-day average — ideally the lowest in 4+ days. Range and volume compressing together = coiled spring.'},
       {h:'Set the trigger', b:"Place a buy stop <code>1–2¢ above the NR4 day's high</code>. This ensures you only enter if price breaks out, not just opens higher."},
       {h:'Set your stop', b:"Hard stop goes <code>below the NR4 low</code>. If price breaks the NR4 low instead, the setup has failed. No exceptions."},
-      {h:'Manage the trade', b:'Target minimum 2× risk (if risking 50¢, target $1). Trail stop to the prior day\'s low as the stock advances.'},
-    ],
-    quiz: [
-      {q:'A stock has these daily ranges over 4 days: 1.20, 0.95, 1.05, 0.88. Is this an NR4?', opts:['Yes','No','Need more data'], answer:0, explain:'Yes — the 4th bar (0.88) is the smallest of all 4. This is an NR4 setup.'},
-      {q:'You spot an NR4 pattern but the stock is below its 50 SMA. What should you do?', opts:['Buy anyway — range is narrow','Skip — no trend context','Wait for NR7 confirmation'], answer:1, explain:'Skip it. NR4 below the 50 SMA lacks uptrend context. The probability of a failed breakout is much higher.'},
-      {q:'Where do you set your stop on an NR4 trade?', opts:['Below the 50 SMA','Below the NR4 day\'s low','Below the 20 SMA'], answer:1, explain:'Always below the NR4 low. This is the level that invalidates the setup — if price breaks below it, the compression has failed.'},
+      {h:'Manage the trade', b:'Target minimum 2× risk. Trail stop to the prior day's low as the stock advances.'},
     ],
   },
   nr7: {
-    title:'NR7 — Narrow Range 7',
-    subtitle:'Deeper compression — higher conviction signal',
-    color:'var(--accent)',
-    svg: () => {
-      const ranges = [18,22,14,20,16,13,9];
-      let c=''; const base=80;
-      ranges.forEach((r,i)=>{ const mid=50+Math.random()*5; c+=svgCandle(10+i*18,mid-r*0.3,base-r,base,mid+r*0.2,14); });
-      c+=`<rect x="118" y="${base-9}" width="16" height="10" fill="none" stroke="#e8ff47" stroke-width="1.5" stroke-dasharray="2"/>`;
-      c+=svgLabel(108,100,'NR7','#e8ff47',8);
-      return `<svg viewBox="0 0 145 115" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'NR7 — Narrow Range 7', subtitle:'Deeper compression — higher conviction signal', color:'var(--accent)',
     rules: [
-      {t:'<b>Today\'s range is the narrowest of the last 7 bars</b> — more selective than NR4',cls:''},
+      {t:'<b>Today's range is the narrowest of the last 7 bars</b> — more selective than NR4',cls:''},
       {t:'Rarer than NR4, but <b>historically higher win rate</b> because deeper compression precedes stronger moves',cls:'green-rule'},
       {t:'Often marks the <b>pivot point before a breakout</b> — especially when NR7 coincides with a pattern base',cls:'green-rule'},
-      {t:'Don\'t confuse with a <b>stock that just doesn\'t move</b> — needs prior volatility to compress from',cls:'red-rule'},
+      {t:'Don't confuse with a <b>stock that just doesn't move</b> — needs prior volatility to compress from',cls:'red-rule'},
     ],
-    entry: 'Break above NR7 high with volume expansion',
-    stop: 'Below NR7 low — tight stop, tight range',
-    target: 'Measure the base depth and project upward from breakout',
-    stats: [{n:'Signal frequency',v:'Less common than NR4'},{n:'Win rate tendency',v:'Higher than NR4'},{n:'Best pairing',v:'VCP base, Flat base'},{n:'Volume signal',v:'Dry-up mandatory'}],
-    walkthrough: [
+    entry:'Break above NR7 high with volume expansion', stop:'Below NR7 low — tight stop, tight range', target:'Measure the base depth and project upward from breakout',
+    stats:[{n:'Signal frequency',v:'Less common than NR4'},{n:'Win rate tendency',v:'Higher than NR4'},{n:'Best pairing',v:'VCP base, Flat base'},{n:'Volume signal',v:'Dry-up mandatory'}],
+    walkthrough:[
       {h:'Why 7 bars?', b:'7 trading days is roughly 1.5 weeks of compression. This timeframe lets genuine institutional accumulation complete before the breakout.'},
-      {h:'Compare to NR4', b:'NR7 is a <code>subset</code> of NR4 — every NR7 is also an NR4. When both fire simultaneously, it\'s stronger.'},
-      {h:'Confirm with volume', b:'Average volume over the 7-day period should ideally be declining. Check that the NR7 bar itself has below-average volume — institutions are done selling, not done buying.'},
-      {h:'Context is everything', b:'The best NR7s appear at the end of a VCP contraction, or at the handle of a Cup & Handle, or at the apex of a flag. Pattern + NR7 = high conviction.'},
+      {h:'Compare to NR4', b:'NR7 is a <code>subset</code> of NR4 — every NR7 is also an NR4. When both fire simultaneously, it's stronger.'},
+      {h:'Confirm with volume', b:'Average volume over the 7-day period should ideally be declining. Check that the NR7 bar itself has below-average volume.'},
+      {h:'Context is everything', b:'The best NR7s appear at the end of a VCP contraction, at the handle of a Cup & Handle, or at the apex of a flag. Pattern + NR7 = high conviction.'},
       {h:'Execute the breakout', b:'Buy on a break above the NR7 high. Expect a volatility expansion — the range will expand significantly on the breakout bar.'},
-    ],
-    quiz: [
-      {q:'What makes NR7 typically higher conviction than NR4?', opts:['It requires 7 green candles','The range is compressed over a longer period (7 bars)','It only works in downtrends'], answer:1, explain:'Correct — 7 bars of compression is deeper and rarer than 4 bars, meaning more energy is stored before the eventual move.'},
-      {q:'You see an NR7 inside a VCP pattern. How does this affect your conviction?', opts:['It lowers conviction — too many signals','It increases conviction — pattern + NR7 is high probability','No effect'], answer:1, explain:'Pattern + NR7 = compound signal. VCP shows volatility contraction over weeks, NR7 confirms the tightest daily range right at the pivot. This is one of the highest-quality setups.'},
     ],
   },
   macross: {
-    title:'MA Cross 20/50',
-    subtitle:'Trend change confirmed by moving average crossover',
-    color:'var(--orange)',
-    svg: () => {
-      const prices=[68,65,63,66,70,74,73,76,80,78,82,85];
-      const ma20=[70,69,68,67,67,68,69,71,73,74,76,78];
-      const ma50=[72,72,71,71,71,71,71,72,72,72,73,74];
-      const pts=prices.length, w=10, pad=8;
-      let c='';
-      prices.forEach((p,i)=>{ const open=i>0?prices[i-1]:p-1; c+=svgCandle(pad+i*w,open,p-2,p+2,p,8); });
-      c+=svgLine(ma20.map((v,i)=>[pad+4+i*w,100-v*0.9]),'#ff9b4e',2);
-      c+=svgLine(ma50.map((v,i)=>[pad+4+i*w,100-v*0.9]),'#4ee8ff',1.5);
-      c+=svgLabel(8,15,'MA20','#ff9b4e',8); c+=svgLabel(45,15,'MA50','#4ee8ff',8);
-      c+=`<circle cx="${pad+4+7*w}" cy="${100-ma20[7]*0.9}" r="4" fill="#e8ff47" opacity=".8"/>`;
-      c+=svgLabel(pad+7*w+6,100-ma20[7]*0.9-4,'cross','#e8ff47',7);
-      return `<svg viewBox="0 0 130 110" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'MA Cross 20/50', subtitle:'Trend change confirmed by moving average crossover', color:'var(--orange)',
     rules: [
       {t:'<b>20 SMA crosses above 50 SMA</b> — signals the short-term trend is now stronger than the medium-term',cls:''},
       {t:'Most powerful when the crossover happens <b>while price is also above both MAs</b>',cls:'green-rule'},
@@ -5836,78 +5750,37 @@ const LEARN_DATA = {
       {t:'<b>Avoid in choppy markets</b> — the 20/50 cross will whipsaw repeatedly without a clear trend',cls:'red-rule'},
       {t:'Works best in <b>momentum phases</b> — after a stock has already started moving, not as the first entry',cls:''},
     ],
-    entry: 'On the cross or on a pullback to the 20 SMA shortly after',
-    stop: 'Below the 50 SMA',
-    target: 'Trail stop on 20 SMA until trend breaks',
-    stats: [{n:'Signal type',v:'Trend-following'},{n:'Best market',v:'Trending, low VIX'},{n:'Lag',v:'Some — price leads MAs'},{n:'Stop width',v:'Medium — to 50 SMA'}],
-    walkthrough: [
-      {h:'Understand the MAs', b:'The <code>20 SMA</code> = average of last 20 closes (short-term sentiment). The <code>50 SMA</code> = average of last 50 closes (medium-term trend). When 20 > 50, bulls are in control.'},
-      {h:'Identify a quality cross', b:'Not all crosses are equal. Look for the cross to happen after a significant move — not a sideways chop. The angle of both MAs should be positive (sloping upward).'},
-      {h:'Wait for the pullback entry (optional)', b:'Entering on the exact cross is fine, but often price pulls back to the 20 SMA in the days after. This gives a <code>lower-risk entry</code> with the MA as support.'},
-      {h:'Use volume for confirmation', b:'Volume on the day of the cross, or the breakout bar just before, should be above average. Low-volume crosses are more likely to fail.'},
-      {h:'Manage with the MAs', b:'Trail your stop just below the 20 SMA as long as the trend continues. If price closes below the 20 SMA for 2+ days, consider reducing position. Exit on a 20/50 death cross.'},
-    ],
-    quiz: [
-      {q:'A 20/50 MA cross occurs but price is below both MAs. What does this suggest?', opts:['Strong buy signal','Weak signal — MAs crossing while price is below is bearish','Irrelevant — only the cross matters'], answer:1, explain:'When price is below both MAs and they cross, it\'s often a lagging signal in a downtrend. The highest probability crosses happen when price is already above both MAs and they confirm the trend.'},
-      {q:'After a 20/50 cross, price pulls back to the 20 SMA on low volume. What is this?', opts:['A failed setup — exit','A potential re-entry opportunity','A death cross forming'], answer:1, explain:'A low-volume pullback to the 20 SMA after a cross is often the best entry — you\'re buying support with a tighter stop than the original cross entry.'},
+    entry:'On the cross or on a pullback to the 20 SMA shortly after', stop:'Below the 50 SMA', target:'Trail stop on 20 SMA until trend breaks',
+    stats:[{n:'Signal type',v:'Trend-following'},{n:'Best market',v:'Trending, low VIX'},{n:'Lag',v:'Some — price leads MAs'},{n:'Stop width',v:'Medium — to 50 SMA'}],
+    walkthrough:[
+      {h:'Understand the MAs', b:'The <code>20 SMA</code> = average of last 20 closes (short-term). The <code>50 SMA</code> = average of last 50 (medium-term). When 20 > 50, bulls are in control.'},
+      {h:'Identify a quality cross', b:'Not all crosses are equal. Look for the cross to happen after a significant move, not a sideways chop. Both MAs should be sloping upward.'},
+      {h:'Wait for the pullback entry', b:'Entering on the exact cross is fine, but often price pulls back to the 20 SMA in the days after. This gives a <code>lower-risk entry</code> with the MA as support.'},
+      {h:'Use volume for confirmation', b:'Volume on the day of the cross or breakout bar should be above average. Low-volume crosses are more likely to fail.'},
+      {h:'Manage with the MAs', b:'Trail your stop just below the 20 SMA. If price closes below the 20 SMA for 2+ days, consider reducing. Exit on a 20/50 death cross.'},
     ],
   },
   pull50: {
-    title:'50 SMA First Pullback',
-    subtitle:'Buying the first test of the 50 SMA after a breakout',
-    color:'var(--green)',
-    svg: () => {
-      const prices=[50,54,58,63,68,72,70,67,66,65,67,70];
-      const ma50=[62,62,62,63,63,64,64,64,64,64,64,64];
-      let c='';
-      prices.forEach((p,i)=>{ const open=i>0?prices[i-1]:p-1; c+=svgCandle(8+i*10,open,p-1.5,p+1.5,p,8); });
-      c+=svgLine(ma50.map((v,i)=>[12+i*10,110-v*1.2]),'#3dffa0',2);
-      c+=`<circle cx="88" cy="${110-65*1.2}" r="4" fill="#3dffa0" opacity=".8"/>`;
-      c+=svgLabel(4,20,'50 SMA','#3dffa0',8);
-      c+=svgLabel(90,105,'1st touch','#3dffa0',7);
-      return `<svg viewBox="0 0 130 115" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'50 SMA First Pullback', subtitle:'Buying the first test of the 50 SMA after a breakout', color:'var(--green)',
     rules: [
       {t:'Stock must have <b>broken out above a base</b> and run at least 5–10% before pulling back',cls:''},
       {t:'This must be the <b>first time</b> price tests the 50 SMA after the breakout — not the 3rd or 4th',cls:'green-rule'},
       {t:'Ideal pullback is <b>3–8 days, low volume</b> — a normal rest, not a trend reversal',cls:'green-rule'},
-      {t:'<b>50 SMA must be rising</b> — if it\'s flat or falling, don\'t use it as support',cls:'red-rule'},
-      {t:'<b>Close below the 50 SMA</b> invalidates the setup entirely — no half-stops',cls:'red-rule'},
+      {t:'<b>50 SMA must be rising</b> — if it's flat or falling, don't use it as support',cls:'red-rule'},
+      {t:'<b>Close below the 50 SMA</b> invalidates the setup entirely',cls:'red-rule'},
     ],
-    entry: 'When price touches or tests 50 SMA and shows a reversal candle (hammer, bullish engulf)',
-    stop: '3–5% below the 50 SMA',
-    target: 'Prior high or measured from breakout point',
-    stats: [{n:'Setup type',v:'Pullback to support'},{n:'Hold period',v:'Days to weeks'},{n:'Key condition',v:'First touch only'},{n:'Market',v:'Uptrending broad market'}],
-    walkthrough: [
-      {h:'Find the base breakout', b:'Look for a stock that broke out of a flat base, VCP, or cup handle in the prior weeks. The breakout should have been on above-average volume.'},
-      {h:'Verify it\'s the first pullback', b:'Count the touches of the 50 SMA since the breakout. Zero prior touches = first pullback = high probability. Multiple touches = diminishing returns.'},
-      {h:'Watch the pullback quality', b:'The ideal pullback has <code>declining volume</code> as price drops. This shows sellers are weak. If volume surges on the pullback, institutions may be distributing.'},
-      {h:'Look for the reversal signal', b:'Enter when price bounces off the 50 SMA with a reversal candle — hammer, doji, or bullish engulfing on the daily. Ideally closes near the high of the day.'},
-      {h:'Size and stop', b:'Stop goes <code>3–5% below the 50 SMA</code>. If the 50 SMA is at $50, your stop is at $47.50–$48.50. Risk-size your position accordingly.'},
-    ],
-    quiz: [
-      {q:'A stock breaks out in January, runs 20%, then pulls back to the 50 SMA in March. This is the 3rd time it\'s touched the 50 SMA. Is this a high-probability first-pullback setup?', opts:['Yes — price is at the 50 SMA','No — this is the 3rd touch, not the first','Only if volume is low'], answer:1, explain:'The first pullback to the 50 SMA after a breakout is the highest probability. By the 3rd touch, the 50 SMA has lost much of its significance as a support level — institutions have already exited at prior tests.'},
+    entry:'When price touches 50 SMA and shows a reversal candle (hammer, bullish engulf)', stop:'3–5% below the 50 SMA', target:'Prior high or measured from breakout point',
+    stats:[{n:'Setup type',v:'Pullback to support'},{n:'Hold period',v:'Days to weeks'},{n:'Key condition',v:'First touch only'},{n:'Market',v:'Uptrending broad market'}],
+    walkthrough:[
+      {h:'Find the base breakout', b:'Look for a stock that broke out of a flat base, VCP, or cup handle in prior weeks. The breakout should have been on above-average volume.'},
+      {h:'Verify it's the first pullback', b:'Count the touches of the 50 SMA since the breakout. Zero prior touches = first pullback = high probability. Multiple touches = diminishing returns.'},
+      {h:'Watch the pullback quality', b:'The ideal pullback has <code>declining volume</code> as price drops. Surging volume on the pullback means institutions may be distributing.'},
+      {h:'Look for the reversal signal', b:'Enter when price bounces off the 50 SMA with a reversal candle — hammer, doji, or bullish engulfing. Ideally closes near the high of the day.'},
+      {h:'Size and stop', b:'Stop goes <code>3–5% below the 50 SMA</code>. Risk-size your position accordingly.'},
     ],
   },
   flat: {
-    title:'Flat Base Breakout',
-    subtitle:'Tight, sideways consolidation after an uptrend',
-    color:'var(--purple)',
-    svg: () => {
-      let c='';
-      // Uptrend
-      [40,44,48,52,56].forEach((p,i)=>{ c+=svgCandle(6+i*12,p-3,p-4,p+2,p+1,10); });
-      // Flat base
-      [58,57,59,58,60,58,59,57,60].forEach((p,i)=>{ c+=svgCandle(66+i*7,p-2,p-3,p+2,p+1,5); });
-      // Break
-      c+=svgCandle(132,62,61,68,67,10);
-      // Base boundaries
-      c+=`<line x1="64" y1="${110-57*1.3}" x2="142" y2="${110-57*1.3}" stroke="#b47dff" stroke-width="1" stroke-dasharray="3"/>`;
-      c+=`<line x1="64" y1="${110-61*1.3}" x2="142" y2="${110-61*1.3}" stroke="#b47dff" stroke-width="1" stroke-dasharray="3"/>`;
-      c+=svgLabel(82,14,'FLAT BASE','#b47dff',8);
-      c+=`<text x="132" y="20" fill="#e8ff47" font-size="7" font-family="Fira Code">BO</text>`;
-      return `<svg viewBox="0 0 150 115" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'Flat Base Breakout', subtitle:'Tight, sideways consolidation after an uptrend', color:'var(--purple)',
     rules: [
       {t:'Price must have <b>trended up at least 20–30%</b> before the flat base forms',cls:''},
       {t:'Base is <b>5+ weeks</b> long, price stays within a <b>5% range</b> (high to low)',cls:'green-rule'},
@@ -5915,39 +5788,18 @@ const LEARN_DATA = {
       {t:'Breakout needs <b>volume surge ≥ 40%</b> above average to be valid',cls:'green-rule'},
       {t:'<b>Avoid flat bases in bear markets</b> — they resolve to the downside more often',cls:'red-rule'},
     ],
-    entry: 'On break above the flat base high on volume surge',
-    stop: 'Below the flat base low (tight — just below 5% range)',
-    target: 'Measure base depth and project from breakout point',
-    stats: [{n:'Base duration',v:'5–12 weeks'},{n:'Depth',v:'<5%'},{n:'Prior uptrend',v:'20%+ required'},{n:'Volume on break',v:'≥40% above avg'}],
-    walkthrough: [
-      {h:'Find the prior uptrend', b:'A flat base only has meaning after a significant advance. The stock needs to have risen at least 20–30% before the base starts. This shows the stock has leadership qualities.'},
+    entry:'On break above the flat base high on volume surge', stop:'Below the flat base low', target:'Measure base depth and project from breakout point',
+    stats:[{n:'Base duration',v:'5–12 weeks'},{n:'Depth',v:'<5%'},{n:'Prior uptrend',v:'20%+ required'},{n:'Volume on break',v:'≥40% above avg'}],
+    walkthrough:[
+      {h:'Find the prior uptrend', b:'A flat base only has meaning after a significant advance. The stock needs to have risen at least 20–30% before the base starts.'},
       {h:'Identify the base boundaries', b:'The flat base has a clear <code>ceiling</code> (resistance) and <code>floor</code> (support) within ~5%. Draw horizontal lines at these levels.'},
       {h:'Count the weeks', b:'At least 5 weeks of sideways action. Less than 5 weeks is just a pause — not enough time for full supply/demand re-equilibration.'},
-      {h:'Watch weekly closes', b:'The tightest flat bases have very tight weekly closing prices — often within 1–2%. This shows institutional buyers are soaking up every share that comes to market.'},
-      {h:'Trade the breakout', b:'Enter on the day price <code>closes above the flat base high</code> with volume at least 40% above average. Don\'t buy on intraday spikes — wait for the close.'},
-    ],
-    quiz: [
-      {q:'A flat base has formed for 3 weeks with a 4% range. Should you buy the breakout?', opts:['Yes — range is tight','No — need at least 5 weeks','Only if volume is above average'], answer:1, explain:'A flat base requires at least 5 weeks of sideways action. 3 weeks is a short pause, not enough time for full base-building. Wait for the 5-week minimum before treating it as a valid flat base.'},
+      {h:'Watch weekly closes', b:'The tightest flat bases have very tight weekly closing prices — often within 1–2%. Institutional buyers soaking up every share.'},
+      {h:'Trade the breakout', b:'Enter on the day price <code>closes above the flat base high</code> with volume at least 40% above average. Don't buy on intraday spikes — wait for the close.'},
     ],
   },
   cup: {
-    title:'Cup & Handle',
-    subtitle:'Rounded recovery with a handle pullback before breakout',
-    color:'var(--cyan)',
-    svg: () => {
-      const cup=[70,65,60,55,52,51,52,55,60,65,70,71,72];
-      const handle=[72,71,70,69,70,71,72];
-      let c='';
-      cup.forEach((p,i)=>{ c+=svgCandle(6+i*9,p+1,p-1,p+2,p-0.5,7); });
-      handle.forEach((p,i)=>{ c+=svgCandle(123+i*7,p+0.5,p-1,p+1.5,p-0.3,5); });
-      // Cup arc
-      const cupPts=cup.map((v,i)=>[9.5+i*9,105-v*0.85]);
-      c+=svgLine(cupPts,'#4ee8ff',1);
-      c+=svgLabel(50,105,'CUP','#4ee8ff',8); c+=svgLabel(136,105,'HANDLE','#4ee8ff',7);
-      c+=`<line x1="6" y1="${105-72*0.85}" x2="155" y2="${105-72*0.85}" stroke="#e8ff47" stroke-width="1" stroke-dasharray="3"/>`;
-      c+=`<text x="148" y="${105-72*0.85-3}" fill="#e8ff47" font-size="7" font-family="Fira Code">BO</text>`;
-      return `<svg viewBox="0 0 162 115" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'Cup & Handle', subtitle:'Rounded recovery with a handle pullback before breakout', color:'var(--cyan)',
     rules: [
       {t:'<b>Cup</b> = U-shaped 6–65 week decline and recovery. Rounded bottom preferred, not V-shaped',cls:''},
       {t:'<b>Handle</b> = 1–5 week pullback of no more than <b>35% of the cup depth</b>, on declining volume',cls:'green-rule'},
@@ -5955,192 +5807,171 @@ const LEARN_DATA = {
       {t:'Handle should <b>drift downward</b>, not spike down — institutional shakeout, not panic selling',cls:'green-rule'},
       {t:'<b>V-shaped cups</b> (sharp bottom) are lower quality — rounded bases = genuine accumulation',cls:'red-rule'},
     ],
-    entry: 'Break above the handle high (the pivot point) on volume surge',
-    stop: 'Below the handle low',
-    target: 'Cup depth added to the pivot/breakout point',
-    stats: [{n:'Duration',v:'6–65 weeks'},{n:'Cup depth',v:'12–33% ideal'},{n:'Handle',v:'<35% of cup'},{n:'Volume',v:'Surge on pivot break'}],
-    walkthrough: [
-      {h:'Identify the left side peak', b:'The cup starts from a high. Mark this price — it\'s the resistance level the stock needs to overcome.'},
-      {h:'Trace the cup base', b:'Price declines 12–33%, then rounds out at the bottom. <code>Rounded bottoms</code> = gradual accumulation. V-bottoms = panic that hasn\'t been absorbed.'},
-      {h:'Confirm the right side recovery', b:'Price climbs back to within 5% of the left side peak. This recovery on the right should take at least as long as the decline — healthy rebuild.'},
-      {h:'Spot the handle', b:'Handle forms as light selling after the right side recovery — a brief 1–5 week consolidation in the upper portion of the cup, pulling back ≤35% of the cup\'s depth.'},
+    entry:'Break above the handle high (pivot point) on volume surge', stop:'Below the handle low', target:'Cup depth added to the pivot/breakout point',
+    stats:[{n:'Duration',v:'6–65 weeks'},{n:'Cup depth',v:'12–33% ideal'},{n:'Handle',v:'<35% of cup'},{n:'Volume',v:'Surge on pivot break'}],
+    walkthrough:[
+      {h:'Identify the left side peak', b:'The cup starts from a high. Mark this price — it's the resistance level the stock needs to overcome.'},
+      {h:'Trace the cup base', b:'Price declines 12–33%, then rounds out at the bottom. <code>Rounded bottoms</code> = gradual accumulation. V-bottoms = panic that hasn't been absorbed.'},
+      {h:'Confirm the right side recovery', b:'Price climbs back to within 5% of the left side peak. This recovery on the right should take at least as long as the decline.'},
+      {h:'Spot the handle', b:'Handle forms as light selling after the right side recovery — a brief 1–5 week consolidation pulling back ≤35% of the cup's depth.'},
       {h:'Enter on the pivot break', b:'Buy when price breaks above the handle high with a volume surge of at least 40% above average. <code>Pivot price</code> = handle high = your entry trigger.'},
-    ],
-    quiz: [
-      {q:'A cup has a left-side peak of $100. The right side recovers to $88. Is this a valid cup?', opts:['Yes','No — right side must reach within 5% of left side','Depends on handle depth'], answer:1, explain:'$88 is 12% below $100 — too far below the left-side peak. The right side must recover to within 5% of the left-side high ($95 or better) to form a valid cup.'},
     ],
   },
   vcp: {
-    title:'VCP — Volatility Contraction Pattern',
-    subtitle:'Series of contracting swings + volume drying up = coiled spring',
-    color:'var(--red)',
-    svg: () => {
-      let c='';
-      // Contracting swings
-      const swings=[
-        {x:8,h:30,l:70},{x:30,h:40,l:65},{x:52,h:46,l:62},{x:74,h:50,l:58},{x:96,h:52,l:56},
-      ];
-      swings.forEach(s=>{ c+=svgCandle(s.x,s.h+5,s.h,s.l,s.l-5,10); });
-      // Breakout
-      c+=svgCandle(118,54,53,48,50,10);
-      // Lines showing contraction
-      c+=svgLine([[8,70],[38,70],[38,65],[60,65],[60,62],[82,62],[82,58],[104,58]],'rgba(255,82,119,.4)',1);
-      c+=svgLine([[8,30],[38,30],[38,40],[60,40],[60,46],[82,46],[82,50],[104,50]],'rgba(255,82,119,.4)',1);
-      c+=`<text x="2" y="112" fill="#ff5277" font-size="7" font-family="Fira Code">VCP → contracting swings + vol dryup</text>`;
-      return `<svg viewBox="0 0 145 118" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'VCP — Volatility Contraction Pattern', subtitle:'Series of contracting swings + volume drying up = coiled spring', color:'var(--red)',
     rules: [
       {t:'<b>3+ contracting swings</b> — each swing smaller than the last (both upswing and pullback)',cls:''},
       {t:'<b>Volume must dry up</b> in the tightest pocket — the fewer sellers near the breakout, the better',cls:'green-rule'},
       {t:'Each contraction shows <b>supply being absorbed</b> — fewer sellers at each level',cls:'green-rule'},
       {t:'Stock should be in a <b>base above the 50 SMA</b> and ideally near 52-week highs',cls:'green-rule'},
-      {t:'<b>Don\'t trade a 2-contraction setup</b> — needs 3+ to confirm the pattern',cls:'red-rule'},
+      {t:'<b>Don't trade a 2-contraction setup</b> — needs 3+ to confirm the pattern',cls:'red-rule'},
     ],
-    entry: 'On breakout from the tightest pocket — above the last swing high',
-    stop: 'Below the last swing low (tightest VCP = tightest stop)',
-    target: 'Measured from the base depth to breakout point',
-    stats: [{n:'Contractions needed',v:'3 minimum'},{n:'Pattern inventor',v:'Mark Minervini'},{n:'Volume at pivot',v:'Driest in the base'},{n:'Combined with',v:'NR4/NR7, Flat Base'}],
-    walkthrough: [
-      {h:'The core concept', b:'VCP was formalized by Mark Minervini. Every contraction represents <code>supply being exhausted</code> — sellers who want out have already sold at each level, leaving only buyers.'},
-      {h:'Count and measure contractions', b:'Label each swing: C1 is the widest, C2 narrower, C3 narrowest. Each contraction should be measurably smaller — both the depth of the pullback AND the volume.'},
-      {h:'The volume dryup', b:'Volume should be at its lowest in the final, tightest contraction (C3 or C4). This is called the <code>volume dryup</code> — there are simply no more sellers willing to sell.'},
-      {h:'The pivot point', b:'Entry is above the last swing high in the tightest contraction. Often this coincides with an NR4 or NR7 day — double confirmation.'},
-      {h:'The stop logic', b:'The beauty of VCP is the stop is defined by the pattern. Below the tightest contraction\'s low — the tighter the VCP, the tighter your stop, the better your R/R.'},
-    ],
-    quiz: [
-      {q:'A stock has 2 contractions and low volume. Is this a valid VCP?', opts:['Yes','No — needs 3+ contractions','Only if near 52-week high'], answer:1, explain:'VCP requires a minimum of 3 contracting swings to confirm the pattern. 2 contractions could just be coincidence. Wait for at least 3 before treating it as a valid VCP.'},
-      {q:'In a VCP, where should volume be at its LOWEST?', opts:['At the widest contraction (C1)','At the tightest contraction (C3+)','On the breakout day'], answer:1, explain:'Volume should dry up progressively with each contraction, reaching its lowest in the tightest pocket. This signals maximum supply exhaustion — the fewest sellers remain.'},
+    entry:'On breakout from the tightest pocket — above the last swing high', stop:'Below the last swing low', target:'Measured from the base depth to breakout point',
+    stats:[{n:'Contractions needed',v:'3 minimum'},{n:'Pattern inventor',v:'Mark Minervini'},{n:'Volume at pivot',v:'Driest in the base'},{n:'Combined with',v:'NR4/NR7, Flat Base'}],
+    walkthrough:[
+      {h:'The core concept', b:'VCP was formalized by Mark Minervini. Every contraction represents <code>supply being exhausted</code> — sellers who want out have already sold at each level.'},
+      {h:'Count and measure contractions', b:'Label each swing: C1 is the widest, C2 narrower, C3 narrowest. Each contraction should be measurably smaller — both depth and volume.'},
+      {h:'The volume dryup', b:'Volume should be at its lowest in the final, tightest contraction. This is the <code>volume dryup</code> — no more sellers willing to sell.'},
+      {h:'The pivot point', b:'Entry is above the last swing high in the tightest contraction. Often coincides with an NR4 or NR7 day — double confirmation.'},
+      {h:'The stop logic', b:'Below the tightest contraction's low. The tighter the VCP, the tighter your stop, the better your R/R.'},
     ],
   },
   hvc: {
-    title:'HVC Breakout',
-    subtitle:'High-volume green candle yesterday → buy the break of that close today',
-    color:'var(--green)',
-    svg: () => {
-      let c='';
-      const bars=[[40,38,48,46],[42,40,45,43],[41,39,44,42],[43,41,46,44]];
-      bars.forEach((b,i)=>{ c+=svgCandle(8+i*16,b[0],b[2],b[3],b[1],12); });
-      // HVC candle (big green, close near top)
-      c+=svgCandle(72,44,40,74,73,12);
-      c+=`<text x="70" y="110" fill="#3dffa0" font-size="8" font-family="Fira Code">HVC</text>`;
-      // Today attempting break
-      c+=svgCandle(88,72,70,78,76,12);
-      c+=`<line x1="86" y1="${105-73*1.1}" x2="104" y2="${105-73*1.1}" stroke="#e8ff47" stroke-width="1.5" stroke-dasharray="3"/>`;
-      c+=`<text x="96" y="${105-73*1.1-3}" fill="#e8ff47" font-size="7">BUY</text>`;
-      return `<svg viewBox="0 0 115 120" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'HVC Breakout', subtitle:'High-volume green candle yesterday → buy the break of that close today', color:'var(--green)',
     rules: [
       {t:'<b>Yesterday</b>: green candle, volume ≥ 1.5× 20-day avg, top wick ≤20% of range, body ≥40%',cls:''},
-      {t:'<b>Today</b>: price breaks above yesterday\'s close → continuation entry',cls:'green-rule'},
-      {t:'The logic: institutions <b>stepped in heavily yesterday</b>. Today\'s break confirms buyers are in control.',cls:'green-rule'},
-      {t:'<b>Small or absent top wick</b> is critical — price closed near the HOD, showing buying conviction',cls:'green-rule'},
+      {t:'<b>Today</b>: price breaks above yesterday's close → continuation entry',cls:'green-rule'},
+      {t:'The logic: institutions <b>stepped in heavily yesterday</b>. Today's break confirms buyers are in control.',cls:'green-rule'},
+      {t:'<b>Small or absent top wick</b> is critical — price closed near HOD, showing buying conviction',cls:'green-rule'},
       {t:'<b>Do not buy</b> if the HVC candle has a large top wick — that shows rejection at the highs',cls:'red-rule'},
     ],
-    entry: 'When today\'s price trades above yesterday\'s HVC close',
-    stop: 'Below yesterday\'s HVC low',
-    target: 'Trail with yesterday\'s low as moving stop, or 2–3× risk',
-    stats: [{n:'Trigger',v:'Break of prev close'},{n:'Key filter',v:'Top wick ≤20%'},{n:'Volume',v:'≥1.5× avg on trigger day'},{n:'Strategy credit',v:'Ariel Hernandez'}],
-    walkthrough: [
-      {h:'Identify the HVC candle', b:'After market close, scan for stocks with: green close, volume ≥ 1.5× 20-day average, close in the top 80% of the daily range (top wick ≤ 20%). This is your watchlist for tomorrow.'},
-      {h:'Assess candle quality', b:'The best HVC candles close very close to the day\'s high — showing buyers dominated all day. A small upper wick = conviction. A large upper wick = rejection.'},
-      {h:'Set your trigger', b:'The trigger is the <code>previous day\'s close</code>. Place a buy stop at that level + 1–2¢. If price breaks and holds above it on opening, you\'re in.'},
+    entry:'When today's price trades above yesterday's HVC close', stop:'Below yesterday's HVC low', target:'Trail with yesterday's low as moving stop, or 2–3× risk',
+    stats:[{n:'Trigger',v:'Break of prev close'},{n:'Key filter',v:'Top wick ≤20%'},{n:'Volume',v:'≥1.5× avg on trigger day'},{n:'Strategy credit',v:'Ariel Hernandez'}],
+    walkthrough:[
+      {h:'Identify the HVC candle', b:'After market close, scan for stocks with: green close, volume ≥ 1.5× 20-day average, close in the top 80% of the daily range. This is your watchlist for tomorrow.'},
+      {h:'Assess candle quality', b:'The best HVC candles close very close to the day's high — showing buyers dominated all day. Small upper wick = conviction. Large upper wick = rejection.'},
+      {h:'Set your trigger', b:'The trigger is the <code>previous day's close</code>. Place a buy stop at that level + 1–2¢. If price breaks and holds above it, you're in.'},
       {h:'Morning behaviour matters', b:'Ideally the stock gaps up or opens near the HVC close and immediately pushes higher. A gap down below the HVC close = setup has failed, no trade.'},
-      {h:'Stop placement', b:'Stop goes below the HVC candle\'s low. This is a tight, well-defined stop. If the stock reverses below that level, the buying conviction from the HVC day has been invalidated.'},
-    ],
-    quiz: [
-      {q:'Yesterday\'s candle: volume 2.5× average, green, close = $48.20, high = $50.00 (top wick = 36% of range). Is this a valid HVC setup?', opts:['Yes — volume is excellent','No — top wick is too large (>20%)','Only if market is in uptrend'], answer:1, explain:'Despite excellent volume, the top wick is 36% of the range — above the 20% maximum. This shows significant rejection at the highs, meaning sellers stepped in. Not a valid HVC candle.'},
-      {q:'For an HVC breakout, what is your entry trigger?', opts:['Open of day after HVC candle','Break above HVC candle\'s HIGH','Break above HVC candle\'s CLOSE'], answer:2, explain:'Entry is on a break above the previous day\'s CLOSE, not the high. The close is the key level — it represents where buyers were willing to hold overnight. Breaking above it confirms continuation.'},
+      {h:'Stop placement', b:'Stop goes below the HVC candle's low. If the stock reverses below that level, the buying conviction from the HVC day has been invalidated.'},
     ],
   },
   hvc4: {
-    title:'HVC 2–4 Day Continuation',
-    subtitle:'Same setup — played as a 2–4 day continuation trade',
-    color:'var(--green)',
-    svg: () => {
-      let c='';
-      // HVC candle 3 days ago
-      c+=svgCandle(8,44,40,76,75,12);
-      c+=`<text x="6" y="110" fill="#3dffa0" font-size="7">HVC</text>`;
-      // 2 days of consolidation/flag
-      c+=svgCandle(24,74,71,78,73,12);
-      c+=svgCandle(40,72,69,76,74,12);
-      // Today: still above
-      c+=svgCandle(56,73,70,80,79,12);
-      c+=`<line x1="6" y1="${105-75*1.0}" x2="72" y2="${105-75*1.0}" stroke="#e8ff47" stroke-width="1" stroke-dasharray="3"/>`;
-      c+=`<text x="58" y="${105-75*1.0-3}" fill="#e8ff47" font-size="7">≥close</text>`;
-      return `<svg viewBox="0 0 80 118" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'HVC 2–4 Day Continuation', subtitle:'Same setup — played as a 2–4 day continuation trade', color:'var(--green)',
     rules: [
       {t:'<b>2–4 days ago</b>: same HVC criteria (green, ≥1.5× vol, wick ≤20%, body ≥40%)',cls:''},
-      {t:'<b>Current price</b> must still be above or within 3% of that HVC candle\'s close',cls:'green-rule'},
-      {t:'<b>Stock hasn\'t run away</b> — price is not more than 15% above the HVC close (still actionable)',cls:'green-rule'},
+      {t:'<b>Current price</b> must still be above or within 3% of that HVC candle's close',cls:'green-rule'},
+      {t:'<b>Stock hasn't run away</b> — price is not more than 15% above the HVC close',cls:'green-rule'},
       {t:'Signals the stock is <b>holding the breakout level</b> — consolidating before continuation',cls:'green-rule'},
-      {t:'<b>Stop is tighter</b> with each passing day — if price hasn\'t moved by day 4, reconsider',cls:'red-rule'},
+      {t:'<b>Stop is tighter</b> with each passing day — if price hasn't moved by day 4, reconsider',cls:'red-rule'},
     ],
-    entry: 'When price confirms above the HVC close during consolidation',
-    stop: 'Below the HVC candle\'s low (still valid)',
-    target: 'Same as strict HVC — 2–3× risk from stop',
-    stats: [{n:'HVC candle age',v:'2–4 days prior'},{n:'Price condition',v:'Within 3% of HVC close'},{n:'Max run-up',v:'<15% above HVC close'},{n:'Combines with',v:'NR4, NR7 setups'}],
-    walkthrough: [
-      {h:'Why 2–4 days later?', b:'Sometimes the HVC candle doesn\'t break out the very next day — the stock consolidates for 2–4 days. This is normal flag/pause behavior and can actually produce a better entry.'},
-      {h:'Confirm the base holds', b:'Check that price is still trading above or near the HVC close. If it\'s dropped significantly below, the setup has failed. The HVC close is the support level.'},
-      {h:'Look for a tight consolidation', b:'The best 2–4 day setups form a tight flag or NR4/NR7 pattern right at the HVC close. This is a compound signal — HVC base + NR compression.'},
-      {h:'Volume should dry up', b:'Volume in the consolidation days should be lower than the HVC day. This shows the selling pressure is light — holders are confident.'},
-      {h:'Trade the break', b:'Entry is the same — above the HVC close. Stop is below the HVC candle\'s low. The risk might be slightly wider after a few days, so size accordingly.'},
-    ],
-    quiz: [
-      {q:'An HVC candle occurred 3 days ago at a close of $55. Today the stock is at $53.80 (-2.2%). Should you still consider this a valid HVC continuation?', opts:['Yes — within 3% of close','No — it\'s below the close so the setup has failed','Only if volume today is high'], answer:0, explain:'$53.80 is 2.2% below the HVC close of $55 — within the 3% tolerance. The stock is consolidating near the level. This could still be a valid continuation setup, especially if today shows a reversal.'},
+    entry:'When price confirms above the HVC close during consolidation', stop:'Below the HVC candle's low', target:'Same as strict HVC — 2–3× risk from stop',
+    stats:[{n:'HVC candle age',v:'2–4 days prior'},{n:'Price condition',v:'Within 3% of HVC close'},{n:'Max run-up',v:'<15% above HVC close'},{n:'Combines with',v:'NR4, NR7 setups'}],
+    walkthrough:[
+      {h:'Why 2–4 days later?', b:'Sometimes the HVC candle doesn't break out the very next day — the stock consolidates for 2–4 days. This is normal flag/pause behavior.'},
+      {h:'Confirm the base holds', b:'Check that price is still trading above or near the HVC close. If it's dropped significantly below, the setup has failed.'},
+      {h:'Look for a tight consolidation', b:'The best 2–4 day setups form a tight flag or NR4/NR7 pattern right at the HVC close — compound signal.'},
+      {h:'Volume should dry up', b:'Volume in the consolidation days should be lower than the HVC day. This shows the selling pressure is light.'},
+      {h:'Trade the break', b:'Entry is the same — above the HVC close. Stop is below the HVC candle's low. The risk may be slightly wider after a few days, so size accordingly.'},
     ],
   },
   orb: {
-    title:'ORB — Opening Range Breakout',
-    subtitle:'Buy the break of the first 5 minutes\' high at market open',
-    color:'var(--orange)',
-    svg: () => {
-      let c='';
-      // Pre-market flat
-      c+=svgLine([[5,60],[35,60]],'rgba(255,155,78,.3)',1);
-      // 5-min opening range
-      c+=`<rect x="35" y="45" width="18" height="25" fill="rgba(255,155,78,.15)" stroke="#ff9b4e" stroke-width="1"/>`;
-      c+=svgLabel(36,105,'OR','#ff9b4e',8);
-      // Breakout above
-      c+=svgCandle(55,46,42,50,49,8);
-      c+=svgCandle(66,48,44,54,53,8);
-      c+=svgCandle(77,52,48,60,59,8);
-      c+=`<line x1="35" y1="45" x2="100" y2="45" stroke="#e8ff47" stroke-width="1.5" stroke-dasharray="4"/>`;
-      c+=svgLabel(82,40,'BUY','#e8ff47',8);
-      c+=svgLabel(4,20,'9:30','#52526e',7); c+=svgLabel(35,20,'9:35','#ff9b4e',7);
-      return `<svg viewBox="0 0 105 115" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
-    },
+    title:'ORB — Opening Range Breakout', subtitle:'Buy the break of the first 5 minutes' high at market open', color:'var(--orange)',
     rules: [
       {t:'<b>Opening Range</b> = high and low of the first 5 minutes (9:30–9:35 AM ET)',cls:''},
       {t:'<b>Long only</b>: Buy when price breaks above the OR high, confirmed by volume',cls:'green-rule'},
       {t:'Best when the stock is already <b>on a momentum watchlist</b> — ORB on a random stock is coin-flip',cls:'green-rule'},
       {t:'<b>Volume must surge</b> on the breakout bar — no-volume ORB breaks fail at high rates',cls:'green-rule'},
-      {t:'<b>Don\'t chase</b> — if you miss the first break, wait for a pullback to the OR high (now support)',cls:'red-rule'},
+      {t:'<b>Don't chase</b> — if you miss the first break, wait for a pullback to the OR high (now support)',cls:'red-rule'},
       {t:'<b>News/catalyst</b> stocks make the best ORB candidates — earnings beats, FDA approvals, upgrades',cls:''},
     ],
-    entry: 'First 5-min close above the OR high + volume confirmation',
-    stop: 'Below the OR low',
-    target: 'Pre-market high, prior day high, or 2× OR range projected',
-    stats: [{n:'Timeframe',v:'5-min intraday'},{n:'Market',v:'9:35 AM ET onward'},{n:'Stop definition',v:'OR low'},{n:'Best catalyst',v:'News, earnings, gap-up'}],
-    walkthrough: [
-      {h:'Pre-market preparation (9:00–9:29)', b:'Identify your watchlist before open using the pipeline scanner. Look for stocks with: catalyst (earnings/news), gap-up ≥2%, pre-market volume. These are your ORB candidates.'},
-      {h:'Mark the opening range (9:30–9:35)', b:'Set a 5-minute chart. The first 5-minute bar\'s high and low become your <code>Opening Range</code>. Mark these as horizontal lines.'},
-      {h:'Wait for the break (9:35+)', b:'After 9:35, watch for price to push above the OR high. Don\'t enter during the opening range — too much whipsawing. Wait for confirmation.'},
-      {h:'Volume is mandatory', b:'The breakout bar (first 5-min candle after 9:35 that closes above OR high) must have <code>above-average volume</code>. A quiet break often fails.'},
-      {h:'Entry execution', b:'Enter as the breakout bar closes above the OR high, or on the next bar\'s open. Stop is placed below the OR low. Risk/reward should be at least 1:2.'},
-      {h:'The pullback entry', b:'If you miss the first break, wait for price to pull back to the OR high (which becomes support). A bounce off the former resistance = lower-risk re-entry.'},
+    entry:'First 5-min close above the OR high + volume confirmation', stop:'Below the OR low', target:'Pre-market high, prior day high, or 2× OR range projected',
+    stats:[{n:'Timeframe',v:'5-min intraday'},{n:'Market open',v:'9:35 AM ET onward'},{n:'Stop definition',v:'OR low'},{n:'Best catalyst',v:'News, earnings, gap-up'}],
+    walkthrough:[
+      {h:'Pre-market preparation (9:00–9:29)', b:'Identify your watchlist before open using the pipeline scanner. Look for stocks with: catalyst (earnings/news), gap-up ≥2%, pre-market volume.'},
+      {h:'Mark the opening range (9:30–9:35)', b:'Set a 5-minute chart. The first 5-minute bar's high and low become your <code>Opening Range</code>. Mark these as horizontal lines.'},
+      {h:'Wait for the break (9:35+)', b:'After 9:35, watch for price to push above the OR high. Don't enter during the opening range — too much whipsawing.'},
+      {h:'Volume is mandatory', b:'The breakout bar must have <code>above-average volume</code>. A quiet break often fails.'},
+      {h:'Entry execution', b:'Enter as the breakout bar closes above the OR high. Stop is placed below the OR low. Risk/reward should be at least 1:2.'},
+      {h:'The pullback entry', b:'If you miss the first break, wait for price to pull back to the OR high (now support). A bounce off former resistance = lower-risk re-entry.'},
     ],
-    quiz: [
-      {q:'The opening range forms between $45.20 (low) and $46.80 (high). Price breaks above $46.80 at 9:42 on 3× average volume. Where do you set your stop?', opts:['Below $45.20 (OR low)','Below $46.80 (OR high)','Below the 9:42 candle low'], answer:0, explain:'Stop goes below the OR low ($45.20). This is the level that invalidates the ORB setup. Putting it below the OR high ($46.80) is too tight — normal volatility could stop you out before the trade has a chance to work.'},
-      {q:'A stock breaks the OR high at 9:38 but on below-average volume. What should you do?', opts:['Buy immediately — price is above OR high','Pass — volume confirmation is mandatory','Wait for volume to catch up, then enter'], answer:1, explain:'Low-volume ORB breaks have a high failure rate. Volume is mandatory confirmation. Entering without it is chasing — you\'re taking on risk without the institutional participation that makes ORB setups work.'},
+  },
+
+  canslim: {
+    title:'CANSLIM — William O\'Neil\'s Framework', subtitle:'The 7-factor system behind every great growth stock', color:'var(--purple)',
+    rules: [
+      {t:'<b>C — Current Earnings:</b> Quarterly EPS up ≥25% vs same quarter last year. Accelerating is better.',cls:'green-rule'},
+      {t:'<b>A — Annual Earnings:</b> 3-year EPS growth rate ≥25% per year. Consistent compounding.',cls:'green-rule'},
+      {t:'<b>N — New:</b> New product, service, management, or industry condition driving the growth.',cls:'green-rule'},
+      {t:'<b>S — Supply & Demand:</b> Shares outstanding ideally under 25M. Large float = hard to move. Watch for buybacks shrinking supply.',cls:'green-rule'},
+      {t:'<b>L — Leader or Laggard:</b> Relative Strength Rating ≥80 (top 20% of all stocks). Only trade leaders, never laggards.',cls:'green-rule'},
+      {t:'<b>I — Institutional Sponsorship:</b> Growing number of quality institutions buying. You want funds accumulating, not distributing.',cls:'green-rule'},
+      {t:'<b>M — Market Direction:</b> 3 out of 4 stocks follow the market. Only buy in a confirmed uptrend — never fight the broad market.',cls:'red-rule'},
+    ],
+    entry:'Buy breakouts from proper bases (flat base, cup & handle, VCP) when M = confirmed uptrend',
+    stop:'7–8% below purchase price — hard rule. O\'Neil never let a loss grow beyond 8%.',
+    target:'Let winners run 20–25% then reassess. Sell if relative strength breaks down before that.',
+    stats:[{n:'Framework author',v:'William O\'Neil'},{n:'Book',v:'How to Make Money in Stocks'},{n:'Developed from',v:'Study of 500 top stocks 1880–1990'},{n:'Core principle',v:'Buy the best, cut the rest'}],
+    walkthrough:[
+      {h:'Start with M — Market Direction', b:'Before doing anything else, assess the broad market. Is the Nasdaq in a <code>confirmed uptrend</code> (follow-through day after a correction)? If the market is in distribution or correction, CANSLIM says: sit in cash. Three out of four stocks follow the market — swimming against the current destroys accounts.'},
+      {h:'Screen for C and A — Earnings quality', b:'Run your scanner looking for stocks with current quarterly EPS up ≥25% vs the same quarter a year ago. Annual EPS growth of 25%+ for the last 3 years is the baseline. <code>Accelerating earnings</code> is the gold standard — if Q1 was +30%, Q2 was +45%, Q3 was +60%, that acceleration is what produces the big winners.'},
+      {h:'N — What\'s the catalyst?', b:'Every great stock had a "N" — NVDA had AI/data centres. AAPL had the iPhone. TSLA had EVs. The "N" is the fundamental reason institutions are willing to pay ever-higher prices. Without it, earnings growth is cyclical, not structural. Ask: <code>why will this company be worth 3× in 3 years?</code>'},
+      {h:'S — Float and ownership', b:'Smaller floats move faster. A stock with 8M shares outstanding needs far less buying to double than one with 800M. Also watch the ownership trend — are the number of funds holding it <code>increasing each quarter</code>? That\'s accumulation. Decreasing? Distribution.'},
+      {h:'L — Only trade leaders', b:'O\'Neil\'s research showed the biggest winners all had Relative Strength Ratings in the top 20% of all stocks <code>before</code> they made their major moves. Use the RS Rank tab in this scanner to find them. Avoid anything below RS 70 — you\'re buying a laggard hoping it catches up. It usually doesn\'t.'},
+      {h:'I — Institutional sponsorship', b:'You need big money on your side. Look for 3–10 high-quality funds (Fidelity Contrafund, T.Rowe Blue Chip, etc.) accumulating the stock. The Smart Alerts tab scans for exactly this. <code>Too many institutions</code> (>80% institutional ownership) can also be a problem — no one left to buy.'},
+      {h:'Putting it together', b:'A CANSLIM stock is one that scores well on all 7 factors simultaneously. Use this app\'s pipeline to scan for technical setups, then open the detail modal on each candidate to check analyst coverage, institutional ownership, and news. Run earnings through Finnhub. The ones that pass all 7 filters are your A-list watchlist.'},
+    ],
+  },
+
+  leaders: {
+    title:'Spotting Market Leaders', subtitle:'How to identify the stocks that will lead the next bull phase',color:'var(--cyan)',
+    rules: [
+      {t:'<b>Leaders break out first</b> — they make new highs while the broad market is still in correction or consolidation',cls:'green-rule'},
+      {t:'<b>Tight base construction</b> — leaders form tight, controlled bases with minimal closing range. Sloppy wide bases = distribution',cls:'green-rule'},
+      {t:'<b>Relative Strength is king</b> — if a stock can\'t outperform SPY in a bull market, it\'s not a leader. RS ≥ 80 is the minimum.',cls:'green-rule'},
+      {t:'<b>Volume pattern matters</b> — weeks of accumulation (up weeks on heavy volume) vs distribution (down weeks on heavy volume)',cls:'green-rule'},
+      {t:'<b>Leaders are never cheap</b> — they trade at premium P/E multiples because institutions pay up for quality. Avoid "cheap" stocks.',cls:''},
+      {t:'<b>Leaders don\'t need help</b> — if a stock only goes up because the whole market went up, it\'s not a leader. It\'s a passenger.',cls:'red-rule'},
+      {t:'<b>Beware late-stage bases</b> — a 4th or 5th base pattern has far lower success rates than a 1st or 2nd base from the launch point',cls:'red-rule'},
+    ],
+    entry:'First or second base breakout from the launching point, with RS already strong before the breakout',
+    stop:'Never more than 7–8% below entry. Leaders that are truly leaders don\'t trigger stops.',
+    target:'Hold until the fundamentals change or the stock starts forming a flawed base (too wide, too deep)',
+    stats:[{n:'RS threshold',v:'≥80 before breakout'},{n:'Base stage',v:'1st or 2nd preferred'},{n:'Float preference',v:'Smaller is better'},{n:'Volume pattern',v:'More up-volume than down'}],
+    walkthrough:[
+      {h:'The leadership list — how to build it', b:'Every market cycle has 3–7 true leaders in the leading sector. Start by identifying <code>which sector is outperforming</code> this cycle (use your ETF RS tab). Within that sector, the leaders are the stocks that: (1) made new highs earliest, (2) have the tightest bases, (3) have the highest RS rankings.'},
+      {h:'The base launch point', b:'Every leader has a launch point — the first base it built after a major earnings acceleration or product announcement. The first breakout from this launch point has the highest success rate. By the 3rd or 4th base, institutions are looking to sell into strength, not buy.'},
+      {h:'Reading the weekly base', b:'Open TradingView, switch to weekly chart, and look at each bar. Count the <code>up weeks on heavy volume</code> vs <code>down weeks on heavy volume</code> during the base. More up-volume weeks = accumulation = institutional buying. This is the most reliable signal the stock will be a leader.'},
+      {h:'Tight closing prices = institutional conviction', b:'Look at weekly closing prices within the base. If a stock is closing within a very tight range (1–2% variation in weekly closes) it means every time it dips, buyers step in at the same level. That\'s a price level where a large institution has a standing buy order.'},
+      {h:'The breakout tells the truth', b:'A genuine leader\'s breakout is unmistakable: volume 2–3× average, stock closes near the high of the day, often gaps up. If the breakout is tentative — low volume, gives back most gains by close — it\'s not a leader yet. Wait for it to prove itself.'},
+      {h:'Checklist: is this a leader?', b:'Run through these: <code>RS ≥ 80?</code> <code>New 52-week high or near it?</code> <code>1st or 2nd base?</code> <code>Earnings accelerating?</code> <code>Sector is leading?</code> <code>Institutional accumulation visible?</code> <code>Volume dry-up in base?</code> — 6 out of 7 or better = genuine leader candidate.'},
+    ],
+  },
+
+  sectors: {
+    title:'Sector Transitions', subtitle:'How money rotates — and how to position ahead of it', color:'var(--green)',
+    rules: [
+      {t:'<b>Sectors rotate in a predictable cycle</b> linked to the economic cycle (early, mid, late expansion → recession → recovery)',cls:'green-rule'},
+      {t:'<b>Money moves before the news</b> — sector leadership changes 3–6 months before the economic data confirms it',cls:'green-rule'},
+      {t:'<b>The strongest sector ETF on a 4-week basis</b> is usually where the next stock leaders will come from',cls:'green-rule'},
+      {t:'<b>Watch the ETF relative strength first</b> — don\'t hunt individual stocks in a weak sector, no matter how good they look technically',cls:'red-rule'},
+      {t:'<b>Sector leadership is narrow at tops</b> — when only 1–2 sectors are holding up the market, it\'s late cycle',cls:'red-rule'},
+      {t:'<b>Volume tells the story</b> — money flowing into a sector shows up as rising volume in sector ETFs before price confirms',cls:''},
+    ],
+    entry:'Once a sector ETF shows 4W RS breakout vs SPY, scan its top holdings for individual setups',
+    stop:'If the sector ETF loses RS leadership (drops below SPY on 4W basis), reduce or exit sector positions',
+    target:'Hold sector exposure until RS cycle tops out — typically 3–12 months per rotation',
+    stats:[{n:'Cycle length',v:'Months to years'},{n:'Leading indicator',v:'4W sector RS vs SPY'},{n:'Best tool',v:'ETF tab RS ranking'},{n:'Key signal',v:'Volume into sector ETFs'}],
+    walkthrough:[
+      {h:'The economic cycle and sector rotation', b:'The classic rotation: <code>Early recovery</code> → Financials, Consumer Discretionary, Tech lead. <code>Mid expansion</code> → Industrials, Materials, Energy join. <code>Late cycle</code> → Energy, Materials peak. Utilities become defensive. <code>Recession</code> → Healthcare, Utilities, Consumer Staples hold best. Knowing where you are in the cycle tells you where to look.'},
+      {h:'How to use your ETF tab for rotation signals', b:'Go to the ETF tab and sort by <b>4W performance</b>. The ETFs at the top are receiving the most capital right now. When a sector ETF breaks into the top 3 for the first time in months, that\'s a <code>rotation signal</code> — money is moving in. The stocks in that sector are your next hunting ground.'},
+      {h:'Confirm with relative strength acceleration', b:'It\'s not enough for a sector to be up — it needs to be up <code>more than SPY</code>. Use your ETF tab\'s "vs SPY" column. When a sector goes from underperforming SPY to outperforming SPY for 3+ consecutive weeks, that\'s the rotation confirming. Set up an alert (or check weekly).'},
+      {h:'The leadership handoff — how to spot it', b:'When Sector A has been leading for 12 months, watch for: (1) its RS vs SPY starts flattening, (2) former laggard Sector B starts closing the gap. The handoff is usually gradual — Sector A doesn\'t collapse, it just stops making new relative highs. That\'s when you start building a watchlist in Sector B.'},
+      {h:'Micro-rotation within sectors', b:'Even within a leading sector there\'s rotation. In a Tech rally, it might go: Software leads first → Semis pick up → Hardware joins late. Within Semis: fabless companies (NVDA, AMD) often lead before foundries (TSM) and equipment (AMAT, LRCX) follow. Understanding this sub-rotation helps you identify which subsector\'s stocks to focus on first.'},
+      {h:'Using this scanner for rotation', b:'The built-in workflow: (1) <b>ETF tab → sort by 4W → identify top 3 sector ETFs</b>. (2) <b>Click 🎯 Holdings</b> on those ETFs to pull their top stocks into your scanner. (3) <b>Run the pipeline</b> — it automatically ranks the top 5 ETFs\' holdings by strategy matches. (4) <b>RS Rank tab</b> — rank those stocks by RS score vs SPY + QQQ + sector. The ones with the highest composite RS scores inside the leading sectors are your highest-conviction setups.'},
+      {h:'Warning signs of a sector top', b:'When a leading sector starts showing: <code>expanding bases</code> (bases getting wider and deeper), <code>failed breakouts</code> (stocks break out then immediately fail), <code>heavy volume on down days</code> in the sector ETF — those are distribution signals. The smart money is selling to retail buyers who are just learning the sector is "hot". Start reducing exposure and look for the next rotation.'},
     ],
   },
 };
-
-// Quiz state
-const quizState = {};
 
 function renderLearnPanel(stratKey) {
   const d = LEARN_DATA[stratKey];
@@ -6151,7 +5982,6 @@ function renderLearnPanel(stratKey) {
   const wins = trades.filter(t=>t.plPct>0);
   const avgWin = wins.length ? (wins.reduce((a,b)=>a+b.plPct,0)/wins.length).toFixed(1) : '—';
   const winRate = trades.length ? ((wins.length/trades.length)*100).toFixed(0) : '—';
-
   const personalHTML = trades.length ? `
     <div class="personal-stats">
       <div class="personal-stats-title">📔 Your Journal Stats for This Strategy</div>
@@ -6162,97 +5992,37 @@ function renderLearnPanel(stratKey) {
       </div>
     </div>` : '';
 
-  // Quiz init
-  if (!quizState[stratKey]) quizState[stratKey] = { current:0, score:0, answered:false };
-
-  const quiz = d.quiz;
-  const qs = quizState[stratKey];
-  const q = quiz[qs.current % quiz.length];
-  const qHTML = `
-    <div class="quiz-wrap">
-      <div class="quiz-title">🧠 Quick Quiz (${qs.current+1}/${quiz.length})</div>
-      <div class="quiz-q">${q.q}</div>
-      <div class="quiz-options">
-        ${q.opts.map((opt,i)=>`<button class="quiz-opt" data-strat="${stratKey}" data-qi="${qs.current}" data-ai="${i}" ${qs.answered?'disabled':''}>${opt}</button>`).join('')}
-      </div>
-      <div class="quiz-feedback" id="qfb-${stratKey}"></div>
-      <button class="quiz-next" id="qnext-${stratKey}">Next Question →</button>
-      <div class="quiz-score">Score: ${qs.score}/${quiz.length}</div>
-    </div>`;
-
   return `
-    <div class="learn-hero">
-      <div class="learn-content">
-        <h2><em>${d.title.split('—')[0].trim()}</em>${d.title.includes('—')?` — ${d.title.split('—')[1].trim()}`:''}</h2>
-        <div class="tagline">${d.subtitle}</div>
-        ${personalHTML}
-        <div class="learn-stats-row">
-          ${d.stats.map(s=>`<div class="learn-stat"><div class="learn-stat-n">${s.v}</div><div class="learn-stat-l">${s.n}</div></div>`).join('')}
-        </div>
-        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase">Rules &amp; Criteria</div>
-        <ul class="learn-rules">
-          ${d.rules.map(r=>`<li class="${r.cls}">${r.t}</li>`).join('')}
-        </ul>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-          <div style="padding:10px;background:var(--green-dim);border:1px solid rgba(61,255,160,.2)"><div style="font-size:8px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Entry</div><div style="font-size:11px;color:var(--text)">${d.entry}</div></div>
-          <div style="padding:10px;background:var(--red-dim);border:1px solid rgba(255,82,119,.2)"><div style="font-size:8px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Stop</div><div style="font-size:11px;color:var(--text)">${d.stop}</div></div>
-          <div style="padding:10px;background:var(--accent-dim);border:1px solid rgba(232,255,71,.2);grid-column:1/-1"><div style="font-size:8px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Target</div><div style="font-size:11px;color:var(--text)">${d.target}</div></div>
-        </div>
+    <div class="learn-content">
+      <h2><em>${d.title}</em></h2>
+      <div class="tagline">${d.subtitle}</div>
+      ${personalHTML}
+      <div class="learn-stats-row">
+        ${d.stats.map(s=>`<div class="learn-stat"><div class="learn-stat-n">${s.v}</div><div class="learn-stat-l">${s.n}</div></div>`).join('')}
       </div>
-      <div>
-        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Pattern Diagram</div>
-        <div class="learn-chart-wrap">${d.svg()}</div>
+
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Rules &amp; Criteria</div>
+      <ul class="learn-rules">
+        ${d.rules.map(r=>`<li class="${r.cls}">${r.t}</li>`).join('')}
+      </ul>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+        <div style="padding:12px;background:var(--green-dim);border:1px solid rgba(61,255,160,.2)"><div style="font-size:8px;color:var(--green);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">Entry</div><div style="font-size:11px;color:var(--text);line-height:1.6">${d.entry}</div></div>
+        <div style="padding:12px;background:var(--red-dim);border:1px solid rgba(255,82,119,.2)"><div style="font-size:8px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">Stop</div><div style="font-size:11px;color:var(--text);line-height:1.6">${d.stop}</div></div>
+        <div style="padding:12px;background:var(--accent-dim);border:1px solid rgba(232,255,71,.2);grid-column:1/-1"><div style="font-size:8px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px">Target</div><div style="font-size:11px;color:var(--text);line-height:1.6">${d.target}</div></div>
+      </div>
+
+      <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Step-by-Step Walkthrough</div>
+      <div class="walkthrough-steps">
+        ${d.walkthrough.map(s=>`<div class="wt-step"><div class="wt-step-body"><h4>${s.h}</h4><p>${s.b}</p></div></div>`).join('')}
       </div>
     </div>
-
-    <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Step-by-Step Walkthrough</div>
-    <div class="walkthrough-steps">
-      ${d.walkthrough.map(s=>`<div class="wt-step"><div class="wt-step-body"><h4>${s.h}</h4><p>${s.b}</p></div></div>`).join('')}
-    </div>
-
-    <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:20px 0 12px">Test Your Knowledge</div>
-    ${qHTML}
   `;
 }
 
 function switchLearnPanel(key) {
   document.querySelectorAll('.learn-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.learn===key));
   g('learn-content').innerHTML = renderLearnPanel(key);
-  wireQuizButtons(key);
-}
-
-function wireQuizButtons(stratKey) {
-  const d = LEARN_DATA[stratKey]; if (!d) return;
-  const qs = quizState[stratKey];
-  document.querySelectorAll(`.quiz-opt[data-strat="${stratKey}"]`).forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if (qs.answered) return;
-      const qi = parseInt(btn.dataset.qi);
-      const ai = parseInt(btn.dataset.ai);
-      const q = d.quiz[qi % d.quiz.length];
-      qs.answered = true;
-      const correct = ai === q.answer;
-      if (correct) qs.score++;
-      // Highlight buttons
-      document.querySelectorAll(`.quiz-opt[data-strat="${stratKey}"]`).forEach((b,i)=>{
-        if (i === q.answer) b.classList.add('revealed');
-        else if (i === ai && !correct) b.classList.add('wrong');
-        b.disabled = true;
-      });
-      // Feedback
-      const fb = g(`qfb-${stratKey}`);
-      fb.textContent = (correct ? '✓ Correct! ' : '✗ Not quite. ') + q.explain;
-      fb.className = `quiz-feedback show ${correct?'':'wrong'}`;
-      // Show next
-      const nxt = g(`qnext-${stratKey}`);
-      nxt.className = 'quiz-next show';
-      nxt.addEventListener('click', ()=>{
-        qs.current = (qs.current+1) % d.quiz.length;
-        qs.answered = false;
-        switchLearnPanel(stratKey);
-      }, {once:true});
-    });
-  });
 }
 
 // Wire learn nav
@@ -6262,7 +6032,6 @@ document.querySelectorAll('.learn-nav-btn').forEach(btn=>{
 // Init first panel
 if (document.querySelector('.learn-nav-btn')) {
   g('learn-content').innerHTML = renderLearnPanel('nr4');
-  wireQuizButtons('nr4');
 }
 
 // Update RS/Learn dropdowns on tab switch
