@@ -3918,57 +3918,105 @@ async function loadDetailInsider(ticker) {
 
 // ─── Institutional ownership (Finnhub) ──────────────────────────────────────
 async function loadDetailInstitutional(ticker) {
-  const key = getFinnhubKey();
-  if (!key) {
-    g('detail-instit-tbl').querySelector('tbody').innerHTML = '<tr><td colspan="4" style="color:var(--orange);font-size:10px;padding:14px">⚠ Finnhub key not set — see ORB Live tab</td></tr>';
+  // Yahoo Finance quoteSummary endpoint — has institutionOwnership, fundOwnership, majorHoldersBreakdown
+  // Browsers can't hit it directly (CORS) so route through the same proxy chain we use for SEC.
+  const yUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=institutionOwnership,fundOwnership,majorHoldersBreakdown`;
+
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+
+  let data = null;
+  let lastErr = '';
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy(yUrl), { signal: AbortSignal.timeout(12000) });
+      if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
+      const text = await r.text();
+      if (!text || text.length < 50) { lastErr = 'empty'; continue; }
+      const j = JSON.parse(text);
+      const result = j?.quoteSummary?.result?.[0];
+      if (!result) { lastErr = 'no result'; continue; }
+      data = result;
+      break;
+    } catch(e) {
+      lastErr = e.message;
+    }
+  }
+
+  if (!data) {
+    g('detail-instit-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ Yahoo institutional data unavailable: ${lastErr}<br><span style="color:var(--muted)">All proxies failed — try again in a few seconds</span></td></tr>`;
+    g('detail-instit-tiles').innerHTML = '';
     return;
   }
+
   try {
-    // Finnhub fund ownership endpoint
-    const r = await fetch(`https://finnhub.io/api/v1/stock/fund-ownership?symbol=${ticker}&limit=20&token=${encodeURIComponent(key)}`);
-    const j = await r.json();
-    if (!r.ok || j?.error) throw new Error(j?.error || `HTTP ${r.status}`);
+    // Combine institutional and fund holders into one list
+    const inst = (data.institutionOwnership?.ownershipList || []).map(o => ({ ...o, kind: 'institution' }));
+    const fund = (data.fundOwnership?.ownershipList || []).map(o => ({ ...o, kind: 'fund' }));
+    const allHolders = [...inst, ...fund];
 
-    const owners = j.ownership || [];
+    // Major holder breakdown summary (insidersPercentHeld, institutionsPercentHeld, etc.)
+    const majors = data.majorHoldersBreakdown || {};
+    const instPctHeld = majors.institutionsPercentHeld?.raw != null ? (majors.institutionsPercentHeld.raw * 100) : null;
+    const insidersPct = majors.insidersPercentHeld?.raw != null ? (majors.insidersPercentHeld.raw * 100) : null;
+    const instCount = majors.institutionsCount?.raw ?? null;
+    const instFloatPct = majors.institutionsFloatPercentHeld?.raw != null ? (majors.institutionsFloatPercentHeld.raw * 100) : null;
 
-    // Sort by share count
-    owners.sort((a,b) => (b.share || 0) - (a.share || 0));
-
-    // Tiles: total holders count, total % held, biggest holder, recent buyers
-    const totalShares = owners.reduce((s,o) => s + (o.share || 0), 0);
-    const buyers = owners.filter(o => o.change > 0).length;
-    const sellers = owners.filter(o => o.change < 0).length;
-    const newPositions = owners.filter(o => o.change && o.share && Math.abs(o.change) >= o.share * 0.99).length;
-
+    // Tiles
     g('detail-instit-tiles').innerHTML = `
-      <div class="detail-tile"><div class="detail-tile-lbl">Funds Holding</div><div class="detail-tile-val">${owners.length}</div></div>
-      <div class="detail-tile"><div class="detail-tile-lbl">Increased</div><div class="detail-tile-val green">${buyers}</div></div>
-      <div class="detail-tile"><div class="detail-tile-lbl">Decreased</div><div class="detail-tile-val red">${sellers}</div></div>
-      <div class="detail-tile"><div class="detail-tile-lbl">New Positions</div><div class="detail-tile-val amber">${newPositions}</div></div>
+      <div class="detail-tile">
+        <div class="detail-tile-lbl">Total Institutions</div>
+        <div class="detail-tile-val">${instCount != null ? fmtNum(instCount) : '—'}</div>
+      </div>
+      <div class="detail-tile">
+        <div class="detail-tile-lbl">Institutional %</div>
+        <div class="detail-tile-val ${instPctHeld >= 70 ? 'green' : instPctHeld >= 40 ? 'amber' : ''}">${instPctHeld != null ? instPctHeld.toFixed(1) + '%' : '—'}</div>
+        <div class="detail-tile-sub">of shares outstanding</div>
+      </div>
+      <div class="detail-tile">
+        <div class="detail-tile-lbl">% of Float</div>
+        <div class="detail-tile-val">${instFloatPct != null ? instFloatPct.toFixed(1) + '%' : '—'}</div>
+      </div>
+      <div class="detail-tile">
+        <div class="detail-tile-lbl">Insiders Hold</div>
+        <div class="detail-tile-val ${insidersPct >= 10 ? 'amber' : ''}">${insidersPct != null ? insidersPct.toFixed(2) + '%' : '—'}</div>
+      </div>
     `;
 
     const tbody = g('detail-instit-tbl').querySelector('tbody');
-    if (!owners.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No institutional ownership data available</td></tr>';
+    if (!allHolders.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No detailed holder data available for this ticker</td></tr>';
       return;
     }
 
-    // Top 5 holders
-    const top5 = owners.slice(0, 5);
-    tbody.innerHTML = top5.map(o => {
-      const change = o.change || 0;
+    // Sort by position size descending
+    allHolders.sort((a,b) => (b.position?.raw || 0) - (a.position?.raw || 0));
+
+    // Top 5
+    const top5 = allHolders.slice(0, 5);
+    tbody.innerHTML = top5.map(h => {
+      const shares = h.position?.raw || 0;
+      const pctHeld = h.pctHeld?.raw != null ? (h.pctHeld.raw * 100) : null;
+      const change = h.pctChange?.raw != null ? (h.pctChange.raw * 100) : null;
       const changeCls = change > 0 ? 'green' : change < 0 ? 'red' : 'muted';
-      const changeStr = change > 0 ? `+${fmtNum(change)}` : change < 0 ? `${fmtNum(change)}` : '0';
-      const pctHeld = o.portfolioPercent ? o.portfolioPercent.toFixed(2) + '%' : '—';
+      const changeStr = change != null
+        ? (change >= 0 ? '+' : '') + change.toFixed(1) + '%'
+        : '—';
+      const kindBadge = h.kind === 'fund'
+        ? '<span style="font-size:8px;color:var(--cyan);margin-left:6px;letter-spacing:1px">FUND</span>'
+        : '';
       return `<tr>
-        <td class="sm-name" style="font-size:11px;white-space:normal;max-width:200px;line-height:1.4">${o.name || '—'}</td>
-        <td class="num">${fmtNum(o.share || 0)}</td>
-        <td class="num">${pctHeld}</td>
+        <td class="sm-name" style="font-size:11px;white-space:normal;max-width:200px;line-height:1.4">${h.organization || '—'}${kindBadge}</td>
+        <td class="num">${fmtNum(shares)}</td>
+        <td class="num">${pctHeld != null ? pctHeld.toFixed(2) + '%' : '—'}</td>
         <td class="num" style="color:var(--${changeCls})">${changeStr}</td>
       </tr>`;
     }).join('');
   } catch(e) {
-    g('detail-instit-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ ${e.message}<br><span style="color:var(--muted)">(this endpoint may require Finnhub paid tier)</span></td></tr>`;
+    g('detail-instit-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ Parse error: ${e.message}</td></tr>`;
   }
 }
 
