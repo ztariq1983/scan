@@ -5384,15 +5384,17 @@ const BACKUP_KEYS_SECRETS = [
 function buildBackup(includeKeys = false) {
   const data = {
     _format: 'apex-scanner-backup',
-    _version: 1,
+    _version: 2,
     _exportedAt: new Date().toISOString(),
     _includesKeys: includeKeys,
     data: {},
   };
+  // Always include ETFs, holdings, watchlists, journal
   for (const k of BACKUP_KEYS_DATA) {
     const v = localStorage.getItem(k);
     if (v != null) data.data[k] = v;
   }
+  // Include keys only if opted in
   if (includeKeys) {
     for (const k of BACKUP_KEYS_SECRETS) {
       const v = localStorage.getItem(k);
@@ -5403,40 +5405,43 @@ function buildBackup(includeKeys = false) {
 }
 
 function exportBackup() {
-  // Ask user whether to include API keys
   const includeKeys = confirm(
     'Include your API keys in the backup?\n\n' +
-    '✓ OK = Include keys (convenient — no need to re-enter on other devices, but file is sensitive)\n' +
-    '✗ Cancel = Exclude keys (safer — you re-enter keys after restoring)\n\n' +
-    'Either way: watchlists, ETFs, holdings, journal trades, all included.'
+    '✓ OK = Include Alpaca + Finnhub keys\n' +
+    '   (convenient for cross-device, but keep the file private)\n\n' +
+    '✗ Cancel = Exclude keys\n' +
+    '   (safer — re-enter keys after restoring)\n\n' +
+    'Either way: watchlists, ETFs, holdings, and journal are always included.'
   );
 
   const backup = buildBackup(includeKeys);
+
+  // Build counts for confirmation
   const counts = {
-    watchlists:  Object.keys(JSON.parse(backup.data.apex_watchlists || '{}')).length,
-    etfs:        JSON.parse(backup.data.apex_etfs || '[]').length,
-    holdings:    Object.keys(JSON.parse(backup.data.apex_etf_holdings || '{}')).length,
-    trades:      JSON.parse(backup.data.apex_journal || '[]').length,
+    watchlists: Object.keys(JSON.parse(backup.data.apex_watchlists || '{}')).length,
+    etfs:       JSON.parse(backup.data.apex_etfs || '[]').length,
+    holdings:   Object.keys(JSON.parse(backup.data.apex_etf_holdings || '{}')).length,
+    trades:     JSON.parse(backup.data.apex_journal || '[]').length,
   };
 
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
   const today = new Date().toISOString().split('T')[0];
-  a.href = url;
+  a.href     = url;
   a.download = `apex-backup-${today}${includeKeys ? '-with-keys' : ''}.json`;
   a.click();
   URL.revokeObjectURL(url);
 
-  // Brief confirmation
   alert(
     `✓ Backup downloaded!\n\n` +
-    `📋 ${counts.watchlists} watchlists\n` +
     `📊 ${counts.etfs} tracked ETFs\n` +
     `🎯 ${counts.holdings} ETF holdings lists\n` +
+    `📋 ${counts.watchlists} watchlists\n` +
     `📔 ${counts.trades} journal trades\n` +
-    `🔑 API keys: ${includeKeys ? 'INCLUDED ⚠' : 'excluded'}\n\n` +
-    `Save this file to Dropbox / iCloud / Google Drive to access from other devices.`
+    `🔑 API keys: ${includeKeys ? 'INCLUDED ⚠ keep file private' : 'excluded'}\n\n` +
+    `To restore on another device:\n` +
+    `Click ⬆ Restore and select this file.`
   );
 }
 
@@ -5446,40 +5451,43 @@ function restoreBackup(file) {
     try {
       const backup = JSON.parse(ev.target.result);
 
-      // Validate
+      // Validate — accept both v1 and v2
       if (backup._format !== 'apex-scanner-backup') {
-        throw new Error('Not an APEX backup file');
+        throw new Error('Not a valid APEX backup file');
       }
       if (!backup.data || typeof backup.data !== 'object') {
-        throw new Error('Invalid backup structure');
+        throw new Error('Invalid backup structure — data section missing');
       }
 
-      // Build summary for confirmation
+      // Build human-readable summary
       const summary = [];
-      let wlNew = 0, wlExisting = 0;
-      if (backup.data.apex_watchlists) {
-        const incoming = JSON.parse(backup.data.apex_watchlists);
-        const existing = getAllWatchlists();
-        for (const name of Object.keys(incoming)) {
-          if (existing[name]) wlExisting++;
-          else wlNew++;
-        }
-        summary.push(`📋 Watchlists: ${Object.keys(incoming).length} (${wlNew} new, ${wlExisting} would overwrite existing)`);
-      }
       if (backup.data.apex_etfs) {
-        const incoming = JSON.parse(backup.data.apex_etfs);
-        summary.push(`📊 Tracked ETFs: ${incoming.length}`);
+        const etfs = JSON.parse(backup.data.apex_etfs);
+        summary.push(`📊 ${etfs.length} tracked ETFs`);
       }
       if (backup.data.apex_etf_holdings) {
-        const incoming = JSON.parse(backup.data.apex_etf_holdings);
-        summary.push(`🎯 ETF holdings: ${Object.keys(incoming).length} ETFs`);
+        const h = JSON.parse(backup.data.apex_etf_holdings);
+        summary.push(`🎯 ${Object.keys(h).length} ETF holdings lists`);
+      }
+      if (backup.data.apex_watchlists) {
+        const wls = JSON.parse(backup.data.apex_watchlists);
+        const existing = getAllWatchlists();
+        const nNew = Object.keys(wls).filter(n => !existing[n]).length;
+        const nOver = Object.keys(wls).length - nNew;
+        summary.push(`📋 ${Object.keys(wls).length} watchlists (${nNew} new, ${nOver} existing)`);
       }
       if (backup.data.apex_journal) {
-        const incoming = JSON.parse(backup.data.apex_journal);
-        summary.push(`📔 Journal trades: ${incoming.length}`);
+        const trades = JSON.parse(backup.data.apex_journal);
+        summary.push(`📔 ${trades.length} journal trades`);
       }
       if (backup._includesKeys) {
-        summary.push(`🔑 API keys: included`);
+        const keyNames = [];
+        if (backup.data.alpaca_key)       keyNames.push('Alpaca Key');
+        if (backup.data.alpaca_secret)    keyNames.push('Alpaca Secret');
+        if (backup.data.apex_finnhub_key) keyNames.push('Finnhub Key');
+        summary.push(`🔑 API keys: ${keyNames.join(', ')}`);
+      } else {
+        summary.push(`🔑 API keys: not in this backup`);
       }
 
       const exportedAt = backup._exportedAt
@@ -5487,60 +5495,73 @@ function restoreBackup(file) {
         : 'unknown date';
 
       const choice = prompt(
-        `Backup file from ${exportedAt}\n\n` +
-        summary.join('\n') + '\n\n' +
-        `Type one of:\n` +
-        `  MERGE   — keep your current data, add new items only\n` +
+        `APEX Backup — ${exportedAt}\n\n` +
+        `Contents:\n` +
+        summary.map(s => `  ${s}`).join('\n') +
+        `\n\n` +
+        `How do you want to restore?\n\n` +
+        `  MERGE   — add to existing data (safe, no overwrites)\n` +
         `  REPLACE — wipe current data and restore from backup\n` +
-        `  CANCEL  — abort\n\n` +
-        `(case-insensitive)`,
+        `  CANCEL  — abort\n`,
         'MERGE'
       );
 
       if (!choice) return;
       const mode = choice.trim().toUpperCase();
-      if (mode === 'CANCEL' || (mode !== 'MERGE' && mode !== 'REPLACE')) {
-        if (mode !== 'CANCEL') alert('Restore cancelled — please type MERGE, REPLACE, or CANCEL.');
+      if (mode === 'CANCEL') return;
+      if (mode !== 'MERGE' && mode !== 'REPLACE') {
+        alert(`Unrecognised choice "${choice}". Please type MERGE, REPLACE, or CANCEL.`);
         return;
       }
 
-      // Apply each backed-up key
+      // ── Apply each key ──────────────────────────────────────────────────
       for (const key of [...BACKUP_KEYS_DATA, ...BACKUP_KEYS_SECRETS]) {
         if (backup.data[key] == null) continue;
 
         if (mode === 'REPLACE') {
+          // REPLACE: overwrite everything unconditionally
           localStorage.setItem(key, backup.data[key]);
           continue;
         }
 
-        // MERGE mode — combine intelligently per data type
+        // MERGE: smart merge per data type
         if (key === 'apex_watchlists' || key === 'apex_etf_holdings') {
+          // Object merge — incoming fills gaps, existing takes precedence on conflict
           const incoming = JSON.parse(backup.data[key]);
           const existing = JSON.parse(localStorage.getItem(key) || '{}');
-          // Incoming takes precedence on conflict
-          const merged = { ...existing, ...incoming };
+          const merged   = { ...incoming, ...existing }; // existing wins on key collision
           localStorage.setItem(key, JSON.stringify(merged));
+
         } else if (key === 'apex_etfs') {
+          // Array merge — union, deduplicated
           const incoming = JSON.parse(backup.data[key]);
           const existing = JSON.parse(localStorage.getItem(key) || '[]');
-          const merged = [...new Set([...existing, ...incoming])];
+          const merged   = [...new Set([...existing, ...incoming])];
           localStorage.setItem(key, JSON.stringify(merged));
+
         } else if (key === 'apex_journal') {
-          const incoming = JSON.parse(backup.data[key]);
-          const existing = JSON.parse(localStorage.getItem(key) || '[]');
+          // Array merge — add trades not already present (by id)
+          const incoming    = JSON.parse(backup.data[key]);
+          const existing    = JSON.parse(localStorage.getItem(key) || '[]');
           const existingIds = new Set(existing.map(t => t.id));
-          const newOnes = incoming.filter(t => !existingIds.has(t.id));
+          const newOnes     = incoming.filter(t => !existingIds.has(t.id));
           localStorage.setItem(key, JSON.stringify([...existing, ...newOnes]));
+
         } else {
-          // API keys: only set if not already present (don't overwrite existing keys in merge)
-          if (!localStorage.getItem(key)) {
-            localStorage.setItem(key, backup.data[key]);
-          }
+          // API keys — ALWAYS restore in MERGE mode if the backup has them.
+          // User explicitly asked to restore, so overwrite current keys.
+          localStorage.setItem(key, backup.data[key]);
         }
       }
 
-      alert(`✓ Restore complete (${mode} mode)\n\nReloading the app to apply changes...`);
-      // Reload to refresh all UI from the new localStorage state
+      const restoredEtfs  = backup.data.apex_etfs ? JSON.parse(backup.data.apex_etfs).length : 0;
+      const restoredKeys  = backup._includesKeys ? '✓ restored' : 'not in backup';
+      alert(
+        `✓ Restore complete (${mode} mode)\n\n` +
+        `📊 ETFs: ${restoredEtfs} restored\n` +
+        `🔑 API keys: ${restoredKeys}\n\n` +
+        `Reloading the app to apply changes…`
+      );
       window.location.reload();
 
     } catch(e) {
@@ -6700,21 +6721,25 @@ function calcCompositeScore(r) {
   else if (rvol >= 0.7) volPts = 3;
 
   // ── 3. Relative Strength vs SPY (20 pts) ────────────────────────
+  // Uses 63-day (3-month) lookback — more meaningful for swing trading
+  // Falls back to 20-day if insufficient data
   let rsPts = 0;
-  if (scanState.spyBars && n >= 20) {
-    const spyC   = scanState.spyBars.map(b=>b.c);
-    const spyCur = spyC[spyC.length-1];
-    const spyP20 = spyC[Math.max(0,spyC.length-21)];
-    const spyRet = spyP20 ? ((spyCur-spyP20)/spyP20)*100 : 0;
-    const stP20  = closes[Math.max(0,n-21)];
-    const stRet  = stP20 ? ((closes[n-1]-stP20)/stP20)*100 : 0;
-    const diff   = stRet - spyRet;
-    if (diff >= 10)  rsPts = 20;
-    else if (diff >= 5)   rsPts = 16;
-    else if (diff >= 2)   rsPts = 12;
-    else if (diff >= 0)   rsPts = 8;
-    else if (diff >= -3)  rsPts = 4;
-    else rsPts = 0;
+  if (scanState.spyBars && n >= 10) {
+    const spyC    = scanState.spyBars.map(b => b.c);
+    const period  = Math.min(63, n - 1, spyC.length - 1); // 63d preferred, shorter if less data
+    const spyCur  = spyC[spyC.length - 1];
+    const spyPast = spyC[Math.max(0, spyC.length - 1 - period)];
+    const spyRet  = spyPast ? ((spyCur - spyPast) / spyPast) * 100 : 0;
+    const stCur   = closes[n - 1];
+    const stPast  = closes[Math.max(0, n - 1 - period)];
+    const stRet   = stPast ? ((stCur - stPast) / stPast) * 100 : 0;
+    const diff    = stRet - spyRet; // positive = outperforming SPY
+    if      (diff >= 15) rsPts = 20;
+    else if (diff >= 8)  rsPts = 16;
+    else if (diff >= 4)  rsPts = 12;
+    else if (diff >= 0)  rsPts = 8;
+    else if (diff >= -5) rsPts = 4;
+    else                 rsPts = 0;
   }
 
   // ── 4. Pattern Quality (20 pts) ─────────────────────────────────
@@ -6832,19 +6857,8 @@ renderTable = function() {
 const _finalRenderTable = renderTable;
 renderTable = function() {
   _finalRenderTable();
-  const tbody = g('tbody');
-  if (!tbody) return;
-  // Add data-ticker to each result row and wire playbook toggle
-  let i = 0;
-  tbody.querySelectorAll('tr:not(.playbook-row)').forEach(row => {
-    if (i >= results.length) return;
-    const r = results.filter(x => !x.error || true)[i];
-    if (r && !row.dataset.ticker) {
-      row.dataset.ticker = r.ticker;
-      row.style.cursor = 'default';
-    }
-    i++;
-  });
+  // Inject playbook rows after DOM settles
+  setTimeout(injectPlaybookRows, 0);
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -7012,52 +7026,57 @@ function getPlaybookHTML(r) {
 function injectPlaybookRows() {
   const tbody = g('tbody');
   if (!tbody) return;
-  // Remove existing playbook rows first
-  tbody.querySelectorAll('.playbook-row').forEach(r=>r.remove());
 
+  // Remove existing playbook rows
+  tbody.querySelectorAll('.playbook-row').forEach(r => r.remove());
+
+  // Use filtered+sorted results (same view as the table)
+  const visible = results.filter(r => !r.error && r.signals.some(s => activeStrats.has(s)));
+
+  // Insert playbook row after each data row and tag with index
   const dataRows = [...tbody.querySelectorAll('tr:not(.playbook-row)')];
   dataRows.forEach((row, i) => {
-    const r = results.filter(x=>!x.error||true)[i];
-    if (!r || r.error) return;
-    row.dataset.ticker = r.ticker;
+    const r = visible[i];
+    if (!r) return;
 
-    // Add playbook toggle button to first cell
+    row.dataset.pbIdx = i;
+
+    // Add ▶ toggle to ticker cell if not already there
     const firstTd = row.querySelector('td.td-tick');
     if (firstTd && !firstTd.querySelector('.playbook-toggle')) {
       const tog = document.createElement('span');
       tog.className = 'playbook-toggle';
       tog.textContent = '▶';
       tog.title = 'Show playbook';
+      tog.dataset.pbIdx = i;
       tog.style.marginLeft = '6px';
-      tog.addEventListener('click', e => {
-        e.stopPropagation();
-        const pbRow = row.nextSibling;
-        if (pbRow && pbRow.classList.contains('playbook-row')) {
-          const isOpen = pbRow.classList.contains('open');
-          pbRow.classList.toggle('open');
-          tog.textContent = isOpen ? '▶' : '▼';
-        }
-      });
       firstTd.appendChild(tog);
     }
 
-    // Create playbook row
+    // Insert playbook row immediately after this row
     const pbTr = document.createElement('tr');
     pbTr.className = 'playbook-row';
+    pbTr.dataset.pbIdx = i;
     const pbTd = document.createElement('td');
-    pbTd.colSpan = 8;
+    pbTd.colSpan = 9; // covers all columns including score
     pbTd.innerHTML = getPlaybookHTML(r);
     pbTr.appendChild(pbTd);
     row.after(pbTr);
   });
 }
 
-// Hook playbook injection into the render pipeline
-const _origRTForPlaybook = renderTable;
-renderTable = function() {
-  _origRTForPlaybook();
-  setTimeout(injectPlaybookRows, 0);
-};
+// Single delegated listener on tbody — survives re-renders
+g('tbody').addEventListener('click', e => {
+  const tog = e.target.closest('.playbook-toggle[data-pb-idx]');
+  if (!tog) return;
+  e.stopPropagation();
+  const idx   = tog.dataset.pbIdx;
+  const pbRow = g('tbody').querySelector(`.playbook-row[data-pb-idx="${idx}"]`);
+  if (!pbRow) return;
+  const isOpen = pbRow.classList.contains('open');
+  pbRow.classList.toggle('open');
+  tog.textContent = isOpen ? '▶' : '▼';
+});
 
 // ═════════════════════════════════════════════════════════════════════════════
 // PERFORMANCE ENGINE — Equity Curve + Day-of-Week + Expectancy
@@ -7174,30 +7193,28 @@ renderJournal = function() {
 // Override runPipeline with enhanced version
 const _origRunPipeline = runPipeline;
 runPipeline = async function() {
-  // The enhanced pipeline adds: gap check, RVOL filter, news catalyst, score ranking
-  // We let the original run, then re-rank by composite score
-  // First refresh scan state for regime
-  if (!scanState.spyBars) await refreshScanState();
+  // Always refresh scan state before pipeline so RS scoring has SPY data
+  await refreshScanState();
 
-  // Start original pipeline — it populates shortlistResults
+  // Run original pipeline — populates shortlistResults
   await _origRunPipeline();
 
-  // Now enhance shortlist with additional filters visible in the status
   if (!shortlistResults || !shortlistResults.length) return;
 
-  // Add composite score to each shortlist result
+  // Compute composite scores (attach _closes/MAs if missing from pipeline scan)
   shortlistResults.forEach(r => {
-    if (!r.compositeScore) {
-      const sc = calcCompositeScore(r);
-      r.compositeScore = sc.total;
-      r.scoreBreakdown = sc.breakdown;
+    if (!r._closes && r.price) {
+      // Minimal fallback: score what we can without MA data
+      r._closes = [r.price]; r._ma20 = null; r._ma50 = null; r._ma200 = null;
     }
+    const sc = calcCompositeScore(r);
+    r.compositeScore = sc.total;
+    r.scoreBreakdown = sc.breakdown;
   });
 
-  // Re-sort shortlist by composite score (highest first)
+  // Re-sort by composite score
   shortlistResults.sort((a,b) => (b.compositeScore||0) - (a.compositeScore||0));
 
-  // Re-render with scores
   renderShortlistV2();
 };
 
