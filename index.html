@@ -3217,6 +3217,7 @@ function renderTradeLog() {
       <td class="ctr"><span class="trade-status ${t.status}">${statusLbl}</span></td>
       <td class="ctr"><div class="td-act">
         ${t.status === 'open' ? `<button class="act-btn exit" data-exit="${t.id}">Close →</button>` : ''}
+        <button class="act-btn" data-change-strat="${t.id}" title="Change strategy" style="color:var(--orange);border-color:rgba(255,155,78,.4)">✎</button>
         <button class="act-btn del" data-del-trade="${t.id}">✕</button>
       </div></td>
     </tr>`;
@@ -3224,6 +3225,7 @@ function renderTradeLog() {
 
   tbody.querySelectorAll('[data-exit]').forEach(b => b.addEventListener('click', () => openExitModal(b.dataset.exit)));
   tbody.querySelectorAll('[data-del-trade]').forEach(b => b.addEventListener('click', () => deleteTrade(b.dataset.delTrade)));
+  tbody.querySelectorAll('[data-change-strat]').forEach(b => b.addEventListener('click', () => changeTradeStrategy(b.dataset.changeStrat)));
 }
 
 function renderJournal() {
@@ -6876,28 +6878,7 @@ document.addEventListener('click', e => {
   if (btn) changeTradeStrategy(btn.dataset.changeStrat);
 });
 
-// Hook into tbody renders to append change-strat buttons
-const _observer = new MutationObserver(() => {
-  const tbody = g('trade-tbody');
-  if (!tbody) return;
-  tbody.querySelectorAll('tr').forEach(row => {
-    const actCell = row.querySelector('.td-act');
-    if (!actCell) return;
-    if (actCell.querySelector('.change-strat-btn')) return; // already added
-    const delBtn = actCell.querySelector('[data-del-trade]');
-    if (!delBtn) return;
-    const tradeId = delBtn.dataset.delTrade;
-    const editBtn = document.createElement('button');
-    editBtn.className = 'act-btn change-strat-btn';
-    editBtn.dataset.changeStrat = tradeId;
-    editBtn.title = 'Change strategy';
-    editBtn.textContent = '✎';
-    editBtn.style.cssText = 'color:var(--orange);border-color:rgba(255,155,78,.3)';
-    actCell.insertBefore(editBtn, delBtn);
-  });
-});
-const tradeTbody = g('trade-tbody');
-if (tradeTbody) _observer.observe(tradeTbody, {childList:true});
+// Strategy change is now wired directly in renderTradeLog
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 10b5-1 FILTER — patch fetchInsider to filter automatic plan trades
