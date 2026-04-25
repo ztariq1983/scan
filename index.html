@@ -897,7 +897,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <table>
         <thead><tr>
           <th>Ticker</th><th>Price</th><th>Change %</th><th>Source ETF</th>
-          <th>Setups</th><th>Signals</th>
+          <th>Score</th><th>Setups</th><th>Signals</th><th>Playbook</th>
         </tr></thead>
         <tbody id="shortlist-tbody"></tbody>
       </table>
@@ -4065,38 +4065,28 @@ async function runPipeline() {
 
 function renderShortlist(topETFs, totalScanned) {
   const panel = g('shortlist-panel');
+  panel.style.display = 'block';
+
   if (!shortlistResults.length) {
-    panel.style.display = 'block';
     g('shortlist-subtitle').textContent = `${totalScanned} tickers scanned · 0 matched shortlist criteria`;
-    g('shortlist-tbody').innerHTML = `<tr><td colspan="6"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Candidates</div><div class="es">No stocks met the HVC-live-OR-2-match threshold today</div></div></td></tr>`;
+    g('shortlist-tbody').innerHTML = `<tr><td colspan="8"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Candidates</div><div class="es">No stocks met the HVC-live-OR-2-match threshold today</div></div></td></tr>`;
     return;
   }
 
-  panel.style.display = 'block';
   const topEtfNames = topETFs.map(e => `${e.ticker} (+${e.pct1w.toFixed(1)}%)`).join(', ');
   g('shortlist-subtitle').innerHTML = `${shortlistResults.length} candidates from ${totalScanned} scanned · Top ETFs: <b style="color:var(--accent)">${topEtfNames || 'none'}</b>`;
 
-  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d', ema21:'21 EMA', ema_rev:'EMA Rev', cons_bo:'Consol BO', gap_hold:'Gap Hold', mean_rev:'Mean Rev' };
+  // Add composite scores if not already present
+  shortlistResults.forEach(r => {
+    if (r.compositeScore == null) {
+      const sc = calcCompositeScore(r);
+      r.compositeScore = sc.total;
+      r.scoreBreakdown = sc.breakdown;
+    }
+  });
 
-  g('shortlist-tbody').innerHTML = shortlistResults.map((r, i) => {
-    const tags = r.signals.map(s => `<span class="stag ${s}">${s==='hvc'?(r.hvcTriggered?'HVC ⚡':'HVC ⏳'):lbl[s]}</span>`).join('');
-    const chCls = r.changePct >= 0 ? 'up' : 'down';
-    const chStr = (r.changePct >= 0 ? '+' : '') + r.changePct.toFixed(2) + '%';
-    const isHvcLive  = r.signals.includes('hvc')  && r.hvcTriggered;
-    const isHvc4Live = r.signals.includes('hvc4') && r.hvc4Triggered;
-    const priority = isHvcLive  ? '<span style="color:var(--green);font-weight:700;font-size:10px;letter-spacing:1px">🚀 LIVE</span> '
-                   : isHvc4Live ? '<span style="color:#3dffa0cc;font-weight:700;font-size:10px;letter-spacing:1px">📈 CONT</span> '
-                   : '';
-
-    return `<tr style="animation-delay:${i*25}ms">
-      <td class="td-tick">${priority}${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
-      <td>$${r.price.toFixed(2)}</td>
-      <td class="td-change ${chCls}">${chStr}</td>
-      <td style="font-size:10px;color:var(--muted)">${r.sourceETF || '—'}</td>
-      <td style="text-align:center"><span style="font-family:var(--font-display);font-weight:700;color:var(--purple)">${r.signals.length}</span></td>
-      <td><div class="strats-cell">${tags}</div></td>
-    </tr>`;
-  }).join('');
+  // Always render using V2 (with score + playbook)
+  renderShortlistV2();
 }
 
 function saveShortlistAsWatchlist() {
@@ -7233,7 +7223,7 @@ function renderShortlistV2() {
     const isHvc4Live = r.signals.includes('hvc4') && r.hvc4Triggered;
     const priority = isHvcLive  ? '<span style="color:var(--green);font-weight:700;font-size:10px;letter-spacing:1px">🚀 LIVE</span> '
                    : isHvc4Live ? '<span style="color:#3dffa0cc;font-weight:700;font-size:10px;letter-spacing:1px">📈 CONT</span> ' : '';
-    return `<tr style="animation-delay:${i*25}ms">
+    return `<tr data-sl-idx="${i}" style="animation-delay:${i*25}ms">
       <td class="td-tick">${priority}${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
       <td>$${r.price.toFixed(2)}</td>
       <td class="td-change ${chCls}">${chStr}</td>
@@ -7241,8 +7231,48 @@ function renderShortlistV2() {
       <td><span class="score-badge ${cls}" style="font-size:9px">${label} ${score}</span></td>
       <td style="text-align:center"><span style="font-family:var(--font-display);font-weight:700;color:var(--purple)">${r.signals.length}</span></td>
       <td><div class="strats-cell">${tags}</div></td>
+      <td><span class="playbook-toggle" data-sl-idx="${i}">▶ View</span></td>
     </tr>`;
   }).join('');
+
+  // Inject playbook rows for shortlist
+  injectShortlistPlaybook();
+}
+
+function injectShortlistPlaybook() {
+  const tbody = g('shortlist-tbody');
+  if (!tbody) return;
+  // Remove any existing playbook rows
+  tbody.querySelectorAll('.playbook-row').forEach(r => r.remove());
+
+  tbody.querySelectorAll('tr[data-sl-idx]').forEach(row => {
+    const idx = parseInt(row.dataset.slIdx, 10);
+    const r   = shortlistResults[idx];
+    if (!r) return;
+
+    // Wire toggle
+    const tog = row.querySelector('.playbook-toggle');
+    if (tog) {
+      tog.style.cursor = 'pointer';
+      tog.addEventListener('click', () => {
+        const pbRow = row.nextSibling;
+        if (pbRow && pbRow.classList.contains('playbook-row')) {
+          const isOpen = pbRow.classList.contains('open');
+          pbRow.classList.toggle('open');
+          tog.textContent = isOpen ? '▶ View' : '▼ Hide';
+        }
+      });
+    }
+
+    // Create playbook row
+    const pbTr = document.createElement('tr');
+    pbTr.className = 'playbook-row';
+    const pbTd = document.createElement('td');
+    pbTd.colSpan = 8;
+    pbTd.innerHTML = getPlaybookHTML(r);
+    pbTr.appendChild(pbTd);
+    row.after(pbTr);
+  });
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
