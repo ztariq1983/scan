@@ -6740,10 +6740,10 @@ function calcCompositeScore(r) {
 }
 
 function scoreGrade(score) {
-  if (score >= 80) return { cls:'a-plus', label:'🔥 A+' };
-  if (score >= 65) return { cls:'b-grade', label:'⚡ B' };
-  if (score >= 45) return { cls:'c-grade', label:'▲ C' };
-  return { cls:'d-grade', label:'— D' };
+  if (score >= 80) return { cls:'a-plus',  label:'🔥 A+' };
+  if (score >= 65) return { cls:'b-grade',  label:'⚡ B' };
+  if (score >= 45) return { cls:'c-grade',  label:'▲ C' };
+  return             { cls:'d-grade',  label:'D' };
 }
 
 // Patch analyzeStock to store MA values for scoring
@@ -7228,7 +7228,7 @@ function renderShortlistV2() {
       <td>$${r.price.toFixed(2)}</td>
       <td class="td-change ${chCls}">${chStr}</td>
       <td style="font-size:10px;color:var(--muted)">${r.sourceETF||'—'}</td>
-      <td><span class="score-badge ${cls}" style="font-size:9px">${label} ${score}</span></td>
+      <td><span class="score-badge ${cls}" style="font-size:9px">${label} <b style="font-size:12px">${score}</b></span></td>
       <td style="text-align:center"><span style="font-family:var(--font-display);font-weight:700;color:var(--purple)">${r.signals.length}</span></td>
       <td><div class="strats-cell">${tags}</div></td>
       <td><span class="playbook-toggle" data-sl-idx="${i}">▶ View</span></td>
@@ -7242,31 +7242,17 @@ function renderShortlistV2() {
 function injectShortlistPlaybook() {
   const tbody = g('shortlist-tbody');
   if (!tbody) return;
-  // Remove any existing playbook rows
+  // Remove existing playbook rows
   tbody.querySelectorAll('.playbook-row').forEach(r => r.remove());
 
+  // Insert a playbook row after every data row
   tbody.querySelectorAll('tr[data-sl-idx]').forEach(row => {
     const idx = parseInt(row.dataset.slIdx, 10);
     const r   = shortlistResults[idx];
     if (!r) return;
-
-    // Wire toggle
-    const tog = row.querySelector('.playbook-toggle');
-    if (tog) {
-      tog.style.cursor = 'pointer';
-      tog.addEventListener('click', () => {
-        const pbRow = row.nextSibling;
-        if (pbRow && pbRow.classList.contains('playbook-row')) {
-          const isOpen = pbRow.classList.contains('open');
-          pbRow.classList.toggle('open');
-          tog.textContent = isOpen ? '▶ View' : '▼ Hide';
-        }
-      });
-    }
-
-    // Create playbook row
     const pbTr = document.createElement('tr');
     pbTr.className = 'playbook-row';
+    pbTr.dataset.slIdx = idx;
     const pbTd = document.createElement('td');
     pbTd.colSpan = 8;
     pbTd.innerHTML = getPlaybookHTML(r);
@@ -7274,6 +7260,19 @@ function injectShortlistPlaybook() {
     row.after(pbTr);
   });
 }
+
+// Single delegated listener on the shortlist panel — survives re-renders
+g('shortlist-panel').addEventListener('click', e => {
+  const tog = e.target.closest('.playbook-toggle[data-sl-idx]');
+  if (!tog) return;
+  e.stopPropagation();
+  const idx   = tog.dataset.slIdx;
+  const pbRow = document.querySelector(`.playbook-row[data-sl-idx="${idx}"]`);
+  if (!pbRow) return;
+  const isOpen = pbRow.classList.contains('open');
+  pbRow.classList.toggle('open');
+  tog.textContent = isOpen ? '▶ View' : '▼ Hide';
+});
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SMART MONEY CLUSTERING + CROSS-SIGNAL + TIME DECAY
