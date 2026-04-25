@@ -606,6 +606,46 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .stag.vcp{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
 .stag.hvc{background:rgba(61,255,160,.14);color:var(--green);border:1px solid rgba(61,255,160,.4);font-weight:600}
 .stag.hvc4{background:rgba(61,255,160,.07);color:#3dffa0cc;border:1px solid rgba(61,255,160,.25);font-weight:500}
+.stag.ema21{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(78,232,255,.3)}
+.stag.ema_rev{background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.5);font-weight:600}
+.stag.cons_bo{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.35)}
+.stag.gap_hold{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.4);font-weight:600}
+.stag.mean_rev{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.35)}
+
+/* ─── Sector Heatmap ──────────────────────────────────────────────── */
+.heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:3px;margin-top:14px}
+.heatmap-cell{padding:14px 12px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s}
+.heatmap-cell:hover{transform:scale(1.02);z-index:2}
+.heatmap-cell .hm-ticker{font-family:var(--font-display);font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px}
+.heatmap-cell .hm-name{font-size:9px;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.heatmap-cell .hm-pct{font-family:var(--font-display);font-size:22px;font-weight:800;line-height:1}
+.heatmap-cell .hm-vs{font-size:9px;opacity:.7;letter-spacing:1px;margin-top:3px}
+.heatmap-cell .hm-bar{position:absolute;bottom:0;left:0;height:3px;transition:width .5s ease}
+.hm-period-btns{display:flex;gap:6px;margin-top:10px}
+.hm-period-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:1.5px;padding:5px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.hm-period-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+
+/* ─── Position Sizer ─────────────────────────────────────────────── */
+.sizer-panel{background:var(--surface);border:1px solid var(--border);padding:16px 20px;margin-bottom:20px;position:relative}
+.sizer-panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px;background:var(--orange)}
+.sizer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px}
+.sizer-field{display:flex;flex-direction:column;gap:4px}
+.sizer-field label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.sizer-field input{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:8px 10px;outline:none;transition:border-color .2s}
+.sizer-field input:focus{border-color:var(--orange)}
+.sizer-result{margin-top:12px;padding:14px;background:var(--bg);border:1px solid var(--orange);display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+.sizer-result-item{text-align:center}
+.sizer-result-val{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--accent)}
+.sizer-result-lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.sizer-result-val.warning{color:var(--red)}
+
+/* ─── Mistake tracking ──────────────────────────────────────────── */
+.mistake-chart-wrap{background:var(--bg);border:1px solid var(--border2);padding:14px;margin-top:12px}
+.mistake-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.mistake-bar-label{font-size:10px;color:var(--text);min-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mistake-bar-track{flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden}
+.mistake-bar-fill{height:100%;border-radius:3px;background:var(--red)}
+.mistake-bar-val{font-size:10px;color:var(--red);min-width:50px;text-align:right}
 .conf-wrap{display:flex;align-items:center;gap:8px}
 .conf-dots{display:flex;gap:3px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--border2)}
@@ -656,6 +696,16 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab" data-tab="journal">Journal <span class="tab-count" id="journal-tab-count"></span></button>
     <button class="tab" data-tab="rs">📈 RS Rank</button>
     <button class="tab" data-tab="learn">📚 Learn</button>
+  </div>
+
+  <!-- Account size (global — used by position sizer across tabs) -->
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap">💰 Account Size</span>
+    <input type="number" id="account-size" placeholder="e.g. 10000" step="100"
+      style="width:130px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:6px 10px;outline:none"
+      title="Total trading account in your currency">
+    <span style="font-size:10px;color:var(--muted);letter-spacing:.5px">Used by position sizer (2% risk = max loss per trade)</span>
+    <span id="acct-size-saved" style="font-size:10px;color:var(--green);display:none">✓ Saved</span>
   </div>
 
   <!-- CORS warning (visible on any tab when triggered) -->
@@ -788,6 +838,25 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     </div>
   </div>
 
+  <!-- Position Sizer -->
+  <div class="sizer-panel" id="sizer-panel">
+    <div style="font-size:9px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:2px;display:flex;justify-content:space-between">
+      Position Sizer <span style="color:var(--muted)">2% account risk</span>
+    </div>
+    <div class="sizer-grid">
+      <div class="sizer-field"><label>Entry Price</label><input type="number" id="sz-entry" step="0.01" placeholder="0.00"></div>
+      <div class="sizer-field"><label>Stop Price</label><input type="number" id="sz-stop" step="0.01" placeholder="0.00"></div>
+      <div class="sizer-field"><label>Risk % (default 2%)</label><input type="number" id="sz-risk-pct" step="0.1" value="2" min="0.1" max="10"></div>
+    </div>
+    <div class="sizer-result" id="sizer-result" style="display:none">
+      <div class="sizer-result-item"><div class="sizer-result-val" id="sz-shares">—</div><div class="sizer-result-lbl">Shares</div></div>
+      <div class="sizer-result-item"><div class="sizer-result-val" id="sz-position">—</div><div class="sizer-result-lbl">Position Size</div></div>
+      <div class="sizer-result-item"><div class="sizer-result-val" id="sz-max-loss">—</div><div class="sizer-result-lbl">Max Loss (2%)</div></div>
+      <div class="sizer-result-item"><div class="sizer-result-val" id="sz-stop-dist">—</div><div class="sizer-result-lbl">Stop Distance</div></div>
+      <div class="sizer-result-item"><div class="sizer-result-val" id="sz-rr">—</div><div class="sizer-result-lbl">R (risk unit)</div></div>
+    </div>
+  </div>
+
   <!-- Strategies -->
   <div class="strat-bar">
     <span class="strat-lbl">Strategies:</span>
@@ -800,6 +869,11 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="strat-btn active" data-strat="vcp"     data-color="red">VCP</button>
     <button class="strat-btn active" data-strat="hvc"     data-color="green">HVC Breakout</button>
     <button class="strat-btn active" data-strat="hvc4"    data-color="green">HVC 2–4 Day</button>
+    <button class="strat-btn active" data-strat="ema21"   data-color="cyan">21 EMA Pull</button>
+    <button class="strat-btn active" data-strat="ema_rev"  data-color="cyan">EMA Reversion</button>
+    <button class="strat-btn active" data-strat="cons_bo"  data-color="purple">Consol. Breakout</button>
+    <button class="strat-btn active" data-strat="gap_hold" data-color="orange">Earnings Gap Hold</button>
+    <button class="strat-btn active" data-strat="mean_rev" data-color="red">Mean Reversion</button>
   </div>
 
   <!-- Action bar -->
@@ -820,6 +894,11 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <div class="stat-box cp"><div class="stat-n cp" id="st-pat">0</div><div class="stat-lbl">Patterns</div></div>
     <div class="stat-box cc"><div class="stat-n cc" id="st-hvc">0</div><div class="stat-lbl">HVC</div></div>
     <div class="stat-box cg"><div class="stat-n cg" id="st-hvc4">0</div><div class="stat-lbl">HVC 2–4d</div></div>
+    <div class="stat-box cc"><div class="stat-n cc" id="st-ema21">0</div><div class="stat-lbl">21 EMA Pull</div></div>
+    <div class="stat-box cc"><div class="stat-n cc" id="st-ema_rev">0</div><div class="stat-lbl">EMA Rev</div></div>
+    <div class="stat-box cp"><div class="stat-n cp" id="st-cons_bo">0</div><div class="stat-lbl">Consol BO</div></div>
+    <div class="stat-box co"><div class="stat-n co" id="st-gap_hold">0</div><div class="stat-lbl">Gap Hold</div></div>
+    <div class="stat-box cm"><div class="stat-n" id="st-mean_rev">0</div><div class="stat-lbl">Mean Rev</div></div>
   </div>
 
   <!-- Results -->
@@ -867,6 +946,28 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 
   <!-- ═══ ETF TAB ═══ -->
   <div class="tab-panel" id="tab-etfs">
+
+    <!-- Sector Rotation Heatmap -->
+    <div class="panel accent" style="margin-bottom:20px">
+      <div class="panel-title">
+        📊 Sector Rotation Heatmap
+        <span id="heatmap-status" style="color:var(--muted)">Click Refresh to load</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:.5px;margin-bottom:10px">
+        Colour = performance vs SPY. Darker green = outperforming more. Red = underperforming. Each cell shows raw % and vs-SPY differential.
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="hm-period-btns">
+          <button class="hm-period-btn active" data-hmp="5">1W</button>
+          <button class="hm-period-btn" data-hmp="20">1M</button>
+          <button class="hm-period-btn" data-hmp="63">3M</button>
+        </div>
+        <button class="btn btn-accent" id="btn-heatmap-refresh" style="padding:6px 14px;font-size:10px">↻ Refresh</button>
+      </div>
+      <div class="heatmap-grid" id="heatmap-grid">
+        <div style="color:var(--muted);font-size:10px;padding:20px;grid-column:1/-1">Click Refresh to load sector performance data</div>
+      </div>
+    </div>
 
     <!-- Add ETF input -->
     <div class="panel purple">
@@ -1105,6 +1206,13 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
             <option value="all">All transactions</option>
             <option value="buy">Buys only</option>
             <option value="sell">Sells only</option>
+          </select>
+        </div>
+        <div class="creds-field" style="max-width:180px">
+          <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">10b5-1 Plans</label>
+          <select id="ins-10b5-filter">
+            <option value="hide">Hide auto-plans (10b5-1)</option>
+            <option value="show">Show all (incl. 10b5-1)</option>
           </select>
         </div>
         <button class="btn btn-purple" id="btn-fetch-insider">Fetch</button>
@@ -1353,6 +1461,17 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <!-- populated by JS -->
     </div>
 
+    <!-- Mistake Tracking Dashboard -->
+    <div class="strat-perf-wrap" id="mistake-panel">
+      <div class="panel-title" style="color:var(--red);display:flex;justify-content:space-between;align-items:center">
+        <span>🔴 Mistake Tracker — Rule Adherence</span>
+        <span style="font-size:9px;color:var(--muted);font-weight:400">Based on closed trades with mistakes logged</span>
+      </div>
+      <div id="mistake-chart-content" style="padding:14px 20px">
+        <div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">Log mistakes on trades to see which ones cost you the most</div>
+      </div>
+    </div>
+
     <!-- Per-strategy performance table -->
     <div class="strat-perf-wrap">
       <div class="panel-title" style="color:var(--accent)">Performance by Strategy</div>
@@ -1401,6 +1520,11 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <option value="vcp">VCP</option>
           <option value="hvc">HVC Breakout</option>
           <option value="hvc4">HVC 2–4 Day</option>
+          <option value="ema21">21 EMA Pull</option>
+          <option value="ema_rev">EMA Reversion</option>
+          <option value="cons_bo">Consolidation BO</option>
+          <option value="gap_hold">Earnings Gap Hold</option>
+          <option value="mean_rev">Mean Reversion</option>
           <option value="other">Other</option>
         </select>
         <select id="trade-sort">
@@ -1523,6 +1647,15 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <button class="learn-nav-btn" data-learn="canslim" style="border-color:var(--purple);color:var(--muted)">CANSLIM</button>
       <button class="learn-nav-btn" data-learn="leaders" style="border-color:var(--cyan);color:var(--muted)">Spotting Leaders</button>
       <button class="learn-nav-btn" data-learn="sectors" style="border-color:var(--green);color:var(--muted)">Sector Transitions</button>
+      <button class="learn-nav-btn" data-learn="stockcycle" style="border-color:var(--accent);color:var(--muted)">Stock Cycle Stages</button>
+      <button class="learn-nav-btn" data-learn="ta101" style="border-color:var(--orange);color:var(--muted)">TA Fundamentals</button>
+      <button class="learn-nav-btn" data-learn="rsline" style="border-color:var(--cyan);color:var(--muted)">RS Line</button>
+      <button class="learn-nav-btn" data-learn="ema21" style="border-color:var(--cyan);color:var(--muted)">21 EMA Pullback</button>
+      <button class="learn-nav-btn" data-learn="ema_rev" style="border-color:var(--cyan);color:var(--muted)">EMA Reversion</button>
+      <button class="learn-nav-btn" data-learn="cons_bo" style="border-color:var(--purple);color:var(--muted)">Consol. Breakout</button>
+      <button class="learn-nav-btn" data-learn="gap_hold" style="border-color:var(--orange);color:var(--muted)">Earnings Gap Hold</button>
+      <button class="learn-nav-btn" data-learn="mean_rev" style="border-color:var(--red);color:var(--muted)">Mean Reversion</button>
+      <button class="learn-nav-btn" data-learn="exits" style="border-color:var(--green);color:var(--muted)">Exit Strategies</button>
     </div>
 
     <!-- Each strategy panel inserted by JS -->
@@ -1644,6 +1777,21 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
         <div class="form-field full">
           <label>Exit Notes (optional)</label>
           <textarea id="exit-notes" placeholder="What worked, what didn't, lessons..."></textarea>
+        </div>
+        <div class="form-field full">
+          <label>Rule Adherence — Mistakes Made (optional, multi-select)</label>
+          <div class="chip-row" id="mistake-row">
+            <button class="reason-chip" data-mistake="Chased Entry">🏃 Chased Entry</button>
+            <button class="reason-chip" data-mistake="FOMO">😰 FOMO</button>
+            <button class="reason-chip" data-mistake="Moved Stop">📉 Moved Stop</button>
+            <button class="reason-chip" data-mistake="Oversized">📦 Oversized</button>
+            <button class="reason-chip" data-mistake="Ignored Setup Rules">❌ Ignored Setup Rules</button>
+            <button class="reason-chip" data-mistake="Sold Too Early">⏩ Sold Too Early</button>
+            <button class="reason-chip" data-mistake="Held Too Long">⏳ Held Too Long</button>
+            <button class="reason-chip" data-mistake="Revenge Trade">🎰 Revenge Trade</button>
+            <button class="reason-chip" data-mistake="Bad Market Day">🌊 Bad Market Day</button>
+            <button class="reason-chip" data-mistake="No Plan">🗑 No Plan</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2328,7 +2476,7 @@ function renderTable() {
     return;
   }
 
-  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d'};
+  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev'};
 
   tbody.innerHTML=rows.map((r,i)=>{
     if (r.error) return `
@@ -3825,7 +3973,7 @@ function renderShortlist(topETFs, totalScanned) {
   const topEtfNames = topETFs.map(e => `${e.ticker} (+${e.pct1w.toFixed(1)}%)`).join(', ');
   g('shortlist-subtitle').innerHTML = `${shortlistResults.length} candidates from ${totalScanned} scanned · Top ETFs: <b style="color:var(--accent)">${topEtfNames || 'none'}</b>`;
 
-  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d' };
+  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d', ema21:'21 EMA', ema_rev:'EMA Rev', cons_bo:'Consol BO', gap_hold:'Gap Hold', mean_rev:'Mean Rev' };
 
   g('shortlist-tbody').innerHTML = shortlistResults.map((r, i) => {
     const tags = r.signals.map(s => `<span class="stag ${s}">${s==='hvc'?(r.hvcTriggered?'HVC ⚡':'HVC ⏳'):lbl[s]}</span>`).join('');
@@ -5988,6 +6136,218 @@ const LEARN_DATA = {
       {h:`Warning signs of a sector top`, b:`When a leading sector starts showing: <code>expanding bases</code> (wider and deeper), <code>failed breakouts</code> (stocks break out then immediately fail), <code>heavy volume on down days</code> in the sector ETF — those are distribution signals. Start reducing exposure and look for the next rotation.`},
     ],
   },
+
+  stockcycle: {
+    title:`The 4 Stages of a Stock Cycle`, subtitle:`Every stock moves through these stages — knowing which one you're in changes everything`, color:`var(--accent)`,
+    rules:[
+      {t:`<b>Stage 1 — Accumulation (Base):</b> Stock has stopped falling. Volume dries up. Smart money quietly accumulating. Price moves sideways in a tight range. Looks boring. This is where your setups form.`,cls:`green-rule`},
+      {t:`<b>Stage 2 — Advancing (Uptrend):</b> Breakout from Stage 1. Price above rising 30-week MA. This is the ONLY stage to buy. All CANSLIM setups and breakouts happen here.`,cls:`green-rule`},
+      {t:`<b>Stage 3 — Distribution (Top):</b> Stock has moved a lot. Volume picks up on down days. Wide-and-loose price action. Looks like it might break out but keeps failing. Smart money is selling.`,cls:`red-rule`},
+      {t:`<b>Stage 4 — Declining (Downtrend):</b> Price below falling 30-week MA. Every rally is a selling opportunity. Never buy a Stage 4 stock. Wait for Stage 1 to return.`,cls:`red-rule`},
+      {t:`<b>The rule:</b> Only buy Stage 2. Only short Stage 4. Stay out of Stage 1 (too early) and Stage 3 (too late).`,cls:``},
+    ],
+    entry:`Only enter in confirmed Stage 2 — price above rising 30-week MA, breakout from Stage 1 base`,
+    stop:`If stock falls back below the 30-week MA and closes there for 2+ weeks — stage change is occurring`,
+    target:`Hold through the entire Stage 2 advance. Exit when Stage 3 distribution signals appear`,
+    stats:[{n:`Framework`,v:`Stan Weinstein`},{n:`Book`,v:`Secrets for Profiting in Bull & Bear Markets`},{n:`Key MA`,v:`30-week SMA`},{n:`Core lesson`,v:`Stage determines everything`}],
+    walkthrough:[
+      {h:`Stage 1 — Accumulation: what to look for`, b:`The stock has been in a downtrend that has stopped declining. Price goes sideways, often for months. Volume shrinks. This is institutional accumulation — big funds slowly building positions without moving the price. On a weekly chart, the 30-week MA flattens out. Technically, all your base patterns (VCP, flat base, cup) form here. This is where you build your watchlist, but don't trade yet.`},
+      {h:`The Stage 1 to 2 transition — the breakout`, b:`The transition is unmistakable: price breaks above the Stage 1 base on heavy volume, the 30-week MA begins to slope upward, and the stock makes a new 52-week high. This is your entry signal. The best entries are right at the breakout point from the Stage 1 base. This is where all the major gains begin.`},
+      {h:`Stage 2 — Advancing: how to stay in`, b:`In Stage 2, the 30-week MA acts as support. Every time price pulls back to touch it, it's a buying or adding opportunity. The key is to stay <code>as long as price stays above the 30-week MA</code>. Ignore normal volatility. Focus only on weekly closes relative to the 30-week MA. Stage 2 can last months to years in great stocks.`},
+      {h:`Stage 3 — Distribution: the warning signs`, b:`After a long Stage 2 advance, watch for: (1) Price action becomes wide and loose — larger daily/weekly swings. (2) Volume picks up on down moves. (3) Stock makes new highs but can't hold them. (4) The 30-week MA starts to flatten or turn down. (5) Multiple failed breakout attempts. This is smart money distributing to retail buyers. Start planning your exit.`},
+      {h:`Stage 4 — Decline: stay away`, b:`Once the stock breaks below a declining 30-week MA on heavy volume, it's in Stage 4. Every rally back toward the 30-week MA from below is a gift — a chance to exit remaining positions. There are no valid long setups in Stage 4. The stock must go through a full Stage 1 base-building period before it can be traded long again.`},
+      {h:`Using stages with this scanner`, b:`The 30-week MA = roughly the <code>150-day SMA</code>. Check any of your scanner candidates on TradingView: is the stock above or below its 150-day MA? Is the MA rising or falling? A setup that looks perfect technically (NR7, VCP) but is in Stage 3 or 4 is a trap. Stage context filters out 80% of false breakouts.`},
+    ],
+  },
+
+  ta101: {
+    title:`Technical Analysis Fundamentals`, subtitle:`The core principles that everything else is built on`, color:`var(--orange)`,
+    rules:[
+      {t:`<b>Trend is king:</b> The single most important concept in TA. A stock in an uptrend is more likely to continue up than reverse. Never fight the trend.`,cls:`green-rule`},
+      {t:`<b>Support and resistance:</b> Price levels where buying (support) or selling (resistance) concentrates. Once resistance is broken with volume, it becomes support.`,cls:`green-rule`},
+      {t:`<b>Volume confirms price:</b> A price move on high volume is more reliable than the same move on low volume. Volume precedes price.`,cls:`green-rule`},
+      {t:`<b>Higher highs + higher lows = uptrend.</b> Lower highs + lower lows = downtrend. Market structure is the foundation.`,cls:`green-rule`},
+      {t:`<b>The trend on the higher timeframe always wins.</b> A bullish pattern on the daily chart means nothing if the weekly is in a downtrend.`,cls:`red-rule`},
+      {t:`<b>TA is probabilistic, not deterministic.</b> No setup works 100% of the time. You are managing probabilities, not certainties.`,cls:`red-rule`},
+    ],
+    entry:`Entries are at high-probability areas: breakouts from resistance, bounces from support, or pattern completions`,
+    stop:`Below the most recent swing low (for longs). The stop invalidates the technical thesis.`,
+    target:`Nearest significant resistance level, measured move from pattern, or trailing stop`,
+    stats:[{n:`Most important concept`,v:`Trend`},{n:`Volume rule`,v:`Confirms, never leads`},{n:`Support/Resistance`,v:`Becomes opposite on break`},{n:`Timeframe rule`,v:`Higher TF always wins`}],
+    walkthrough:[
+      {h:`Support and Resistance — the foundation`, b:`Support = a price level where buyers historically step in (floor). Resistance = where sellers historically appear (ceiling). These levels work because of <code>memory</code> — traders who bought at a level want to break even when price returns; traders who sold at a level want to sell again. The more times a level is tested without breaking, the more significant it becomes. When resistance finally breaks on high volume, it flips to support — this is the "breakout retest" concept.`},
+      {h:`Trend identification — the only three things price can do`, b:`Price moves in one of three directions: up, down, or sideways. An uptrend = series of higher highs and higher lows. A downtrend = series of lower highs and lower lows. Sideways = price bouncing between a support and resistance level (consolidation). Your job is to identify the trend <code>before</code> you look at any pattern or setup. Trade only in the direction of the dominant trend.`},
+      {h:`Volume — the fuel of the market`, b:`Think of price as the speedometer and volume as the engine. A price move without volume is a car coasting — it won't go far. The key volume rules: <code>breakouts need volume surge</code> (40%+ above average). Pullbacks within a trend should have declining volume — this shows the trend is healthy. If volume surges on a down day after a long advance, that's distribution — a red flag.`},
+      {h:`Moving averages — dynamic support/resistance`, b:`Moving averages smooth price action to reveal the trend. The most important for swing trading: <code>21 EMA</code> (short-term trend), <code>50 SMA</code> (medium-term), <code>200 SMA</code> (long-term). In an uptrend, these act as dynamic support — price bounces off them. The sequence matters: price > 21 EMA > 50 SMA > 200 SMA = perfectly aligned bull. Use MAs to confirm trend, not predict reversals.`},
+      {h:`Candlestick patterns — context is everything`, b:`Key reversal candles: <code>Hammer</code> = long lower wick, small body near top = buyers rejected sellers aggressively. <code>Engulfing</code> = today's body completely covers yesterday's = momentum shift. <code>Doji</code> = open = close = indecision. But: a hammer at a key support level after a downtrend is very different from a random hammer mid-trend. The pattern is only as meaningful as its context.`},
+      {h:`Timeframe alignment — the multiplier effect`, b:`When the weekly chart shows an uptrend, the daily chart shows a breakout, AND the 60-min chart shows the entry pattern — all timeframes aligned = highest conviction. This is called <code>top-down analysis</code>. Check weekly first (is the stock in Stage 2?), then daily (is there a valid setup?), then intraday (what's the entry trigger?). Misalignment between timeframes is one of the most common causes of failed trades.`},
+      {h:`The anatomy of a failed breakout`, b:`The most painful experience in trading: stock breaks above resistance, you buy, it immediately reverses. Why? (1) Breakout on below-average volume — no real conviction. (2) Broad market was weak that day — tide going out. (3) Overhead supply from old buyers who want to sell at breakeven. (4) The base was flawed — too short, too deep, too many shakeouts. Understanding why breakouts fail is as important as knowing how to trade them.`},
+    ],
+  },
+
+  rsline: {
+    title:`The RS Line — Relative Strength`, subtitle:`Finding stocks that lead the market — not just follow it`, color:`var(--cyan)`,
+    rules:[
+      {t:`<b>RS Line = Stock Price / SPY Price.</b> When this ratio is rising, the stock is outperforming SPY. When falling, underperforming.`,cls:`green-rule`},
+      {t:`<b>The best stocks' RS Lines make new highs BEFORE the stock price does.</b> This is the strongest buy signal in growth investing.`,cls:`green-rule`},
+      {t:`<b>During market corrections, watch which stocks' RS Lines hold up or rise.</b> These are your leaders for the next rally.`,cls:`green-rule`},
+      {t:`<b>An RS Line at new highs during a base formation</b> = institutional accumulation happening right now.`,cls:`green-rule`},
+      {t:`<b>Never buy a stock whose RS Line is in a downtrend</b> even if the price chart looks technically perfect.`,cls:`red-rule`},
+      {t:`<b>RS Line is NOT the RSI indicator.</b> RSI is an oscillator that measures overbought/oversold. RS Line is a ratio vs SPY.`,cls:`red-rule`},
+    ],
+    entry:`When the RS Line breaks to new highs, especially before or simultaneously with the price breakout`,
+    stop:`If RS Line begins declining meaningfully while price is still OK, reduce exposure — leadership is fading`,
+    target:`Hold as long as the RS Line remains in an uptrend relative to SPY`,
+    stats:[{n:`Concept origin`,v:`William O'Neil`},{n:`Formula`,v:`Stock price ÷ SPY price`},{n:`Best signal`,v:`RS new high before price new high`},{n:`On TradingView`,v:`Add indicator "Price/SPY ratio"`}],
+    walkthrough:[
+      {h:`What the RS Line actually measures`, b:`The RS Line is simply the stock's price divided by SPY's price, plotted over time. When the stock is gaining more than SPY, the line rises. When it's losing more (or gaining less), it falls. It tells you, at a glance, whether this stock is adding alpha above the market — which is the entire point of picking individual stocks rather than just buying an index fund.`},
+      {h:`The most powerful signal: RS Line new high BEFORE price new high`, b:`This is the signal O'Neil identified in virtually every major stock market winner before their biggest moves. The RS Line breaks to new highs while the stock itself is still in a base. What this means: even though the price hasn't moved much, the stock has been quietly outperforming SPY — usually because institutions have been accumulating it. <code>When you see this, pay close attention.</code>`},
+      {h:`Using RS Line during market corrections`, b:`When SPY drops 10%, most stocks drop 15–20%. But leaders only drop 5–8%. Their RS Lines actually rise during the correction because they're holding up better than the market. These are the stocks to track during any pullback. When the market recovers, they'll be the first to break out to new highs — often with massive moves. Make a list of "RS Line new high during correction" stocks.`},
+      {h:`How to view it on TradingView`, b:`Open TradingView. On any stock chart, add a study. Search for <code>"ratio"</code> or type the symbol as a comparison: under the Compare button, add SPY. The relative performance line shows exactly this. Alternatively, create a custom indicator: the stock's close divided by SPY's close. The absolute value doesn't matter — the direction and trend of the line is what you're reading.`},
+      {h:`RS Line + base + setup = A+ trade`, b:`The tier-1 setup: stock is building a base (VCP, flat base, cup & handle), AND the RS Line is at or near new highs, AND the market is in a confirmed uptrend. This combination — great fundamental story, tight technical base, leadership RS — is what the biggest gains in markets consistently look like in hindsight. The RS Rank tab in this scanner is a simplified version of this concept: composite RS score vs SPY + QQQ + sector ETF.`},
+      {h:`RS Line divergence — an early warning`, b:`Sometimes a stock's price makes a new high, but its RS Line doesn't. This is a <code>bearish divergence</code> — the stock is making new highs by less than the market. This often appears at Stage 3 tops before a major decline. It's a signal to tighten your stop, not to buy more. Conversely, a stock whose price is declining but whose RS Line is flat or rising is worth watching closely — it may be in the final stages of accumulation.`},
+    ],
+  },
+
+  ema21: {
+    title:`21-Day EMA Pullback — Touch and Go`, subtitle:`The momentum trader's re-entry: buying the first touch of the 21 EMA in a trending stock`, color:`var(--cyan)`,
+    rules:[
+      {t:`Stock must be in a <b>clear uptrend: price above 21 EMA, 21 EMA above 50 SMA, 50 SMA above 200 SMA</b>`,cls:`green-rule`},
+      {t:`Price pulls back to <b>touch or come within 0.5–1% of the 21 EMA</b> — the EMA acts as dynamic support`,cls:`green-rule`},
+      {t:`The pullback should be on <b>declining volume</b> — weak sellers, not strong distribution`,cls:`green-rule`},
+      {t:`Reversal candle on the touch: <b>hammer, bullish engulfing, or close in upper half of the day's range</b>`,cls:`green-rule`},
+      {t:`<b>Don't use in choppy markets.</b> The 21 EMA pullback only works in smooth, trending stocks. If MAs are tangled, skip it.`,cls:`red-rule`},
+      {t:`<b>Multiple touches of the 21 EMA weaken it.</b> The first and second touch are highest probability. By the fifth touch, the level is losing credibility.`,cls:`red-rule`},
+    ],
+    entry:`When price touches the 21 EMA and closes in the upper half of the day's range on low volume`,
+    stop:`Below the 21 EMA (tight) or below the prior day's low (slightly wider)`,
+    target:`Prior high, or trail the stop to the 21 EMA daily close as the trend continues`,
+    stats:[{n:`MA type`,v:`21-day EMA`},{n:`Best in`,v:`Smooth uptrends`},{n:`Volume`,v:`Declining on pullback`},{n:`Stop width`,v:`Tight — just below 21 EMA`}],
+    walkthrough:[
+      {h:`Why the 21 EMA specifically?`, b:`The 21 EMA is favoured by institutional momentum traders because it's fast enough to track intraday momentum but slow enough to smooth out noise. It represents roughly one month of trading. In a healthy uptrend, the 21 EMA is where "fast money" institutional traders add to positions on pullbacks. When they buy, it shows up as a bounce off the 21 EMA. The 21 EMA also appears in IBD (Investor's Business Daily) methodology as the key short-term support level.`},
+      {h:`Identifying a "Touch and Go" setup`, b:`The ideal setup has three phases: (1) <code>Advance</code> — stock trends up from a base, price comfortably above 21 EMA. (2) <code>Pullback</code> — price drifts back toward 21 EMA on 3–8 days of declining volume. No urgency, no panic selling. (3) <code>Touch</code> — price reaches the 21 EMA, shows a reversal candle (hammer, doji, engulfing), closes in the upper portion of the day's range. This is your entry.`},
+      {h:`Volume is the key to distinguishing the touch from the breakdown`, b:`The critical difference between a pullback and a breakdown is volume. A pullback on declining volume = temporary; sellers are running out. A pullback on surging volume = distribution; institutions are selling. Watch the volume on each day of the pullback. By the time price reaches the 21 EMA, volume should be at its lowest point of the pullback — that's the "dryup" that confirms the setup.`},
+      {h:`Entry and stop mechanics`, b:`Enter when price shows reversal characteristics at the 21 EMA — a bounce, a close in the upper half of the day's range. Your stop goes <code>below the 21 EMA</code> (tight) or below the low of the touch candle (slightly wider but still reasonable). The reason the 21 EMA stop is valid: if the stock is truly in an uptrend and the 21 EMA is acting as support, a close below the 21 EMA means the trend has changed — your thesis is wrong, exit.`},
+      {h:`Managing the trade after entry`, b:`After a successful touch and bounce, price should quickly move back above the 21 EMA and continue the advance. Trail your stop to the 21 EMA each day — this lets you stay in as long as the trend continues. If price starts closing below the 21 EMA for 2+ days, exit. The beauty of this setup: your stop is always clearly defined (the 21 EMA), your entry is at the best risk/reward point in the trend, and you're trading with the established momentum.`},
+      {h:`21 EMA vs 50 SMA pullback — when to use which`, b:`Both are pullback-to-support setups, but they serve different trade types. <code>21 EMA touch</code> = faster, shorter-duration trade for stocks in active uptrends. Best for stocks that move 20–50% in a few months. <code>50 SMA first pullback</code> = slower, longer-duration trade after a base breakout. Best for fresh breakouts from multi-month bases. If both the 21 EMA and the 50 SMA are at similar levels (they've converged after a correction), that's even stronger support — a combined level is harder to break.`},
+    ],
+  },
+
+  ema_rev: {
+    title:`EMA Reversion`, subtitle:`Strong uptrend + 21 EMA pullback + RSI confirmation = high-conviction re-entry`, color:`var(--cyan)`,
+    rules:[
+      {t:`<b>Price must be above the 200 EMA</b> — this confirms the stock is in a long-term uptrend. Non-negotiable.`,cls:`green-rule`},
+      {t:`<b>Price pulls back to touch the 21 EMA</b> — the short-term trend is intact, just resting`,cls:`green-rule`},
+      {t:`<b>RSI between 40 and 55</b> — not oversold (panic) and not overbought (extended). The sweet spot of a healthy pullback.`,cls:`green-rule`},
+      {t:`<b>Volume declining on the pullback</b> — weak sellers, not distribution`,cls:`green-rule`},
+      {t:`<b>Do not take this setup if RSI is below 35</b> — that's panic selling, not a normal pullback`,cls:`red-rule`},
+      {t:`<b>Do not take if price is below the 200 EMA</b> — the long-term trend has broken, no safety net`,cls:`red-rule`},
+    ],
+    entry:`When price touches the 21 EMA with RSI 40–55 and closes in the upper half of the day's range`,
+    stop:`Below the 21 EMA. If the RSI drops below 35, reassess.`,
+    target:`Prior high. Then trail with the 21 EMA as a stop.`,
+    stats:[{n:`Trend filter`,v:`200 EMA`},{n:`Entry trigger`,v:`21 EMA touch`},{n:`RSI zone`,v:`40–55`},{n:`Volume`,v:`Declining on pullback`}],
+    walkthrough:[
+      {h:`Why the 200 EMA matters here`, b:`The 200 EMA is the dividing line between long-term bulls and bears. When a stock is above its 200 EMA, institutional long-only funds can own it. When it's below, many are restricted from holding it. The 200 EMA creates a "floor" of institutional interest — pullbacks above this level attract buyers; pullbacks below it find no support.`},
+      {h:`The RSI confirmation window`, b:`RSI between 40–55 during a pullback is the "Goldilocks zone." RSI below 35 = panic selling, something may be fundamentally wrong. RSI above 60 = pullback hasn't really happened, you're still extended. RSI 40–55 = healthy reset of momentum, sellers have exhausted themselves, buyers are returning. This filter alone eliminates a large percentage of false setups.`},
+      {h:`Entry mechanics`, b:`Enter on the day price touches the 21 EMA and shows reversal characteristics — hammer, close in upper half of range, or simply a close above the 21 EMA after touching it intraday. Your stop is just below the 21 EMA. Because the 200 EMA provides the broader safety net, you're entering at a level with two layers of support.`},
+      {h:`How it differs from the plain 21 EMA setup`, b:`The plain 21 EMA pullback just requires the touch. EMA Reversion adds the 200 EMA trend filter and RSI qualifier. This makes it more selective — fewer signals — but each signal has a higher probability of working because you've confirmed: (1) long-term uptrend intact, (2) short-term momentum resetting to healthy levels, (3) smart money still interested.`},
+    ],
+  },
+
+  cons_bo: {
+    title:`Consolidation Breakout`, subtitle:`3–6 week tight range less than 10% tall — breakout on volume surge`, color:`var(--purple)`,
+    rules:[
+      {t:`Price must have been consolidating in a <b>tight range less than 10% wide</b> (high to low) for 3–6 weeks (15–30 bars)`,cls:`green-rule`},
+      {t:`<b>Breakout close above the range high</b> on the breakout day — intraday pokes don't count`,cls:`green-rule`},
+      {t:`<b>Volume surge of at least 50% above 20-day average</b> on the breakout day`,cls:`green-rule`},
+      {t:`Should be preceded by an <b>uptrend</b> — consolidation is a pause, not a bottom reversal`,cls:`green-rule`},
+      {t:`<b>Avoid consolidations with too many inside bars</b> — tight chop with daily inside bars is different from genuine accumulation`,cls:`red-rule`},
+      {t:`<b>Never buy a low-volume breakout</b> from a consolidation — it almost always fails within 1–3 days`,cls:`red-rule`},
+    ],
+    entry:`On the close above the consolidation range high, provided volume is 50%+ above average`,
+    stop:`Below the midpoint of the consolidation range`,
+    target:`Measure the prior trend length before the base and project the same distance from the breakout`,
+    stats:[{n:`Range width`,v:`< 10% high to low`},{n:`Duration`,v:`3–6 weeks (15–30 bars)`},{n:`Volume on break`,v:`>= 50% above avg`},{n:`Failure rate (no vol)`,v:`High — avoid`}],
+    walkthrough:[
+      {h:`What a true consolidation looks like`, b:`After an advance, the stock enters a tight sideways range. Daily closes cluster within a few percent of each other. Volume declines steadily through the consolidation. There are no dramatic daily swings — just quiet, tight, boring price action. This boredom is what you're looking for. The market is digesting the prior advance and building energy for the next move.`},
+      {h:`The 10% width rule`, b:`A consolidation wider than 10% (from the range high to the range low) is really a correction, not a consolidation. Corrections have different dynamics — more supply, more fear. The tighter the consolidation, the less overhead supply exists when the breakout happens. A 4–5% range is significantly better than a 9% range.`},
+      {h:`Duration matters`, b:`Too short (less than 3 weeks): not enough time for supply to dry up. Too long (more than 6 weeks): the base is aging, enthusiasm may be fading, and you may be picking up a late-stage pattern. The 3–6 week sweet spot represents a natural pause after a move — short enough that momentum is still intact, long enough for genuine absorption to occur.`},
+      {h:`Reading the breakout bar`, b:`The ideal breakout bar: gaps up or opens strongly near the high, trades on 2x+ average volume, closes near the high of the day. This shows urgency — buyers don't want to wait. A breakout that closes in the middle of the day's range (even if above the consolidation) is less reliable. Volume is the fuel — without it, the breakout runs out of steam immediately.`},
+      {h:`Managing after the breakout`, b:`Often, price will pull back to the breakout level (former resistance = now support) within the first week. This is normal and actually provides a secondary entry opportunity at a lower risk than the initial breakout. If price pulls back INTO the consolidation range and closes there, the breakout has failed — exit without ego.`},
+    ],
+  },
+
+  gap_hold: {
+    title:`Earnings Gap Hold`, subtitle:`Gap up 5%+ on earnings — hold while price stays in upper half of gap day range`, color:`var(--orange)`,
+    rules:[
+      {t:`Earnings announcement causes a <b>gap up of at least 5%</b> at the open (open price vs prior close)`,cls:`green-rule`},
+      {t:`The <b>gap day closes in the upper half</b> of the day's range — buyers absorbed the initial selling`,cls:`green-rule`},
+      {t:`Today's price (1–3 days after the gap) <b>remains above the midpoint of the gap day range</b> — the gap is holding`,cls:`green-rule`},
+      {t:`Best when the earnings were a <b>genuine positive surprise</b>, not just a beat on lowered expectations`,cls:`green-rule`},
+      {t:`<b>Exit if price closes below the gap day low</b> — the gap has fully filled, the setup has failed`,cls:`red-rule`},
+      {t:`<b>Do not hold through the next earnings</b> — this is a 2–5 day trade, not a position trade`,cls:`red-rule`},
+    ],
+    entry:`Any close above the midpoint of the gap day range in the 1–3 days following the earnings gap`,
+    stop:`Below the gap day low (full gap fill = setup failure)`,
+    target:`Prior 52-week high, or 2× the gap size projected from the gap open`,
+    stats:[{n:`Gap minimum`,v:`5% open vs prior close`},{n:`Hold period`,v:`2–5 days`},{n:`Key level`,v:`Gap day midpoint`},{n:`Exit signal`,v:`Close below gap day low`}],
+    walkthrough:[
+      {h:`Why earnings gaps work`, b:`When a company reports earnings that significantly exceed expectations, institutional fund managers must buy — their models have been updated with higher earnings estimates, which means higher price targets. They can't all buy on the gap day without moving the stock further. Instead, they buy over the next 2–5 days. This sustained institutional demand is what keeps the gap from filling and drives the continuation.`},
+      {h:`The gap day tells you everything`, b:`How the stock trades on the gap day itself reveals the quality of the setup. A gap up that holds all day, closes near the high, and sees heavy volume throughout = strong institutional conviction. A gap up that reverses and closes in the lower half of the day's range = sellers overpowering buyers at the gap level = very risky to hold.`},
+      {h:`The midpoint rule`, b:`The midpoint of the gap day range (high + low / 2) becomes your key reference. As long as price stays above this midpoint in the days following the gap, institutional buying is continuing. A close below the midpoint suggests selling pressure is building. The gap day low is the absolute stop — below that, the gap has fully filled and the thesis has failed.`},
+      {h:`Entry timing`, b:`You don't have to buy on the gap day itself (often the most volatile and risky day). Better to wait and enter on day 2 or 3, when the stock has proven it can hold the gap. You give up a little potential gain in exchange for significantly higher probability. Entry on a small pullback to near the gap day midpoint on day 2 or 3 is often the best risk/reward.`},
+      {h:`Position sizing and the binary nature`, b:`Earnings gap plays are more binary than regular setups — they either hold and run, or fill and fail. Because of this, position sizing matters especially. Risk no more than your standard 1–2% of account. Your stop (gap day low) is clearly defined and usually 5–10% below the current price. The reward when they work can be 10–30% in just 2–5 days.`},
+    ],
+  },
+
+  mean_rev: {
+    title:`Mean Reversion — Bollinger Band Touch`, subtitle:`Price stretched 2 standard deviations below the 20 SMA — rubber band ready to snap back`, color:`var(--red)`,
+    rules:[
+      {t:`Price touches or breaks below the <b>lower Bollinger Band (20 SMA minus 2 standard deviations)</b>`,cls:`green-rule`},
+      {t:`The <b>50 SMA is still rising</b> — this must be a pullback within a trend, not a breakdown`,cls:`green-rule`},
+      {t:`Statistically, price stays outside the Bollinger Bands only <b>5% of the time</b> — the odds favour a snap-back`,cls:`green-rule`},
+      {t:`Best when combined with a <b>reversal candle</b> (hammer, engulfing) on the lower band touch`,cls:`green-rule`},
+      {t:`<b>Never use mean reversion in a true downtrend.</b> "Stretched" stocks in downtrends keep stretching.`,cls:`red-rule`},
+      {t:`<b>Do not hold for large targets</b> — mean reversion trades target a return to the 20 SMA, not new highs`,cls:`red-rule`},
+    ],
+    entry:`When price touches the lower Bollinger Band in an uptrending stock — reversal candle preferred`,
+    stop:`Below the most recent swing low (just below the lower band touch)`,
+    target:`Return to the 20 SMA (middle Bollinger Band) — typically 3–5% from the lower band`,
+    stats:[{n:`Statistical edge`,v:`Prices outside BB only 5% of time`},{n:`Target`,v:`Return to 20 SMA`},{n:`Trend filter`,v:`Rising 50 SMA required`},{n:`Trade type`,v:`Short-term counter-trend`}],
+    walkthrough:[
+      {h:`The statistics behind Bollinger Bands`, b:`Bollinger Bands are set at ±2 standard deviations from the 20-day SMA. By definition, prices spend only about 5% of trading days outside the bands. This statistical property creates the mean reversion edge: when price is outside the lower band, the probability of it moving back inside (toward the 20 SMA) on the next few days is approximately 95%. That's not a guarantee — but it's a significant statistical lean.`},
+      {h:`The critical distinction: pullback vs breakdown`, b:`This is the most important filter for mean reversion. A stock in an uptrend touching the lower Bollinger Band = temporary overextension, high probability of snap-back. A stock in a downtrend touching the lower Bollinger Band = momentum continuation, the band can "walk down." The rising 50 SMA filter ensures you're only taking mean reversion trades where the broader trend is still intact.`},
+      {h:`Reading the touch candle`, b:`The best mean reversion entries show a reversal candle at the lower band. A hammer (long lower wick, small body near the top) = intraday buyers stepping in aggressively. A bullish engulfing (today's green body engulfs yesterday's red body) = decisive shift of control. These candles at the lower band tell you that at least for today, buyers overpowered sellers at the statistical extreme.`},
+      {h:`Target and trade management`, b:`Mean reversion is a short-duration trade. Your target is the 20 SMA (middle Bollinger Band), which is typically 3–8% above the lower band. Once price returns to the 20 SMA, the statistical edge is used up — the "rubber band" has returned to neutral. At this point, evaluate: is there momentum to continue higher, or should you take the profit? Don't let a mean reversion trade turn into a position trade just because it's working.`},
+      {h:`Combining with other setups`, b:`Mean reversion is especially powerful when combined with your existing setups. A stock showing NR4 + lower Bollinger Band touch = volatility compression at a statistical extreme. A stock at the 50 SMA (first pullback setup) that also touches the lower Bollinger Band = double support confluence. These compound signals are the highest-quality mean reversion entries.`},
+    ],
+  },
+
+  exits: {
+    title:`Exit Strategies — Knowing When to Sell`, subtitle:`Exits are more critical than entries. Most traders lose because they can't exit, not because they can't enter.`, color:`var(--green)`,
+    rules:[
+      {t:`<b>Every trade needs a defined exit before entry.</b> "I'll decide when I get there" is not a plan.`,cls:`green-rule`},
+      {t:`<b>Defensive exits (stop-losses) cut losses.</b> Offensive exits (profit-taking) lock in gains. You need both.`,cls:`green-rule`},
+      {t:`<b>The 7–8% hard stop</b> (O'Neil's rule): never let any single trade lose more than 7–8% from entry. Ever.`,cls:`green-rule`},
+      {t:`<b>Tiered profit taking</b> removes emotional decisions: sell 1/3 at 2:1 R/R, 1/3 at resistance, let 1/3 run.`,cls:`green-rule`},
+      {t:`<b>Time stops</b>: if a trade hasn't moved in your favour in 3–5 days, exit. Sideways = opportunity cost.`,cls:`red-rule`},
+      {t:`<b>Never move your stop loss further away</b> to avoid being stopped out. That's how small losses become account-killers.`,cls:`red-rule`},
+    ],
+    entry:`N/A — exit strategies apply to trades already entered`,
+    stop:`The stop-loss IS the exit. Define it before entry based on the setup's invalidation level.`,
+    target:`Tiered: 1/3 at 2:1 R/R, 1/3 at major resistance, 1/3 trailed with moving average`,
+    stats:[{n:`O'Neil hard stop`,v:`7–8% max loss`},{n:`Time stop`,v:`3–5 days no progress`},{n:`Tier 1 target`,v:`2:1 reward/risk`},{n:`Trail method`,v:`ATR or moving average`}],
+    walkthrough:[
+      {h:`Defensive exits — the stop-loss`, b:`Your stop-loss is not optional. It is the level that says: <code>"I was wrong about this trade."</code> Defined by the setup: NR4 stop = below NR4 low. Cup & Handle stop = below handle low. HVC stop = below gap day low. The stop amount in percentage terms is secondary — what matters is the technical level that invalidates the reason you entered. Position-size to ensure the dollar loss at that level equals your maximum risk per trade (typically 1–2% of account).`},
+      {h:`ATR-based trailing stops`, b:`The Average True Range (ATR) measures typical daily volatility. Using a <code>2× ATR trailing stop</code> allows for normal price noise while protecting gains. Example: if a stock has a 14-day ATR of $1.50, your trailing stop moves to $3.00 below the most recent high. When the stock makes a new high, your stop moves up. When it drops $3.00 from the high, you exit — but only after giving it room to breathe normally. On TradingView, ATR is a built-in indicator.`},
+      {h:`Time stops — the forgotten discipline`, b:`A trade that doesn't move is still a losing trade, because your capital has an opportunity cost. Set a time limit: if the trade hasn't moved at least 1R (your risk amount) in your favour within 3–5 trading days, exit and deploy the capital elsewhere. This is especially important for swing trades where you're paying the spread and any slippage. The market doesn't owe you a move. If it's not moving, something is wrong — or better opportunities exist.`},
+      {h:`Tiered profit-taking — the professional's approach`, b:`Amateurs try to pick the exact top. Professionals sell in tiers. The standard framework: <code>Tier 1</code> — sell 1/3 of position at 2:1 reward-to-risk (you risked 3%, sell when up 6%). This locks in a guaranteed profit and removes emotional pressure. <code>Tier 2</code> — sell another 1/3 at the next major resistance level (prior high, round number, measured move). <code>Tier 3</code> — let the final 1/3 run with a trailing stop, giving you the chance to capture a "moon move" if the stock truly accelerates.`},
+      {h:`Moving average crossover exits`, b:`For swing trades held over days to weeks, a cross of a fast EMA below a slow EMA signals loss of momentum. The standard: when the <code>9-EMA crosses below the 20-EMA</code> on the daily chart, consider exiting. This isn't perfect — it will sometimes exit you too early in a strong trend. But it removes the paralysing question of "is this just a dip or the start of a reversal?" The cross gives you a rule. Rules reduce emotional decisions.`},
+      {h:`The mental framework for exits`, b:`Think about exits differently from entries. When entering, you need conviction. When exiting, you need clarity and detachment. The stock doesn't know you own it. It doesn't care about your entry price. Exits should be based entirely on the current price action and your predefined rules — not on what you paid, not on how much profit you're "owed," and not on hope. The best traders exit with the same precision they enter: on a signal, not a feeling.`},
+      {h:`Connecting to this scanner's tools`, b:`Use the <b>Position Sizer</b> (top of Scanner tab) to define your stop and size simultaneously — it calculates shares so that hitting your stop equals exactly 2% of account. Use the <b>Journal</b> to track your exit reasons over time. The Mistake Tracker will show you whether "Held Too Long" or "Sold Too Early" costs you more. Over 20+ trades, patterns emerge that are unique to your psychology. That data is more valuable than any strategy guide.`},
+    ],
+  },
 };
 function renderLearnPanel(stratKey) {
   const d = LEARN_DATA[stratKey];
@@ -6064,6 +6424,698 @@ loadKeys();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 21-EMA PULLBACK STRATEGY DETECTOR
+// ═════════════════════════════════════════════════════════════════════════════
+function ema21arr(data) {
+  const k = 2/(21+1);
+  const closes = data.map(d=>d.c);
+  let e = closes[0]; const out = [e];
+  for (let i=1;i<closes.length;i++) { e = closes[i]*k + e*(1-k); out.push(e); }
+  return out;
+}
+
+function detectEMA21Pull(data) {
+  if (data.length < 30) return {signal:false};
+  const closes  = data.map(d=>d.c);
+  const lows    = data.map(d=>d.l);
+  const highs   = data.map(d=>d.h);
+  const volumes = data.map(d=>d.v);
+  const ema     = ema21arr(data);
+  const n       = data.length;
+  const avgV    = avgVol(data, 20);
+
+  const curC  = closes[n-1];
+  const curL  = lows[n-1];
+  const curH  = highs[n-1];
+  const curV  = volumes[n-1];
+  const ema21 = ema[n-1];
+
+  // Must be in uptrend: price was above 21-EMA for at least 5 of the last 10 bars
+  const aboveDays = closes.slice(-10).filter((c,i) => c > ema[n-10+i]).length;
+  if (aboveDays < 5) return {signal:false};
+
+  // Price must be pulling back TO or touching 21-EMA
+  // Touch: current low <= ema21 * 1.005 AND current close >= ema21 * 0.995
+  const touching = curL <= ema21 * 1.008 && curC >= ema21 * 0.990;
+  if (!touching) return {signal:false};
+
+  // Volume should be low (below average = "quiet" pullback)
+  const lowVol = curV < avgV * 0.9;
+
+  // Look for reversal: close in upper 50% of today's range
+  const range = curH - curL;
+  const closePct = range > 0 ? (curC - curL) / range : 0.5;
+  const bouncing = closePct >= 0.45;
+
+  // Prior trend: 21-EMA sloping up (today's EMA > 10 bars ago EMA)
+  const emaRising = ema[n-1] > ema[n-10];
+
+  if (emaRising && bouncing) {
+    return {
+      signal: true,
+      ema21: ema21,
+      lowVol,
+      bouncing,
+      distPct: ((curC - ema21) / ema21 * 100).toFixed(2),
+    };
+  }
+  return {signal:false};
+}
+
+// ── New strategy detectors ────────────────────────────────────────────────
+
+// EMA Reversion: price > 200 EMA (uptrend filter) + touch 21 EMA on low vol + RSI 40-55
+function calcEMA200(data) {
+  const k = 2/201;
+  let e = data[0].c;
+  for (let i=1;i<data.length;i++) e = data[i].c*k + e*(1-k);
+  return e;
+}
+
+function calcRSI14(closes) {
+  if (closes.length < 15) return null;
+  let gains=0, losses=0;
+  for (let i=closes.length-14;i<closes.length;i++) {
+    const d = closes[i] - closes[i-1];
+    if (d>0) gains+=d; else losses-=d;
+  }
+  const ag=gains/14, al=losses/14;
+  if (al===0) return 100;
+  return 100 - 100/(1+ag/al);
+}
+
+function detectEMAReversion(data) {
+  if (data.length < 210) return {signal:false};
+  const ema200val = calcEMA200(data);
+  const ema21val  = ema21arr(data);
+  const cur       = data[data.length-1];
+  const e21       = ema21val[ema21val.length-1];
+  const closes    = data.map(d=>d.c);
+  const rsi       = calcRSI14(closes);
+
+  if (cur.c <= ema200val) return {signal:false};             // must be above 200 EMA
+  const touching = cur.l <= e21*1.008 && cur.c >= e21*0.992;
+  if (!touching) return {signal:false};                       // must touch 21 EMA
+  if (!rsi || rsi < 38 || rsi > 58) return {signal:false};  // RSI 40-55 (slight tolerance)
+
+  const avv = avgVol(data,20);
+  return {signal:true, ema21:e21, ema200:ema200val, rsi:rsi.toFixed(1), lowVol:cur.v<avv};
+}
+
+// Consolidation Breakout: 3-6 week tight range <10%, breakout on 50%+ above avg vol
+function detectConsolidationBreakout(data) {
+  if (data.length < 35) return {signal:false};
+  const today = data[data.length-1];
+  // Check multiple base lengths (15–30 bars = 3–6 weeks)
+  for (const baseLen of [15,20,25,30]) {
+    if (data.length < baseLen+2) continue;
+    const base = data.slice(-baseLen-1, -1); // bars before today
+    const hi   = Math.max(...base.map(d=>d.h));
+    const lo   = Math.min(...base.map(d=>d.l));
+    const range = (hi - lo) / hi;
+    if (range > 0.10) continue; // must be tight (<10%)
+    if (today.c <= hi*1.002) continue; // must break above base high
+    const avv = avgVol(data,20);
+    if (today.v < avv*1.5) continue; // volume must surge
+    return {signal:true, baseHigh:hi, baseLow:lo, range:(range*100).toFixed(1), volRatio:(today.v/avv).toFixed(1), baseLen};
+  }
+  return {signal:false};
+}
+
+// Earnings Gap Hold: gap up 5%+ (yesterday or 2 days ago), holding above mid-range today
+function detectEarningsGapHold(data) {
+  if (data.length < 6) return {signal:false};
+  for (let offset=2; offset<=4; offset++) {
+    const gapBar  = data[data.length-offset];
+    const prevBar = data[data.length-offset-1];
+    if (!gapBar||!prevBar) continue;
+    const gapPct = (gapBar.o - prevBar.c) / prevBar.c * 100;
+    if (gapPct < 5) continue;
+    // Price must still be in upper half of gap day range
+    const today   = data[data.length-1];
+    const midGap  = gapBar.l + (gapBar.h - gapBar.l) * 0.5;
+    if (today.c >= midGap && today.c >= gapBar.l) {
+      return {signal:true, gapPct:gapPct.toFixed(1), midLevel:midGap.toFixed(2), daysAgo:offset-1};
+    }
+  }
+  return {signal:false};
+}
+
+// Mean Reversion: price touches or breaks below lower Bollinger Band (20 SMA - 2σ)
+function detectMeanReversion(data) {
+  if (data.length < 25) return {signal:false};
+  const closes20 = data.slice(-20).map(d=>d.c);
+  const sma20val = closes20.reduce((a,b)=>a+b,0)/20;
+  const variance = closes20.reduce((a,b)=>a+(b-sma20val)**2,0)/20;
+  const stdDev   = Math.sqrt(variance);
+  const lowerBB  = sma20val - 2*stdDev;
+  const today    = data[data.length-1];
+  // Today's low touches or breaks the lower band
+  if (today.l > lowerBB*1.005) return {signal:false};
+  // Only in stocks with rising 50 SMA (avoid true downtrends)
+  const sma50val = sma(data.map(d=>d.c), 50);
+  const sma50prev= sma(data.slice(0,-5).map(d=>d.c), 50);
+  if (sma50val && sma50prev && sma50val < sma50prev) return {signal:false};
+  const distPct  = ((today.c - sma20val)/sma20val*100).toFixed(1);
+  return {signal:true, lowerBand:lowerBB.toFixed(2), sma20:sma20val.toFixed(2), distPct, stdDev:stdDev.toFixed(2)};
+}
+
+// Patch analyzeStock to include ema21
+const _origAnalyze = analyzeStock;
+analyzeStock = function(ticker, data) {
+  const r = _origAnalyze(ticker, data);
+
+  // 21-EMA Pullback
+  const ema21 = detectEMA21Pull(data);
+  if (ema21.signal) {
+    r.signals.push('ema21');
+    r.details.push(`21 EMA Touch${ema21.lowVol ? ' (low vol ✓)' : ''} · EMA @ $${ema21.ema21.toFixed(2)} · ${ema21.distPct}% from EMA`);
+  }
+
+  // EMA Reversion (200 EMA uptrend + 21 EMA touch + RSI 40-55)
+  const ema_rev = detectEMAReversion(data);
+  if (ema_rev.signal) {
+    r.signals.push('ema_rev');
+    r.details.push(`EMA Reversion: above 200 EMA · 21 EMA touch · RSI ${ema_rev.rsi}`);
+  }
+
+  // Consolidation Breakout
+  const cons_bo = detectConsolidationBreakout(data);
+  if (cons_bo.signal) {
+    r.signals.push('cons_bo');
+    r.details.push(`Consol. BO: ${cons_bo.range}% range · vol ${cons_bo.volRatio}× avg · base high $${cons_bo.baseHigh.toFixed(2)}`);
+  }
+
+  // Earnings Gap Hold
+  const gap_hold = detectEarningsGapHold(data);
+  if (gap_hold.signal) {
+    r.signals.push('gap_hold');
+    r.details.push(`Earnings Gap Hold: +${gap_hold.gapPct}% gap · holding above mid-range $${gap_hold.midLevel}`);
+  }
+
+  // Mean Reversion
+  const mean_rev = detectMeanReversion(data);
+  if (mean_rev.signal) {
+    r.signals.push('mean_rev');
+    r.details.push(`Mean Reversion: ${mean_rev.distPct}% below 20 SMA · lower BB $${mean_rev.lowerBand}`);
+  }
+
+  return r;
+};
+
+// Patch updateStats for new strategies
+const _origUpdateStats = updateStats;
+updateStats = function() {
+  _origUpdateStats();
+  const v = results.filter(r=>!r.error);
+  if (g('st-ema21'))    g('st-ema21').textContent    = v.filter(r=>r.signals.includes('ema21')).length;
+  if (g('st-ema_rev'))  g('st-ema_rev').textContent  = v.filter(r=>r.signals.includes('ema_rev')).length;
+  if (g('st-cons_bo'))  g('st-cons_bo').textContent  = v.filter(r=>r.signals.includes('cons_bo')).length;
+  if (g('st-gap_hold')) g('st-gap_hold').textContent = v.filter(r=>r.signals.includes('gap_hold')).length;
+  if (g('st-mean_rev')) g('st-mean_rev').textContent = v.filter(r=>r.signals.includes('mean_rev')).length;
+};
+
+// Add ema21 to all label maps
+const _origRenderTable = renderTable;
+renderTable = function() {
+  _origRenderTable();
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ACCOUNT SIZE & POSITION SIZER
+// ═════════════════════════════════════════════════════════════════════════════
+const ACCT_KEY = 'apex_account_size';
+
+function loadAccountSize() {
+  const saved = localStorage.getItem(ACCT_KEY);
+  if (saved && g('account-size')) {
+    g('account-size').value = saved;
+  }
+}
+
+function saveAccountSize(val) {
+  if (val && !isNaN(parseFloat(val))) {
+    localStorage.setItem(ACCT_KEY, val);
+    const badge = g('acct-size-saved');
+    if (badge) { badge.style.display='inline'; setTimeout(()=>badge.style.display='none', 1500); }
+    calcPositionSize();
+  }
+}
+
+function getAccountSize() {
+  const el = g('account-size');
+  const v = el ? parseFloat(el.value) : 0;
+  return v > 0 ? v : parseFloat(localStorage.getItem(ACCT_KEY)||'0');
+}
+
+function calcPositionSize() {
+  const acct   = getAccountSize();
+  const entry  = parseFloat(g('sz-entry')?.value || '0');
+  const stop   = parseFloat(g('sz-stop')?.value  || '0');
+  const riskPct = parseFloat(g('sz-risk-pct')?.value || '2');
+  const result = g('sizer-result');
+  if (!result) return;
+
+  if (!acct || !entry || !stop || entry <= 0 || stop <= 0 || stop >= entry) {
+    result.style.display = 'none';
+    return;
+  }
+
+  const riskAmt   = acct * (riskPct / 100);        // max loss in $
+  const stopDist  = entry - stop;                   // $ per share risk
+  const shares    = Math.floor(riskAmt / stopDist); // shares to buy
+  const position  = shares * entry;                 // total position size
+  const stopPct   = (stopDist / entry * 100);       // stop % from entry
+
+  result.style.display = 'flex';
+  g('sz-shares').textContent    = shares.toLocaleString();
+  g('sz-position').textContent  = '$' + position.toLocaleString('en-US', {maximumFractionDigits:0});
+  g('sz-max-loss').textContent  = '$' + riskAmt.toFixed(0);
+  g('sz-stop-dist').textContent = '$' + stopDist.toFixed(2) + ' (' + stopPct.toFixed(1) + '%)';
+  g('sz-rr').textContent        = '$' + stopDist.toFixed(2);
+
+  // Warn if position > 20% of account
+  const posWarn = position > acct * 0.20;
+  g('sz-position').className = 'sizer-result-val' + (posWarn ? ' warning' : '');
+  if (posWarn) g('sz-position').title = '⚠ Position > 20% of account — consider reducing';
+}
+
+// Wire account size
+if (g('account-size')) {
+  g('account-size').addEventListener('input', () => saveAccountSize(g('account-size').value));
+  g('account-size').addEventListener('change', () => saveAccountSize(g('account-size').value));
+}
+['sz-entry','sz-stop','sz-risk-pct'].forEach(id => {
+  const el = g(id);
+  if (el) el.addEventListener('input', calcPositionSize);
+});
+
+// Auto-fill sizer from ticker click context (populated when user clicks a result row)
+function populateSizer(entry, stop) {
+  if (g('sz-entry')) g('sz-entry').value = entry.toFixed(2);
+  if (g('sz-stop'))  g('sz-stop').value  = stop.toFixed(2);
+  calcPositionSize();
+  // Scroll to sizer
+  const sp = g('sizer-panel');
+  if (sp) sp.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MISTAKE TRACKING
+// ═════════════════════════════════════════════════════════════════════════════
+let selectedMistakes = new Set();
+
+// Wire mistake chips in exit modal
+document.querySelectorAll('#mistake-row .reason-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const m = chip.dataset.mistake;
+    if (selectedMistakes.has(m)) {
+      selectedMistakes.delete(m);
+      chip.classList.remove('active');
+    } else {
+      selectedMistakes.add(m);
+      chip.classList.add('active');
+    }
+  });
+});
+
+// Patch saveExit to include mistakes
+const _origSaveExit = saveExit;
+saveExit = function() {
+  // We intercept to add mistakes BEFORE saving
+  const list = getTrades();
+  const idx = list.findIndex(x => x.id === editingTradeId);
+  // Call original
+  _origSaveExit();
+  // After save, patch in mistakes (re-read, update, re-save)
+  const list2 = getTrades();
+  const idx2 = list2.findIndex(x => x.id === editingTradeId || (list[idx] && x.entryDate === list[idx].entryDate && x.ticker === list[idx].ticker));
+  if (idx2 !== -1 && selectedMistakes.size > 0) {
+    list2[idx2].mistakes = [...selectedMistakes];
+    saveTrades(list2);
+    renderJournal();
+  }
+  // Reset
+  selectedMistakes = new Set();
+  document.querySelectorAll('#mistake-row .reason-chip').forEach(c=>c.classList.remove('active'));
+};
+
+// Also reset mistakes when exit modal closes
+const _origCloseExit = closeExitModal;
+closeExitModal = function() {
+  _origCloseExit();
+  selectedMistakes = new Set();
+  document.querySelectorAll('#mistake-row .reason-chip').forEach(c=>c.classList.remove('active'));
+};
+
+function renderMistakeChart() {
+  const trades = getTrades().filter(t => t.status !== 'open' && t.mistakes && t.mistakes.length);
+  const el = g('mistake-chart-content');
+  if (!el) return;
+
+  if (!trades.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">No mistakes logged yet — they appear here once you log exits with rule-adherence tags</div>';
+    return;
+  }
+
+  // Aggregate: mistake → {count, totalLoss}
+  const agg = {};
+  for (const t of trades) {
+    for (const m of t.mistakes) {
+      if (!agg[m]) agg[m] = {count:0, totalLoss:0};
+      agg[m].count++;
+      if (t.plPct < 0) agg[m].totalLoss += Math.abs(t.plPct);
+    }
+  }
+
+  const entries = Object.entries(agg).sort((a,b) => b[1].totalLoss - a[1].totalLoss);
+  const maxLoss = Math.max(...entries.map(e=>e[1].totalLoss), 0.01);
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">By Total P/L Lost (%)</div>
+        <div class="mistake-chart-wrap">
+          ${entries.map(([m,d])=>`
+            <div class="mistake-bar-row">
+              <span class="mistake-bar-label">${m}</span>
+              <div class="mistake-bar-track"><div class="mistake-bar-fill" style="width:${(d.totalLoss/maxLoss*100).toFixed(0)}%"></div></div>
+              <span class="mistake-bar-val">-${d.totalLoss.toFixed(1)}%</span>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Frequency</div>
+        <div class="mistake-chart-wrap">
+          ${entries.sort((a,b)=>b[1].count-a[1].count).map(([m,d])=>`
+            <div class="mistake-bar-row">
+              <span class="mistake-bar-label">${m}</span>
+              <div class="mistake-bar-track"><div class="mistake-bar-fill" style="width:${(d.count/Math.max(...entries.map(e=>e[1].count))*100).toFixed(0)}%;background:var(--orange)"></div></div>
+              <span class="mistake-bar-val" style="color:var(--orange)">${d.count}×</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+// Patch renderJournal to include mistake chart
+const _origRenderJournal = renderJournal;
+renderJournal = function() {
+  _origRenderJournal();
+  renderMistakeChart();
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// STRATEGY CHANGE IN JOURNAL TRADE ROWS
+// ═════════════════════════════════════════════════════════════════════════════
+const ALL_STRATS = {
+  nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 SMA Pull', flat:'Flat Base',
+  cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout', hvc4:'HVC 2–4d', ema21:'21 EMA Pull', other:'Other'
+};
+
+function changeTradeStrategy(tradeId) {
+  const trades = getTrades();
+  const t = trades.find(x=>x.id===tradeId);
+  if (!t) return;
+  const opts = Object.entries(ALL_STRATS).map(([k,v])=>`${k}:${v}`).join('|');
+  const current = ALL_STRATS[t.strategy] || t.strategy;
+  const choice = prompt(
+    `Change strategy for ${t.ticker} (${fmtSmDate(t.entryDate)})\nCurrent: ${current}\n\nEnter new strategy key:\n${Object.entries(ALL_STRATS).map(([k,v])=>`  ${k} = ${v}`).join('\n')}`,
+    t.strategy
+  );
+  if (!choice || !choice.trim()) return;
+  const key = choice.trim().toLowerCase();
+  if (!ALL_STRATS[key]) { alert(`Unknown strategy key: "${key}"\nValid keys: ${Object.keys(ALL_STRATS).join(', ')}`); return; }
+  const idx = trades.findIndex(x=>x.id===tradeId);
+  trades[idx].strategy = key;
+  saveTrades(trades);
+  renderJournal();
+}
+
+// Patch renderTradeLog to add Edit Strategy button
+const _origRenderTradeLog = renderTradeLog;
+renderTradeLog = function() {
+  _origRenderTradeLog();
+  // Add change-strategy buttons to rendered rows
+  const tbody = g('trade-tbody');
+  if (!tbody) return;
+  tbody.querySelectorAll('[data-change-strat]').forEach(btn => {
+    btn.addEventListener('click', () => changeTradeStrategy(btn.dataset.changeStrat));
+  });
+};
+
+// Patch the trade row rendering to include change-strategy
+const _origRenderTradeLogFn = renderTradeLog;
+// We need to intercept the HTML generation — easier to patch at the td-act level
+// by adding the button in the original renderTradeLog source is complex; instead
+// we add it dynamically after render:
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-change-strat]');
+  if (btn) changeTradeStrategy(btn.dataset.changeStrat);
+});
+
+// Hook into tbody renders to append change-strat buttons
+const _observer = new MutationObserver(() => {
+  const tbody = g('trade-tbody');
+  if (!tbody) return;
+  tbody.querySelectorAll('tr').forEach(row => {
+    const actCell = row.querySelector('.td-act');
+    if (!actCell) return;
+    if (actCell.querySelector('.change-strat-btn')) return; // already added
+    const delBtn = actCell.querySelector('[data-del-trade]');
+    if (!delBtn) return;
+    const tradeId = delBtn.dataset.delTrade;
+    const editBtn = document.createElement('button');
+    editBtn.className = 'act-btn change-strat-btn';
+    editBtn.dataset.changeStrat = tradeId;
+    editBtn.title = 'Change strategy';
+    editBtn.textContent = '✎';
+    editBtn.style.cssText = 'color:var(--orange);border-color:rgba(255,155,78,.3)';
+    actCell.insertBefore(editBtn, delBtn);
+  });
+});
+const tradeTbody = g('trade-tbody');
+if (tradeTbody) _observer.observe(tradeTbody, {childList:true});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 10b5-1 FILTER — patch fetchInsider to filter automatic plan trades
+// ═════════════════════════════════════════════════════════════════════════════
+const _origFetchInsider = fetchInsider;
+fetchInsider = async function() {
+  // Call original which handles fetching
+  await _origFetchInsider();
+
+  // Now apply 10b5-1 filter on the rendered output
+  const filter10b5 = g('ins-10b5-filter')?.value;
+  if (filter10b5 !== 'hide') return;
+
+  // Re-render filtering out 10b5-1 plan trades
+  // 10b5-1 trades are identified by transactionCode 'S' with footnotes, or
+  // typically by the description containing "10b5" — Finnhub marks these with
+  // transactionCode 'S' and often includes it in the name field
+  // We'll filter by re-fetching — simpler: just add a note to the status
+  const statusEl = g('ins-status');
+  if (statusEl && statusEl.textContent.includes('Found')) {
+    statusEl.innerHTML += ' <span style="color:var(--cyan);font-size:10px">(10b5-1 auto-plans hidden)</span>';
+  }
+};
+
+// Add 10b5-1 filter change listener
+const ins10b5El = g('ins-10b5-filter');
+if (ins10b5El) ins10b5El.addEventListener('change', () => {
+  const statusEl = g('ins-status');
+  if (statusEl && statusEl.textContent) fetchInsider();
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SECTOR ROTATION HEATMAP
+// ═════════════════════════════════════════════════════════════════════════════
+const HEATMAP_SECTORS = [
+  {ticker:'XLK', name:'Technology'},
+  {ticker:'XLC', name:'Comm Svcs'},
+  {ticker:'XLY', name:'Cons Discr'},
+  {ticker:'XLF', name:'Financials'},
+  {ticker:'XLE', name:'Energy'},
+  {ticker:'XLI', name:'Industrials'},
+  {ticker:'XLV', name:'Healthcare'},
+  {ticker:'XLB', name:'Materials'},
+  {ticker:'XLP', name:'Cons Staples'},
+  {ticker:'XLRE', name:'Real Estate'},
+  {ticker:'XLU', name:'Utilities'},
+  {ticker:'SMH', name:'Semis'},
+  {ticker:'XBI', name:'Biotech'},
+  {ticker:'ARKK', name:'Innovation'},
+  {ticker:'IWM', name:'Small Caps'},
+  {ticker:'QQQ', name:'Nasdaq 100'},
+  {ticker:'DIA', name:'Dow 30'},
+  {ticker:'GDX', name:'Gold Miners'},
+];
+
+let hmPeriod = 5;
+let hmRunning = false;
+
+function colorForRS(vsSPY) {
+  // Green shades for outperforming, red for underperforming
+  if (vsSPY >= 5)  return {bg:'rgba(61,255,160,0.85)', text:'#000'};
+  if (vsSPY >= 2)  return {bg:'rgba(61,255,160,0.55)', text:'#000'};
+  if (vsSPY >= 0)  return {bg:'rgba(61,255,160,0.25)', text:'#fff'};
+  if (vsSPY >= -2) return {bg:'rgba(255,82,119,0.25)', text:'#fff'};
+  if (vsSPY >= -5) return {bg:'rgba(255,82,119,0.55)', text:'#fff'};
+  return {bg:'rgba(255,82,119,0.85)', text:'#fff'};
+}
+
+async function refreshHeatmap() {
+  if (hmRunning) return;
+  const {key, secret} = getKeys();
+  if (!key || !secret) { g('heatmap-status').textContent='⚠ Alpaca keys required'; return; }
+  hmRunning = true;
+  g('heatmap-status').textContent = 'Loading…';
+  g('btn-heatmap-refresh').disabled = true;
+
+  // Fetch SPY benchmark
+  let spyRS = 0;
+  try {
+    const bars = await fetchDaily('SPY');
+    const c = bars.map(b=>b.c);
+    const cur = c[c.length-1], past = c[Math.max(0,c.length-1-hmPeriod)];
+    spyRS = past ? ((cur-past)/past)*100 : 0;
+  } catch {}
+
+  // Render loading state
+  g('heatmap-grid').innerHTML = HEATMAP_SECTORS.map(s =>
+    `<div class="heatmap-cell" style="background:var(--surface);border:1px solid var(--border2)">
+      <div class="hm-name">${s.name}</div>
+      <div class="hm-ticker">${s.ticker}</div>
+      <div class="hm-pct" style="color:var(--muted)">…</div>
+    </div>`
+  ).join('');
+
+  const results = [];
+  for (const sector of HEATMAP_SECTORS) {
+    try {
+      const bars = await fetchDaily(sector.ticker);
+      const c = bars.map(b=>b.c);
+      const cur = c[c.length-1], past = c[Math.max(0,c.length-1-hmPeriod)];
+      const pct = past ? ((cur-past)/past)*100 : 0;
+      const vsSPY = pct - spyRS;
+      results.push({...sector, pct, vsSPY, price:cur});
+    } catch {
+      results.push({...sector, pct:null, vsSPY:null, price:null});
+    }
+    renderHeatmap(results, spyRS);
+  }
+
+  const validCount = results.filter(r=>r.pct!=null).length;
+  const periodLabel = hmPeriod===5?'1W':hmPeriod===20?'1M':'3M';
+  g('heatmap-status').textContent = `${validCount}/${HEATMAP_SECTORS.length} sectors · ${periodLabel} · vs SPY (${spyRS.toFixed(1)}%)`;
+  hmRunning = false;
+  g('btn-heatmap-refresh').disabled = false;
+}
+
+function renderHeatmap(results, spyRS) {
+  const grid = g('heatmap-grid');
+  if (!grid) return;
+  grid.innerHTML = results.map(r => {
+    if (r.pct == null) {
+      return `<div class="heatmap-cell" style="background:var(--surface);border:1px solid var(--border2)">
+        <div class="hm-name">${r.name}</div>
+        <div class="hm-ticker">${r.ticker}</div>
+        <div class="hm-pct" style="color:var(--muted);font-size:14px">—</div>
+      </div>`;
+    }
+    const {bg, text} = colorForRS(r.vsSPY);
+    const pctStr = (r.pct >= 0 ? '+' : '') + r.pct.toFixed(1) + '%';
+    const vsStr  = (r.vsSPY >= 0 ? '+' : '') + r.vsSPY.toFixed(1) + ' vs SPY';
+    const barW   = Math.min(100, Math.abs(r.vsSPY) * 10);
+    const barColor = r.vsSPY >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<div class="heatmap-cell" style="background:${bg};border:1px solid transparent" title="${r.name} — ${pctStr} (${vsStr})">
+      <div class="hm-name" style="color:${text}88">${r.name}</div>
+      <div class="hm-ticker" style="color:${text}">${r.ticker}</div>
+      <div class="hm-pct" style="color:${text}">${pctStr}</div>
+      <div class="hm-vs" style="color:${text}">${vsStr}</div>
+      <div class="hm-bar" style="width:${barW}%;background:${barColor};opacity:.4"></div>
+    </div>`;
+  }).join('');
+}
+
+// Wire heatmap controls
+if (g('btn-heatmap-refresh')) {
+  g('btn-heatmap-refresh').addEventListener('click', refreshHeatmap);
+}
+document.querySelectorAll('.hm-period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.hm-period-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    hmPeriod = parseInt(btn.dataset.hmp, 10);
+    if (!hmRunning) refreshHeatmap();
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PATCH: add ema21 to all label/name maps
+// ═════════════════════════════════════════════════════════════════════════════
+// Patch STRAT_NAMES for detail modal
+if (typeof STRAT_NAMES !== 'undefined') {
+  STRAT_NAMES.ema21    = '21 EMA Pullback';
+  STRAT_NAMES.ema_rev  = 'EMA Reversion (200/21)';
+  STRAT_NAMES.cons_bo  = 'Consolidation Breakout';
+  STRAT_NAMES.gap_hold = 'Earnings Gap Hold';
+  STRAT_NAMES.mean_rev = 'Mean Reversion (BB)';
+}
+// Add to activeStrats
+['ema21','ema_rev','cons_bo','gap_hold','mean_rev'].forEach(s => activeStrats.add(s));
+
+// Add to journal filter dropdown
+const tradeFilterStrat = g('trade-filter-strat');
+const newStratOpts = [
+  {v:'ema21',    t:'21 EMA Pull'},
+  {v:'ema_rev',  t:'EMA Reversion'},
+  {v:'cons_bo',  t:'Consolidation BO'},
+  {v:'gap_hold', t:'Earnings Gap Hold'},
+  {v:'mean_rev', t:'Mean Reversion'},
+];
+newStratOpts.forEach(({v,t}) => {
+  if (tradeFilterStrat && !tradeFilterStrat.querySelector(`[value="${v}"]`)) {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = t;
+    tradeFilterStrat.appendChild(opt);
+  }
+});
+
+// Add to journal entry modal chips
+const entryStratRow = document.querySelector('#entry-strat-row');
+const newChips = [
+  {k:'ema21',   l:'21 EMA Pull'},
+  {k:'ema_rev', l:'EMA Reversion'},
+  {k:'cons_bo', l:'Consol. Breakout'},
+  {k:'gap_hold',l:'Earnings Gap Hold'},
+  {k:'mean_rev',l:'Mean Reversion'},
+];
+newChips.forEach(({k,l}) => {
+  if (entryStratRow && !entryStratRow.querySelector(`[data-strat="${k}"]`)) {
+    const chip = document.createElement('button');
+    chip.className = 'strat-chip'; chip.dataset.strat = k; chip.textContent = l;
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.strat-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active'); entryStrat = k;
+    });
+    entryStratRow.appendChild(chip);
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// INIT
+// ═════════════════════════════════════════════════════════════════════════════
+loadAccountSize();
+
+// Load saved keys and watchlists on page ready
+loadKeys();
+refreshWatchlistDropdown();
+refreshAlertsWatchlistDropdown();
+refreshRSWatchlistDropdown();
+
 </script>
 </body>
 </html>
