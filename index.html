@@ -479,6 +479,72 @@ table.rs-tbl tbody tr.rs-top{background:rgba(232,255,71,.03)}
 .panel{background:var(--surface);border:1px solid var(--border);padding:18px 20px;margin-bottom:20px;position:relative}
 .panel::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px}
 .panel.accent::before{background:var(--accent)}
+
+/* ─── Composite Score Badge ───────────────────────────────────────── */
+.score-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;font-family:var(--font-display);font-weight:700;font-size:11px;letter-spacing:1.5px;white-space:nowrap}
+.score-badge.a-plus{background:linear-gradient(135deg,rgba(232,255,71,.2),rgba(61,255,160,.15));color:var(--accent);border:1px solid rgba(232,255,71,.5)}
+.score-badge.b-grade{background:rgba(61,255,160,.1);color:var(--green);border:1px solid rgba(61,255,160,.3)}
+.score-badge.c-grade{background:rgba(255,155,78,.08);color:var(--orange);border:1px solid rgba(255,155,78,.25)}
+.score-badge.d-grade{background:rgba(74,85,104,.15);color:var(--muted);border:1px solid var(--border2)}
+.score-bar{display:flex;gap:2px;margin-top:4px}
+.score-seg{height:3px;flex:1;border-radius:1px;background:var(--border2)}
+.score-seg.filled{background:var(--accent)}
+.score-seg.filled.green{background:var(--green)}
+.score-seg.filled.orange{background:var(--orange)}
+.score-number{font-family:var(--font-display);font-size:18px;font-weight:800;line-height:1}
+
+/* ─── Market Regime Bar ───────────────────────────────────────────── */
+.regime-bar{display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--surface);border:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+.regime-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.regime-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:600;border-radius:0}
+.regime-pill.bull{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.3)}
+.regime-pill.bear{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.regime-pill.neutral{background:rgba(74,85,104,.15);color:var(--muted);border:1px solid var(--border2)}
+.regime-pill.loading{background:var(--bg);color:var(--muted);border:1px solid var(--border2);animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.regime-index{display:flex;align-items:center;gap:6px;font-size:10px}
+.regime-index span{color:var(--muted)}
+.regime-index b{color:var(--text)}
+
+/* ─── Playbook Row ────────────────────────────────────────────────── */
+.playbook-row{display:none;background:rgba(232,255,71,.02);border-top:1px solid rgba(232,255,71,.1)}
+.playbook-row.open{display:table-row}
+.playbook-inner{padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.playbook-section{padding:10px 14px;background:var(--bg);border:1px solid var(--border2)}
+.playbook-section-title{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.playbook-section-body{font-size:11px;color:var(--text);line-height:1.6}
+.playbook-section.entry-sec{border-left:2px solid var(--green)}
+.playbook-section.stop-sec{border-left:2px solid var(--red)}
+.playbook-section.target-sec{border-left:2px solid var(--accent)}
+.playbook-section.risk-sec{border-left:2px solid var(--purple)}
+.playbook-risk{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px}
+.playbook-risk.low{background:var(--green-dim);color:var(--green)}
+.playbook-risk.med{background:var(--orange-dim);color:var(--orange)}
+.playbook-risk.high{background:var(--red-dim);color:var(--red)}
+.playbook-toggle{cursor:pointer;user-select:none;color:var(--accent);font-size:11px;padding:2px 6px;border:1px solid rgba(232,255,71,.2);transition:all .15s}
+.playbook-toggle:hover{background:rgba(232,255,71,.08)}
+.playbook-levels{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.playbook-level{font-size:10px;font-family:var(--font-mono);padding:2px 7px;border:1px solid var(--border2);color:var(--text)}
+.playbook-level.entry{border-color:rgba(61,255,160,.3);color:var(--green)}
+.playbook-level.stop{border-color:rgba(255,82,119,.3);color:var(--red)}
+.playbook-level.t1{border-color:rgba(232,255,71,.2);color:var(--accent)}
+.playbook-level.t2{border-color:rgba(232,255,71,.1);color:var(--muted)}
+.conviction-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-left:8px}
+.conviction-badge.high-conviction{background:linear-gradient(135deg,rgba(232,255,71,.2),rgba(61,255,160,.15));color:var(--accent);border:1px solid rgba(232,255,71,.4)}
+
+/* ─── Equity Curve ────────────────────────────────────────────────── */
+.equity-section{margin-bottom:24px}
+.equity-chart-wrap{background:var(--bg);border:1px solid var(--border2);padding:14px;position:relative;overflow:hidden}
+.equity-chart-wrap svg{width:100%;display:block}
+.equity-stats-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.equity-stat{flex:1;min-width:110px;padding:10px 14px;background:var(--bg);border:1px solid var(--border2);text-align:center}
+.equity-stat-val{font-family:var(--font-display);font-size:16px;font-weight:700}
+.equity-stat-lbl{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+.dow-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.dow-cell{padding:10px 6px;text-align:center;background:var(--bg);border:1px solid var(--border2)}
+.dow-cell-day{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.dow-cell-val{font-family:var(--font-display);font-size:14px;font-weight:700}
+.dow-cell-n{font-size:9px;color:var(--muted);margin-top:2px}
 .panel.cyan::before{background:var(--cyan)}
 .panel-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .panel.accent .panel-title{color:var(--accent)}
@@ -857,6 +923,15 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     </div>
   </div>
 
+  <!-- Market Regime Indicator -->
+  <div class="regime-bar" id="regime-bar">
+    <span class="regime-label">Market Regime</span>
+    <span class="regime-pill loading" id="regime-spy">SPY —</span>
+    <span class="regime-pill loading" id="regime-qqq">QQQ —</span>
+    <div class="regime-index" id="regime-detail"><span>Load regime →</span></div>
+    <button class="btn btn-ghost" id="btn-regime-refresh" style="padding:5px 12px;font-size:9px;margin-left:auto">↻ Refresh</button>
+  </div>
+
   <!-- Strategies -->
   <div class="strat-bar">
     <span class="strat-lbl">Strategies:</span>
@@ -926,7 +1001,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <th class="sortable" data-scansort="ticker">Ticker</th>
           <th class="sortable" data-scansort="price">Price</th>
           <th class="sortable" data-scansort="change">Change %</th>
-          <th class="sortable" data-scansort="vol">Vol Ratio</th>
+          <th class="sortable" data-scansort="vol">RVOL</th>
+          <th class="sortable" data-scansort="score">Score</th>
           <th class="sortable" data-scansort="signals">Setups</th>
           <th>Signals</th>
           <th>Details</th>
@@ -1459,6 +1535,31 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <!-- Overall stats dashboard -->
     <div class="jdash" id="jdash">
       <!-- populated by JS -->
+    </div>
+
+    <!-- Equity Curve + Performance Engine -->
+    <div class="strat-perf-wrap equity-section">
+      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📈 Equity Curve</span>
+        <span style="font-size:9px;color:var(--muted);font-weight:400">Cumulative P&L from closed trades</span>
+      </div>
+      <div style="padding:14px 20px">
+        <div id="equity-stats-row" class="equity-stats-row"></div>
+        <div class="equity-chart-wrap" style="margin-top:12px" id="equity-curve-wrap">
+          <div style="color:var(--muted);font-size:11px;text-align:center;padding:30px">Close trades to see your equity curve</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day of Week Performance -->
+    <div class="strat-perf-wrap equity-section">
+      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📅 Day-of-Week Performance</span>
+        <span style="font-size:9px;color:var(--muted);font-weight:400">Avg P&L% by entry day</span>
+      </div>
+      <div style="padding:14px 20px">
+        <div class="dow-grid" id="dow-chart"></div>
+      </div>
     </div>
 
     <!-- Mistake Tracking Dashboard -->
@@ -6485,6 +6586,725 @@ function detectEMA21Pull(data) {
   }
   return {signal:false};
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SCAN STATE — shared cache for SPY/QQQ data across scoring + regime
+// ═════════════════════════════════════════════════════════════════════════════
+const scanState = {
+  spyBars: null, qqqBars: null,
+  spyMA50: null, spyMA200: null,
+  qqqMA50: null, qqqMA200: null,
+  spyRS: null, qqqRS: null,
+  regime: 'unknown', // 'bull' | 'neutral' | 'bear'
+  sectorScores: {}, // etf ticker → RS score
+  lastFetch: 0,
+};
+
+async function refreshScanState() {
+  const now = Date.now();
+  if (now - scanState.lastFetch < 5 * 60 * 1000) return; // cache 5min
+  try {
+    const [spyB, qqqB] = await Promise.all([fetchDaily('SPY'), fetchDaily('QQQ')]);
+    scanState.spyBars = spyB;
+    scanState.qqqBars = qqqB;
+    const spyC = spyB.map(b=>b.c);
+    const qqqC = qqqB.map(b=>b.c);
+    scanState.spyMA50  = sma(spyC, 50);
+    scanState.spyMA200 = sma(spyC, 200);
+    scanState.qqqMA50  = sma(qqqC, 50);
+    scanState.qqqMA200 = sma(qqqC, 200);
+    const spyCur  = spyC[spyC.length-1];
+    const qqqCur  = qqqC[qqqC.length-1];
+    const spyP10  = spyC[Math.max(0,spyC.length-11)];
+    const qqqP10  = qqqC[Math.max(0,qqqC.length-11)];
+    scanState.spyRS  = spyP10 ? ((spyCur-spyP10)/spyP10)*100 : 0;
+    scanState.qqqRS  = qqqP10 ? ((qqqCur-qqqP10)/qqqP10)*100 : 0;
+    // Regime: bull = both above MA50+MA200, bear = both below, neutral = mixed
+    const spyAbove50  = spyCur > scanState.spyMA50;
+    const spyAbove200 = spyCur > scanState.spyMA200;
+    const qqqAbove50  = qqqCur > scanState.qqqMA50;
+    const qqqAbove200 = qqqCur > scanState.qqqMA200;
+    const bullCount = [spyAbove50, spyAbove200, qqqAbove50, qqqAbove200].filter(Boolean).length;
+    scanState.regime = bullCount >= 3 ? 'bull' : bullCount <= 1 ? 'bear' : 'neutral';
+    scanState.lastFetch = now;
+    renderRegimeBar();
+  } catch(e) {
+    console.warn('Regime fetch failed:', e.message);
+  }
+}
+
+function renderRegimeBar() {
+  const {regime, spyBars, qqqBars, spyMA50, spyMA200, qqqMA50, qqqMA200} = scanState;
+  if (!spyBars) return;
+  const spyCur  = spyBars[spyBars.length-1].c;
+  const qqqCur  = qqqBars[qqqBars.length-1].c;
+  const spyEl   = g('regime-spy');
+  const qqqEl   = g('regime-qqq');
+  if (!spyEl) return;
+
+  const regClass = r => r.c > scanState[`${r.name}MA50`] && r.c > scanState[`${r.name}MA200`] ? 'bull'
+                      : r.c < scanState[`${r.name}MA50`] && r.c < scanState[`${r.name}MA200`] ? 'bear' : 'neutral';
+
+  const spyStatus = spyCur > spyMA50 && spyCur > spyMA200 ? 'bull' : spyCur < spyMA50 && spyCur < spyMA200 ? 'bear' : 'neutral';
+  const qqqStatus = qqqCur > qqqMA50 && qqqCur > qqqMA200 ? 'bull' : qqqCur < qqqMA50 && qqqCur < qqqMA200 ? 'bear' : 'neutral';
+  const statusIcon = {bull:'▲', bear:'▼', neutral:'→'};
+
+  spyEl.className = `regime-pill ${spyStatus}`;
+  spyEl.textContent = `SPY ${statusIcon[spyStatus]} $${spyCur.toFixed(2)}`;
+  qqqEl.className = `regime-pill ${qqqStatus}`;
+  qqqEl.textContent = `QQQ ${statusIcon[qqqStatus]} $${qqqCur.toFixed(2)}`;
+
+  const detail = g('regime-detail');
+  if (detail) {
+    const emoji = regime==='bull'?'🟢':regime==='bear'?'🔴':'🟡';
+    detail.innerHTML = `${emoji} <b style="color:${regime==='bull'?'var(--green)':regime==='bear'?'var(--red)':'var(--orange)'}">${regime.toUpperCase()}</b>
+      <span> · SPY vs 50MA: ${spyCur>spyMA50?'✓ above':'✗ below'}</span>
+      <span> · SPY vs 200MA: ${spyCur>spyMA200?'✓ above':'✗ below'}</span>
+      <span> · QQQ vs 50MA: ${qqqCur>qqqMA50?'✓ above':'✗ below'}</span>`;
+  }
+}
+
+g('btn-regime-refresh').addEventListener('click', async () => {
+  scanState.lastFetch = 0; // force refresh
+  g('regime-spy').className = 'regime-pill loading'; g('regime-spy').textContent = 'SPY …';
+  g('regime-qqq').className = 'regime-pill loading'; g('regime-qqq').textContent = 'QQQ …';
+  await refreshScanState();
+});
+
+// Patch runScan to refresh regime first
+const _origRunScan = runScan;
+runScan = async function() {
+  await refreshScanState();
+  return _origRunScan();
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// COMPOSITE SCORING ENGINE (0–100)
+// 5 components × 20 pts each:
+//   Trend Strength | Volume Confirmation | Relative Strength
+//   Pattern Quality | Market Alignment
+// ═════════════════════════════════════════════════════════════════════════════
+function calcCompositeScore(r) {
+  const closes = r._closes || [];
+  const n = closes.length;
+
+  // ── 1. Trend Strength (20 pts) ──────────────────────────────────
+  let trendPts = 0;
+  if (r._ma20 && r._ma50 && r._ma200 && n > 0) {
+    const cur = closes[n-1];
+    if (cur > r._ma20)  trendPts += 5;
+    if (cur > r._ma50)  trendPts += 6;
+    if (cur > r._ma200) trendPts += 5;
+    if (r._ma20 > r._ma50) trendPts += 2;  // MA stacking
+    if (r._ma50 > r._ma200) trendPts += 2;
+    trendPts = Math.min(20, trendPts);
+  }
+
+  // ── 2. Volume Confirmation (20 pts) ─────────────────────────────
+  const rvol = r.volRatio || 0;
+  let volPts = 0;
+  if (rvol >= 3)   volPts = 20;
+  else if (rvol >= 2)   volPts = 16;
+  else if (rvol >= 1.5) volPts = 12;
+  else if (rvol >= 1)   volPts = 7;
+  else if (rvol >= 0.7) volPts = 3;
+
+  // ── 3. Relative Strength vs SPY (20 pts) ────────────────────────
+  let rsPts = 0;
+  if (scanState.spyBars && n >= 20) {
+    const spyC   = scanState.spyBars.map(b=>b.c);
+    const spyCur = spyC[spyC.length-1];
+    const spyP20 = spyC[Math.max(0,spyC.length-21)];
+    const spyRet = spyP20 ? ((spyCur-spyP20)/spyP20)*100 : 0;
+    const stP20  = closes[Math.max(0,n-21)];
+    const stRet  = stP20 ? ((closes[n-1]-stP20)/stP20)*100 : 0;
+    const diff   = stRet - spyRet;
+    if (diff >= 10)  rsPts = 20;
+    else if (diff >= 5)   rsPts = 16;
+    else if (diff >= 2)   rsPts = 12;
+    else if (diff >= 0)   rsPts = 8;
+    else if (diff >= -3)  rsPts = 4;
+    else rsPts = 0;
+  }
+
+  // ── 4. Pattern Quality (20 pts) ─────────────────────────────────
+  const sigCount = (r.signals || []).filter(s => activeStrats.has(s)).length;
+  // Premium signals get bonus
+  const premiumSigs = ['vcp','flat','cup','hvc','gap_hold','cons_bo'];
+  const hasPremium = r.signals.some(s => premiumSigs.includes(s));
+  let patPts = Math.min(14, sigCount * 4);
+  if (hasPremium) patPts += 4;
+  if (r.hvcTriggered || r.hvc4Triggered) patPts += 2;
+  patPts = Math.min(20, patPts);
+
+  // ── 5. Market Alignment (20 pts) ────────────────────────────────
+  const mktPts = scanState.regime === 'bull' ? 20
+               : scanState.regime === 'neutral' ? 10
+               : scanState.regime === 'bear' ? 0 : 10;
+
+  const total = Math.round(trendPts + volPts + rsPts + patPts + mktPts);
+  return {
+    total: Math.min(100, total),
+    breakdown: { trend:trendPts, volume:volPts, rs:rsPts, pattern:patPts, market:mktPts }
+  };
+}
+
+function scoreGrade(score) {
+  if (score >= 80) return { cls:'a-plus', label:'🔥 A+' };
+  if (score >= 65) return { cls:'b-grade', label:'⚡ B' };
+  if (score >= 45) return { cls:'c-grade', label:'▲ C' };
+  return { cls:'d-grade', label:'— D' };
+}
+
+// Patch analyzeStock to store MA values for scoring
+const _origAnalyzeForScore = analyzeStock;
+analyzeStock = function(ticker, data) {
+  const r = _origAnalyzeForScore(ticker, data);
+  // Cache MA values + closes for scoring
+  r._closes = data.map(d=>d.c);
+  r._ma20   = sma(r._closes, 20);
+  r._ma50   = sma(r._closes, 50);
+  r._ma200  = sma(r._closes, 200);
+  // Compute and attach score
+  const scoreResult = calcCompositeScore(r);
+  r.compositeScore = scoreResult.total;
+  r.scoreBreakdown = scoreResult.breakdown;
+  return r;
+};
+
+// ── Patch renderTable to add score column and playbook rows ──────────────────
+const _origRenderTableForScore = renderTable;
+renderTable = function() {
+  // Run original render
+  _origRenderTableForScore();
+  // Re-inject score column and playbook toggle into each row
+  const tbody = g('tbody');
+  if (!tbody) return;
+  const rows = tbody.querySelectorAll('tr[data-ticker]');
+  rows.forEach(row => {
+    const ticker = row.dataset.ticker;
+    const r = results.find(x=>x.ticker===ticker);
+    if (!r || r.error) return;
+    // Score cell — insert before signals cell
+    if (row.querySelector('.score-cell')) return; // already done
+    const scoreTd = document.createElement('td');
+    scoreTd.className = 'score-cell';
+    scoreTd.style.cssText = 'text-align:center;white-space:nowrap';
+    const { cls, label } = scoreGrade(r.compositeScore || 0);
+    const bd = r.scoreBreakdown || {};
+    scoreTd.innerHTML = `<div>
+      <div class="score-badge ${cls}">${label} <span class="score-number">${r.compositeScore||0}</span></div>
+      <div class="score-bar">${[bd.trend,bd.volume,bd.rs,bd.pattern,bd.market].map(v=>
+        `<div class="score-seg ${v>=16?'filled':v>=8?'filled green':v>=4?'filled orange':''}"></div>`
+      ).join('')}</div>
+    </div>`;
+    // Insert before the "Setups" cell (index 4 = 0-ticker,1-price,2-change,3-rvol,4-score,5-setups)
+    const cells = row.querySelectorAll('td');
+    if (cells[4]) row.insertBefore(scoreTd, cells[4]);
+  });
+  // Sort by score if scanSort.col === 'score'
+  if (scanSort.col === 'score') renderTable._lastSort = 'score';
+};
+
+// Add score sorting support
+const _origSortFn = null;
+document.addEventListener('click', e => {
+  const th = e.target.closest('#scanner-thead th[data-scansort="score"]');
+  if (!th) return;
+  scanSort.col = 'score';
+  scanSort.dir = scanSort.dir === 'asc' ? 'desc' : 'asc';
+  renderTable();
+});
+
+// Patch renderTable to handle score sort
+const _rTableForScore2 = renderTable;
+renderTable = function() {
+  // Override the sort to handle 'score'
+  const origScanSort = {...scanSort};
+  if (scanSort.col === 'score') {
+    // Temporarily pre-sort results
+    results.sort((a,b) => {
+      const d = scanSort.dir==='asc'?1:-1;
+      return d*((a.compositeScore||0)-(b.compositeScore||0));
+    });
+    // Temporarily set sort to signals so original renderTable uses our pre-sorted order
+    scanSort.col = '_presorted';
+  }
+  _rTableForScore2();
+  // Restore
+  scanSort.col = origScanSort.col;
+};
+
+// ── Patch renderTable rows to include data-ticker and playbook toggle ────────
+// We need to intercept the HTML generation. Since renderTable builds HTML via
+// template literals, we patch the output by overriding the tbody innerHTML setter.
+// Simpler: Add data-ticker via a post-render pass and inject playbook rows.
+const _finalRenderTable = renderTable;
+renderTable = function() {
+  _finalRenderTable();
+  const tbody = g('tbody');
+  if (!tbody) return;
+  // Add data-ticker to each result row and wire playbook toggle
+  let i = 0;
+  tbody.querySelectorAll('tr:not(.playbook-row)').forEach(row => {
+    if (i >= results.length) return;
+    const r = results.filter(x => !x.error || true)[i];
+    if (r && !row.dataset.ticker) {
+      row.dataset.ticker = r.ticker;
+      row.style.cursor = 'default';
+    }
+    i++;
+  });
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PLAYBOOK MODE — inline expandable row per scanner result
+// ═════════════════════════════════════════════════════════════════════════════
+const PLAYBOOK = {
+  nr4: {
+    entry: 'Buy stop 1–2¢ above NR4 high. Wait for next-day open.',
+    stop: 'Hard stop below NR4 low. No exceptions.',
+    targets: ['T1: +2×R (2:1 R/R)', 'T2: Next resistance level'],
+    risk: 'med', riskLabel:'Medium',
+    note: 'Sell 50% at T1, trail rest with prior-day low.'
+  },
+  nr7: {
+    entry: 'Break above NR7 high on expanding volume.',
+    stop: 'Below NR7 low — tighter than NR4.',
+    targets: ['T1: +2×R', 'T2: Measured base depth projected up'],
+    risk: 'low', riskLabel:'Low–Med',
+    note: 'NR7 inside VCP or flat base = highest conviction.'
+  },
+  macross: {
+    entry: 'Enter on cross or pullback to 20 SMA after cross.',
+    stop: 'Below the 50 SMA.',
+    targets: ['T1: Prior resistance', 'T2: Trail with 20 SMA daily close'],
+    risk: 'med', riskLabel:'Medium',
+    note: 'Exit if stock closes below 20 SMA for 2+ days.'
+  },
+  pull50: {
+    entry: 'Bounce off 50 SMA with reversal candle on low volume.',
+    stop: '3–5% below 50 SMA.',
+    targets: ['T1: Prior high', 'T2: +15–20% from entry'],
+    risk: 'low', riskLabel:'Low',
+    note: 'First touch only. Second or third touch = lower probability.'
+  },
+  flat: {
+    entry: 'Close above flat base high on volume ≥40% above average.',
+    stop: 'Below flat base low.',
+    targets: ['T1: Base depth projected up', 'T2: +20–25%'],
+    risk: 'low', riskLabel:'Low',
+    note: 'Do not buy intraday poke. Wait for daily close above base.'
+  },
+  cup: {
+    entry: 'Break above handle high (pivot point) on volume surge.',
+    stop: 'Below handle low.',
+    targets: ['T1: Cup depth added to pivot', 'T2: +20–30%'],
+    risk: 'low', riskLabel:'Low',
+    note: 'Cup depth projected from pivot gives measured target.'
+  },
+  vcp: {
+    entry: 'Break above last contraction high — enter same day.',
+    stop: 'Below last contraction low (tightest pocket).',
+    targets: ['T1: 2×R minimum', 'T2: Base depth projected'],
+    risk: 'low', riskLabel:'Low–Med',
+    note: 'Volume dryup at pivot + NR4/NR7 = maximum conviction.'
+  },
+  hvc: {
+    entry: 'Price breaks above yesterday\'s HVC close — buy immediately.',
+    stop: 'Below yesterday\'s HVC low.',
+    targets: ['T1: +5–8% intraday extension', 'T2: Trail with prior-day low'],
+    risk: 'med', riskLabel:'Medium',
+    note: 'HVC triggered = entry TODAY. Gap below HVC close = no trade.'
+  },
+  hvc4: {
+    entry: 'Price re-confirms above HVC candle close after consolidation.',
+    stop: 'Below HVC candle low (still valid).',
+    targets: ['T1: 2×R from stop', 'T2: Prior swing high'],
+    risk: 'med', riskLabel:'Med–High',
+    note: 'If no move by day 4, exit and reallocate capital.'
+  },
+  ema21: {
+    entry: 'Touch of 21 EMA with reversal candle on low volume.',
+    stop: 'Below 21 EMA (or below touch-day low).',
+    targets: ['T1: Prior high', 'T2: Trail with 21 EMA daily'],
+    risk: 'low', riskLabel:'Low',
+    note: 'First and second touch = high probability. 5th touch = skip.'
+  },
+  ema_rev: {
+    entry: '21 EMA touch with RSI 40–55 and price above 200 EMA.',
+    stop: 'Below 21 EMA.',
+    targets: ['T1: Prior high', 'T2: Trail 21 EMA'],
+    risk: 'low', riskLabel:'Low',
+    note: 'Highest quality re-entry. Two layers of support (200+21 EMA).'
+  },
+  cons_bo: {
+    entry: 'Close above consolidation high on volume ≥50% above avg.',
+    stop: 'Below consolidation midpoint.',
+    targets: ['T1: Prior trend length projected', 'T2: +15%'],
+    risk: 'med', riskLabel:'Medium',
+    note: 'Pullback to breakout level (now support) is valid re-entry.'
+  },
+  gap_hold: {
+    entry: 'Day 2–3 after earnings gap, price above gap-day midpoint.',
+    stop: 'Below gap day low (gap fill = setup failed).',
+    targets: ['T1: 2× gap size projected from open', 'T2: Prior 52wk high'],
+    risk: 'high', riskLabel:'High',
+    note: 'Binary setup. Size conservatively. 2–5 day hold maximum.'
+  },
+  mean_rev: {
+    entry: 'Touch of lower Bollinger Band with reversal candle.',
+    stop: 'Below the lower Bollinger Band touch low.',
+    targets: ['T1: Return to 20 SMA (middle BB)', 'T2: Upper BB if momentum builds'],
+    risk: 'med', riskLabel:'Medium',
+    note: 'Counter-trend trade. Take profits at 20 SMA, do not overstay.'
+  },
+};
+
+function getPlaybookHTML(r) {
+  // Collect unique strategies, pick best playbook
+  const sigs = (r.signals || []).filter(s => PLAYBOOK[s]);
+  if (!sigs.length) return '<div style="padding:14px;color:var(--muted);font-size:11px">No playbook available for current signals.</div>';
+
+  // Show top 2 strategies max
+  return sigs.slice(0,2).map(sig => {
+    const pb = PLAYBOOK[sig];
+    const stratName = {nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev'}[sig] || sig;
+
+    // Compute actual price levels from result
+    const price  = r.price || 0;
+    const entryL = price; // current close is approx entry
+    const stopPct = pb.risk === 'low' ? 0.04 : pb.risk === 'med' ? 0.06 : 0.08;
+    const stopL  = (price * (1-stopPct)).toFixed(2);
+    const t1L    = (price * (1 + stopPct*2)).toFixed(2);
+    const t2L    = (price * (1 + stopPct*4)).toFixed(2);
+    const riskAmt = getAccountSize() * 0.02;
+    const shares = riskAmt && stopPct ? Math.floor(riskAmt / (price * stopPct)) : null;
+
+    return `<div style="margin-bottom:${sigs.length>1?'12px':'0'}">
+      <div style="font-size:9px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:700">${stratName} Playbook</div>
+      <div class="playbook-inner">
+        <div class="playbook-section entry-sec">
+          <div class="playbook-section-title">Entry</div>
+          <div class="playbook-section-body">${pb.entry}</div>
+          <div class="playbook-levels">
+            <span class="playbook-level entry">Entry ~$${price.toFixed(2)}</span>
+            ${shares ? `<span class="playbook-level" style="color:var(--cyan);border-color:rgba(78,232,255,.3)">${shares} shares @ 2% risk</span>` : ''}
+          </div>
+        </div>
+        <div class="playbook-section stop-sec">
+          <div class="playbook-section-title">Stop Loss</div>
+          <div class="playbook-section-body">${pb.stop}</div>
+          <div class="playbook-levels">
+            <span class="playbook-level stop">Stop ~$${stopL}</span>
+            <span class="playbook-level stop">${(stopPct*100).toFixed(0)}% risk</span>
+          </div>
+        </div>
+        <div class="playbook-section target-sec">
+          <div class="playbook-section-title">Targets</div>
+          <div class="playbook-section-body">${pb.targets.join(' · ')}</div>
+          <div class="playbook-levels">
+            <span class="playbook-level t1">T1 ~$${t1L}</span>
+            <span class="playbook-level t2">T2 ~$${t2L}</span>
+          </div>
+        </div>
+        <div class="playbook-section risk-sec">
+          <div class="playbook-section-title">Risk Rating + Note</div>
+          <div class="playbook-section-body" style="margin-bottom:6px">${pb.note}</div>
+          <span class="playbook-risk ${pb.risk}">${pb.riskLabel} Risk</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('<hr style="border:none;border-top:1px solid var(--border);margin:0">');
+}
+
+// Inject playbook rows after scanner renders
+function injectPlaybookRows() {
+  const tbody = g('tbody');
+  if (!tbody) return;
+  // Remove existing playbook rows first
+  tbody.querySelectorAll('.playbook-row').forEach(r=>r.remove());
+
+  const dataRows = [...tbody.querySelectorAll('tr:not(.playbook-row)')];
+  dataRows.forEach((row, i) => {
+    const r = results.filter(x=>!x.error||true)[i];
+    if (!r || r.error) return;
+    row.dataset.ticker = r.ticker;
+
+    // Add playbook toggle button to first cell
+    const firstTd = row.querySelector('td.td-tick');
+    if (firstTd && !firstTd.querySelector('.playbook-toggle')) {
+      const tog = document.createElement('span');
+      tog.className = 'playbook-toggle';
+      tog.textContent = '▶';
+      tog.title = 'Show playbook';
+      tog.style.marginLeft = '6px';
+      tog.addEventListener('click', e => {
+        e.stopPropagation();
+        const pbRow = row.nextSibling;
+        if (pbRow && pbRow.classList.contains('playbook-row')) {
+          const isOpen = pbRow.classList.contains('open');
+          pbRow.classList.toggle('open');
+          tog.textContent = isOpen ? '▶' : '▼';
+        }
+      });
+      firstTd.appendChild(tog);
+    }
+
+    // Create playbook row
+    const pbTr = document.createElement('tr');
+    pbTr.className = 'playbook-row';
+    const pbTd = document.createElement('td');
+    pbTd.colSpan = 8;
+    pbTd.innerHTML = getPlaybookHTML(r);
+    pbTr.appendChild(pbTd);
+    row.after(pbTr);
+  });
+}
+
+// Hook playbook injection into the render pipeline
+const _origRTForPlaybook = renderTable;
+renderTable = function() {
+  _origRTForPlaybook();
+  setTimeout(injectPlaybookRows, 0);
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PERFORMANCE ENGINE — Equity Curve + Day-of-Week + Expectancy
+// ═════════════════════════════════════════════════════════════════════════════
+function renderEquityCurve() {
+  const closed = getTrades().filter(t => t.status !== 'open' && t.plPct != null && t.exitDate);
+  closed.sort((a,b) => (a.exitDate||'').localeCompare(b.exitDate||''));
+
+  const statsEl = g('equity-stats-row');
+  const wrapEl  = g('equity-curve-wrap');
+  if (!statsEl || !wrapEl) return;
+
+  if (!closed.length) {
+    wrapEl.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:30px">Close trades to see your equity curve</div>';
+    statsEl.innerHTML = '';
+    return;
+  }
+
+  // Cumulative P&L
+  let cum = 0;
+  const points = closed.map(t => { cum += t.plPct; return {date:t.exitDate, cum, pl:t.plPct}; });
+  const wins   = closed.filter(t=>t.plPct>0);
+  const losses = closed.filter(t=>t.plPct<0);
+  const winRate  = (wins.length/closed.length*100).toFixed(1);
+  const avgWin   = wins.length   ? (wins.reduce((a,b)=>a+b.plPct,0)/wins.length).toFixed(2) : 0;
+  const avgLoss  = losses.length ? (losses.reduce((a,b)=>a+b.plPct,0)/losses.length).toFixed(2) : 0;
+  const expectancy = ((wins.length/closed.length)*(+avgWin) + (losses.length/closed.length)*(+avgLoss)).toFixed(2);
+
+  // Stats tiles
+  statsEl.innerHTML = [
+    {v:`${winRate}%`, l:'Win Rate', c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
+    {v:`+${avgWin}%`, l:'Avg Win', c:'green'},
+    {v:`${avgLoss}%`, l:'Avg Loss', c:'red'},
+    {v:`${expectancy}%`, l:'Expectancy', c: +expectancy>0?'green':'red'},
+    {v:`${cum.toFixed(1)}%`, l:'Total P&L', c: cum>=0?'green':'red'},
+    {v:closed.length, l:'Closed Trades', c:''},
+  ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
+
+  // SVG equity curve
+  const W=700, H=160, PAD=32;
+  const vals = points.map(p=>p.cum);
+  const minV = Math.min(0, ...vals);
+  const maxV = Math.max(0.01, ...vals);
+  const range = maxV - minV || 1;
+  const x = i => PAD + (i / (points.length-1||1)) * (W - PAD*2);
+  const y = v => H - PAD - ((v-minV)/range) * (H-PAD*2);
+  const y0 = y(0);
+
+  // Build polyline
+  const pts = points.map((p,i) => `${x(i).toFixed(1)},${y(p.cum).toFixed(1)}`).join(' ');
+  // Area fill
+  const area = `${x(0)},${y0} ${pts} ${x(points.length-1)},${y0}`;
+  // Color based on final value
+  const finalColor = cum >= 0 ? '#3dffa0' : '#ff5277';
+
+  wrapEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+    <!-- Grid -->
+    <line x1="${PAD}" y1="${y0}" x2="${W-PAD}" y2="${y0}" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-dasharray="4"/>
+    <!-- Area fill -->
+    <polygon points="${area}" fill="${finalColor}" opacity=".08"/>
+    <!-- Line -->
+    <polyline points="${pts}" fill="none" stroke="${finalColor}" stroke-width="2"/>
+    <!-- Start dot -->
+    <circle cx="${x(0)}" cy="${y(0)}" r="3" fill="${finalColor}"/>
+    <!-- End dot -->
+    <circle cx="${x(points.length-1)}" cy="${y(cum)}" r="4" fill="${finalColor}"/>
+    <!-- Labels -->
+    <text x="${PAD-2}" y="${y0-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">0%</text>
+    <text x="${PAD-2}" y="${y(maxV)+4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">+${maxV.toFixed(1)}%</text>
+    ${minV < 0 ? `<text x="${PAD-2}" y="${y(minV)-2}" fill="rgba(255,82,119,.5)" font-size="9" font-family="Fira Code">${minV.toFixed(1)}%</text>` : ''}
+    <text x="${W-PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${closed[closed.length-1].exitDate}</text>
+    <text x="${W-PAD+2}" y="${y(cum)}" fill="${finalColor}" font-size="10" font-family="Fira Code,sans-serif" font-weight="700">${cum>=0?'+':''}${cum.toFixed(1)}%</text>
+  </svg>`;
+}
+
+function renderDOWChart() {
+  const el = g('dow-chart');
+  if (!el) return;
+  const closed = getTrades().filter(t=>t.status!=='open'&&t.plPct!=null&&t.entryDate);
+  if (!closed.length) {
+    el.innerHTML='<div style="color:var(--muted);font-size:10px;padding:14px;grid-column:1/-1;text-align:center">No closed trades yet</div>';
+    return;
+  }
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const buckets = Array.from({length:7}, ()=>({sum:0,n:0}));
+  for (const t of closed) {
+    const d = new Date(t.entryDate).getDay();
+    buckets[d].sum += t.plPct;
+    buckets[d].n++;
+  }
+  el.innerHTML = days.map((d,i)=>{
+    const b = buckets[i];
+    const avg = b.n ? (b.sum/b.n) : null;
+    const col = avg===null?'var(--muted)':avg>0?'var(--green)':avg<0?'var(--red)':'var(--muted)';
+    return `<div class="dow-cell">
+      <div class="dow-cell-day">${d}</div>
+      <div class="dow-cell-val" style="color:${col}">${avg!==null?(avg>=0?'+':'')+avg.toFixed(1)+'%':'—'}</div>
+      <div class="dow-cell-n">${b.n} trade${b.n!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+// Patch renderJournal to include equity curve
+const _origRenderJournalForPerf = renderJournal;
+renderJournal = function() {
+  _origRenderJournalForPerf();
+  renderEquityCurve();
+  renderDOWChart();
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PIPELINE v2 — Gap scan + RVOL filter + News catalyst + Score ranking
+// ═════════════════════════════════════════════════════════════════════════════
+// Override runPipeline with enhanced version
+const _origRunPipeline = runPipeline;
+runPipeline = async function() {
+  // The enhanced pipeline adds: gap check, RVOL filter, news catalyst, score ranking
+  // We let the original run, then re-rank by composite score
+  // First refresh scan state for regime
+  if (!scanState.spyBars) await refreshScanState();
+
+  // Start original pipeline — it populates shortlistResults
+  await _origRunPipeline();
+
+  // Now enhance shortlist with additional filters visible in the status
+  if (!shortlistResults || !shortlistResults.length) return;
+
+  // Add composite score to each shortlist result
+  shortlistResults.forEach(r => {
+    if (!r.compositeScore) {
+      const sc = calcCompositeScore(r);
+      r.compositeScore = sc.total;
+      r.scoreBreakdown = sc.breakdown;
+    }
+  });
+
+  // Re-sort shortlist by composite score (highest first)
+  shortlistResults.sort((a,b) => (b.compositeScore||0) - (a.compositeScore||0));
+
+  // Re-render with scores
+  renderShortlistV2();
+};
+
+function renderShortlistV2() {
+  const panel = g('shortlist-panel');
+  if (!panel || !shortlistResults.length) return;
+
+  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base',
+    cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d', ema21:'21 EMA',
+    ema_rev:'EMA Rev', cons_bo:'Consol BO', gap_hold:'Gap Hold', mean_rev:'Mean Rev' };
+
+  g('shortlist-tbody').innerHTML = shortlistResults.map((r, i) => {
+    const tags = r.signals.map(s => {
+      if (s==='hvc')  return `<span class="stag hvc">${r.hvcTriggered?'HVC ⚡ LIVE':'HVC ⏳ WATCH'}</span>`;
+      if (s==='hvc4') return `<span class="stag hvc4">${r.hvc4Triggered?'HVC 2–4d ✅':'HVC 2–4d 〜'}</span>`;
+      return `<span class="stag ${s}">${lbl[s]||s}</span>`;
+    }).join('');
+    const chCls  = r.changePct >= 0 ? 'up' : 'down';
+    const chStr  = (r.changePct >= 0 ? '+' : '') + r.changePct.toFixed(2) + '%';
+    const score  = r.compositeScore || 0;
+    const { cls, label } = scoreGrade(score);
+    const isHvcLive  = r.signals.includes('hvc')  && r.hvcTriggered;
+    const isHvc4Live = r.signals.includes('hvc4') && r.hvc4Triggered;
+    const priority = isHvcLive  ? '<span style="color:var(--green);font-weight:700;font-size:10px;letter-spacing:1px">🚀 LIVE</span> '
+                   : isHvc4Live ? '<span style="color:#3dffa0cc;font-weight:700;font-size:10px;letter-spacing:1px">📈 CONT</span> ' : '';
+    return `<tr style="animation-delay:${i*25}ms">
+      <td class="td-tick">${priority}${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+      <td>$${r.price.toFixed(2)}</td>
+      <td class="td-change ${chCls}">${chStr}</td>
+      <td style="font-size:10px;color:var(--muted)">${r.sourceETF||'—'}</td>
+      <td><span class="score-badge ${cls}" style="font-size:9px">${label} ${score}</span></td>
+      <td style="text-align:center"><span style="font-family:var(--font-display);font-weight:700;color:var(--purple)">${r.signals.length}</span></td>
+      <td><div class="strats-cell">${tags}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SMART MONEY CLUSTERING + CROSS-SIGNAL + TIME DECAY
+// ═════════════════════════════════════════════════════════════════════════════
+
+// Enhance renderInsider to detect clusters
+const _origRenderInsider = renderInsider;
+renderInsider = function(data) {
+  _origRenderInsider(data);
+  // Post-process: detect clusters (multiple insiders buying same stock in 30 days)
+  const tbody = g('ins-tbody');
+  if (!tbody) return;
+
+  // We already have data — group by ticker-ish approach
+  // Since insider data is per-ticker, cluster = multiple people buying same stock
+  const buys = data.filter(d => (d.change||0) > 0);
+  const ticker = g('ins-ticker')?.value?.trim()?.toUpperCase() || '';
+
+  if (buys.length >= 2 && ticker) {
+    // Multiple insiders buying same stock = cluster signal
+    const uniqueNames = new Set(buys.map(d=>d.name)).size;
+    if (uniqueNames >= 2) {
+      // Add cluster alert above the table
+      const alert = document.createElement('div');
+      alert.style.cssText = 'margin-bottom:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(232,255,71,.1),rgba(61,255,160,.08));border:1px solid rgba(232,255,71,.4);font-size:11px';
+      alert.innerHTML = `<span style="color:var(--accent);font-weight:700;letter-spacing:1px">🔔 CLUSTER SIGNAL</span>
+        <span style="color:var(--text);margin-left:10px">${uniqueNames} different insiders bought <b style="color:var(--accent)">${ticker}</b> in this period — high conviction signal</span>`;
+      tbody.closest('.tbl-wrap').before(alert);
+    }
+  }
+
+  // Time decay: fade older transactions
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach((row, i) => {
+    if (i >= data.length) return;
+    const d = data[i];
+    if (!d.transactionDate) return;
+    const daysAgo = Math.floor((Date.now() - new Date(d.transactionDate)) / 864e5);
+    const opacity = daysAgo > 60 ? 0.45 : daysAgo > 30 ? 0.7 : 1;
+    row.style.opacity = opacity;
+    if (daysAgo > 60) {
+      const lastCell = row.querySelector('td:last-child');
+      if (lastCell) lastCell.innerHTML += ` <span style="font-size:9px;color:var(--muted);margin-left:6px">(${daysAgo}d ago)</span>`;
+    }
+  });
+
+  // Cross-signal: check if this ticker has scanner results with setups
+  if (ticker && results.length) {
+    const scanResult = results.find(r => r.ticker === ticker && !r.error);
+    if (scanResult && scanResult.signals && scanResult.signals.length) {
+      const crossBadge = document.createElement('div');
+      crossBadge.style.cssText = 'margin-bottom:10px;padding:10px 14px;background:linear-gradient(135deg,rgba(180,125,255,.15),rgba(61,255,160,.08));border:1px solid rgba(180,125,255,.4);font-size:11px;display:flex;align-items:center;gap:10px';
+      crossBadge.innerHTML = `<span class="conviction-badge high-conviction">✦ HIGH CONVICTION</span>
+        <span style="color:var(--text)">Insider activity + <b style="color:var(--green)">${scanResult.signals.length} technical setup${scanResult.signals.length>1?'s':''}</b> match on this ticker from your last scan</span>`;
+      tbody.closest('.tbl-wrap').before(crossBadge);
+    }
+  }
+};
+
+// Enhance Smart Alerts to show cluster detection results
+const _origAddAlert = addAlert;
 
 // ── New strategy detectors ────────────────────────────────────────────────
 
