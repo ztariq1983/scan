@@ -6601,6 +6601,14 @@ function detectEMA21Pull(data) {
 // ═════════════════════════════════════════════════════════════════════════════
 // SCAN STATE — shared cache for SPY/QQQ data across scoring + regime
 // ═════════════════════════════════════════════════════════════════════════════
+
+// Define ACCT_KEY early so getAccountSize() can use it anywhere below
+const ACCT_KEY = 'apex_account_size';
+function getAccountSize() {
+  const el = g('account-size');
+  const v  = el ? parseFloat(el.value) : 0;
+  return v > 0 ? v : parseFloat(localStorage.getItem(ACCT_KEY) || '0');
+}
 const scanState = {
   spyBars: null, qqqBars: null,
   spyMA50: null, spyMA200: null,
@@ -6857,8 +6865,8 @@ renderTable = function() {
 const _finalRenderTable = renderTable;
 renderTable = function() {
   _finalRenderTable();
-  // Inject playbook rows after DOM settles
-  setTimeout(injectPlaybookRows, 0);
+  // Wait for score cell injection to settle before adding playbook toggles
+  setTimeout(injectPlaybookRows, 50);
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -7030,10 +7038,10 @@ function injectPlaybookRows() {
   // Remove existing playbook rows
   tbody.querySelectorAll('.playbook-row').forEach(r => r.remove());
 
-  // Use filtered+sorted results (same view as the table)
+  // Use filtered+sorted results matching what renderTable drew
   const visible = results.filter(r => !r.error && r.signals.some(s => activeStrats.has(s)));
+  if (!visible.length) return;
 
-  // Insert playbook row after each data row and tag with index
   const dataRows = [...tbody.querySelectorAll('tr:not(.playbook-row)')];
   dataRows.forEach((row, i) => {
     const r = visible[i];
@@ -7041,24 +7049,24 @@ function injectPlaybookRows() {
 
     row.dataset.pbIdx = i;
 
-    // Add ▶ toggle to ticker cell if not already there
-    const firstTd = row.querySelector('td.td-tick');
-    if (firstTd && !firstTd.querySelector('.playbook-toggle')) {
+    // Find ticker cell — try td-tick class first, fall back to first td
+    const tickerTd = row.querySelector('td.td-tick') || row.querySelector('td');
+    if (tickerTd && !tickerTd.querySelector('.playbook-toggle')) {
       const tog = document.createElement('span');
       tog.className = 'playbook-toggle';
       tog.textContent = '▶';
       tog.title = 'Show playbook';
       tog.dataset.pbIdx = i;
-      tog.style.marginLeft = '6px';
-      firstTd.appendChild(tog);
+      tog.style.cssText = 'cursor:pointer;margin-left:7px;color:var(--accent);font-size:10px;padding:1px 5px;border:1px solid rgba(232,255,71,.25);user-select:none';
+      tickerTd.appendChild(tog);
     }
 
-    // Insert playbook row immediately after this row
+    // Insert playbook row after this row
     const pbTr = document.createElement('tr');
     pbTr.className = 'playbook-row';
     pbTr.dataset.pbIdx = i;
     const pbTd = document.createElement('td');
-    pbTd.colSpan = 9; // covers all columns including score
+    pbTd.colSpan = 9;
     pbTd.innerHTML = getPlaybookHTML(r);
     pbTr.appendChild(pbTd);
     row.after(pbTr);
@@ -7349,9 +7357,6 @@ renderInsider = function(data) {
   }
 };
 
-// Enhance Smart Alerts to show cluster detection results
-const _origAddAlert = addAlert;
-
 // ── New strategy detectors ────────────────────────────────────────────────
 
 // EMA Reversion: price > 200 EMA (uptrend filter) + touch 21 EMA on low vol + RSI 40-55
@@ -7514,7 +7519,7 @@ renderTable = function() {
 // ═════════════════════════════════════════════════════════════════════════════
 // ACCOUNT SIZE & POSITION SIZER
 // ═════════════════════════════════════════════════════════════════════════════
-const ACCT_KEY = 'apex_account_size';
+// (ACCT_KEY and getAccountSize defined earlier at top of scoring section)
 
 function loadAccountSize() {
   const saved = localStorage.getItem(ACCT_KEY);
@@ -7530,12 +7535,6 @@ function saveAccountSize(val) {
     if (badge) { badge.style.display='inline'; setTimeout(()=>badge.style.display='none', 1500); }
     calcPositionSize();
   }
-}
-
-function getAccountSize() {
-  const el = g('account-size');
-  const v = el ? parseFloat(el.value) : 0;
-  return v > 0 ? v : parseFloat(localStorage.getItem(ACCT_KEY)||'0');
 }
 
 function calcPositionSize() {
