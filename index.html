@@ -2663,7 +2663,7 @@ document.addEventListener('click', e => {
 });
 g('btn-save').addEventListener('click',  saveKeys);
 g('btn-test').addEventListener('click',  testConnection);
-g('btn-scan').addEventListener('click',  runScan);
+g('btn-scan').addEventListener('click', () => runScan());
 g('btn-retry').addEventListener('click', retryFailed);
 g('btn-clear').addEventListener('click', clearAll);
 g('btn-use').addEventListener('click',   useManual);
@@ -3002,6 +3002,10 @@ function switchTab(name) {
   // Refresh pipeline UI when returning to scanner tab
   if (name === 'scanner' && typeof refreshPipelineUI === 'function') {
     refreshPipelineUI();
+    // Auto-load regime if not yet fetched
+    if (!scanState.spyBars && typeof refreshScanState === 'function') {
+      refreshScanState();
+    }
   }
   // Refresh alerts watchlist dropdown when entering smart tab
   if (name === 'smart' && typeof refreshAlertsWatchlistDropdown === 'function') {
@@ -4465,7 +4469,23 @@ async function fetch13F() {
     holdings.sort((a,b) => b.value - a.value);
 
     const subtitle = subData.name || `CIK ${cik}`;
+    const fundName = subtitle.replace(/\s*\(.*?\)\s*/g, '').trim(); // strip "(Buffett)" etc
     g('thirteenf-status').innerHTML = `<b style="color:var(--purple)">${subtitle}</b> · Filed ${fmtSmDate(filingDate)} · <b>${holdings.length}</b> positions · Total: <b>${fmtMoney(totalValue)}</b> · <a href="${filingHref}" target="_blank" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid">View on SEC ↗</a>`;
+
+    // ── Cache holdings by ticker for use in detail modal ─────────────────────
+    // We can't map CUSIP→ticker reliably without a lookup service,
+    // but we cache by the issuer name as a best-effort cross-reference.
+    // Also try to extract ticker from name patterns like "APPLE INC" → AAPL
+    // The primary path: smart alerts will call cacheWhaleHolding with real tickers.
+    for (const h of holdings) {
+      if (h.cusip) {
+        // Store by cusip prefix for later cross-reference if needed
+        const key = '_cusip_' + h.cusip;
+        if (!whaleTickerCache[key]) whaleTickerCache[key] = [];
+        whaleTickerCache[key].push({ fund: fundName, shares: h.shares, value: h.value, reportDate: fmtSmDate(filingDate), name: h.name });
+      }
+    }
+
     render13F(holdings, totalValue);
 
   } catch(e) {
@@ -4769,30 +4789,24 @@ async function runSmartAlerts() {
 
         if (isNew && latestPos.value >= 1_000_000) {
           addAlert({
-            type: 'f13-new',
-            ticker,
-            who: inst.name,
+            type: 'f13-new', ticker, who: inst.name,
             role: inst.group === 'whale' ? '🐋 Whale' : '🏦 Sponsor',
-            value: latestPos.value,
-            shares: latestPos.shares,
-            date: latest.date,
-            quarter,
-            changeVal: latestPos.value,
-            isNew: true,
+            value: latestPos.value, shares: latestPos.shares,
+            date: latest.date, quarter, changeVal: latestPos.value, isNew: true,
           });
         } else if (!isNew && increase >= 1_000_000) {
           addAlert({
-            type: 'f13-up',
-            ticker,
-            who: inst.name,
+            type: 'f13-up', ticker, who: inst.name,
             role: inst.group === 'whale' ? '🐋 Whale' : '🏦 Sponsor',
-            value: latestPos.value,
-            shares: latestPos.shares,
-            date: latest.date,
-            quarter,
-            changeVal: increase,
-            isNew: false,
+            value: latestPos.value, shares: latestPos.shares,
+            date: latest.date, quarter, changeVal: increase, isNew: false,
           });
+        }
+
+        // ── Always cache the holding regardless of threshold ─────────────────
+        // This powers the institutional section of the stock detail modal
+        if (latestPos.value > 0) {
+          cacheWhaleHolding(inst.name, ticker, latestPos.shares, latestPos.value, latest.date);
         }
       }
       setStepState(inst.cik, 'done');
@@ -5147,107 +5161,218 @@ async function loadDetailInsider(ticker) {
 }
 
 // ─── Institutional ownership (Finnhub) ──────────────────────────────────────
-async function loadDetailInstitutional(ticker) {
-  // Yahoo Finance quoteSummary endpoint — has institutionOwnership, fundOwnership, majorHoldersBreakdown
-  // Browsers can't hit it directly (CORS) so route through the same proxy chain we use for SEC.
-  const yUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=institutionOwnership,fundOwnership,majorHoldersBreakdown`;
+// ─── Whale 13F cache — populated whenever a 13F is fetched (alerts or manual) ─
+// Maps: ticker (uppercase) → [{fund, shares, value, pct, reportDate}]
+const whaleTickerCache = {};
 
+function cacheWhaleHolding(fundName, ticker, shares, value, reportDate) {
+  const t = ticker.toUpperCase().trim();
+  if (!whaleTickerCache[t]) whaleTickerCache[t] = [];
+  // Deduplicate by fund name
+  const existing = whaleTickerCache[t].findIndex(x => x.fund === fundName);
+  const entry = { fund: fundName, shares, value, reportDate: reportDate || '' };
+  if (existing >= 0) whaleTickerCache[t][existing] = entry;
+  else whaleTickerCache[t].push(entry);
+}
+
+async function loadDetailInstitutional(ticker) {
+  const el      = g('detail-instit-tbl')?.querySelector('tbody');
+  const tilesEl = g('detail-instit-tiles');
+  if (!el) return;
+
+  el.innerHTML = `<tr><td colspan="4" style="padding:14px;color:var(--muted);font-size:10px;text-align:center">
+    <span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Loading institutional data…</td></tr>`;
+  if (tilesEl) tilesEl.innerHTML = '';
+
+  const TK = ticker.toUpperCase();
+
+  // ── Layer 1: Yahoo Finance — try 4 endpoints in order ────────────────────
+  const yahooUrls = [
+    // v10 query2 (sometimes bypasses blocks on query1)
+    `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${TK}?modules=institutionOwnership,majorHoldersBreakdown`,
+    // v10 query1
+    `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${TK}?modules=institutionOwnership,majorHoldersBreakdown`,
+    // v8 — different format, majorHoldersBreakdown only but more reliable
+    `https://query2.finance.yahoo.com/v8/finance/chart/${TK}?modules=majorHoldersBreakdown`,
+  ];
   const proxies = [
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
   ];
 
-  let data = null;
-  let lastErr = '';
-  for (const proxy of proxies) {
-    try {
-      const r = await fetch(proxy(yUrl), { signal: AbortSignal.timeout(12000) });
-      if (!r.ok) { lastErr = `HTTP ${r.status}`; continue; }
-      const text = await r.text();
-      if (!text || text.length < 50) { lastErr = 'empty'; continue; }
-      const j = JSON.parse(text);
-      const result = j?.quoteSummary?.result?.[0];
-      if (!result) { lastErr = 'no result'; continue; }
-      data = result;
-      break;
-    } catch(e) {
-      lastErr = e.message;
+  let yahooData = null;
+  for (const yUrl of yahooUrls) {
+    if (yahooData) break;
+    for (const proxy of proxies) {
+      try {
+        const r = await fetch(proxy(yUrl), { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) continue;
+        const text = await r.text();
+        if (!text || text.length < 50) continue;
+        const j = JSON.parse(text);
+        const result = j?.quoteSummary?.result?.[0] || j?.chart?.result?.[0];
+        if (result && (result.institutionOwnership || result.majorHoldersBreakdown)) {
+          yahooData = result;
+          break;
+        }
+      } catch {}
     }
   }
 
-  if (!data) {
-    g('detail-instit-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ Yahoo institutional data unavailable: ${lastErr}<br><span style="color:var(--muted)">All proxies failed — try again in a few seconds</span></td></tr>`;
-    g('detail-instit-tiles').innerHTML = '';
+  // ── Layer 2: Whale cache cross-reference ──────────────────────────────────
+  const whaleCacheHits = whaleTickerCache[TK] || [];
+
+  // ── Layer 3: Render — Yahoo data, whale cache, or fallback ────────────────
+  if (yahooData) {
+    renderYahooInstitutional(yahooData, TK, whaleCacheHits);
     return;
   }
 
-  try {
-    // Combine institutional and fund holders into one list
-    const inst = (data.institutionOwnership?.ownershipList || []).map(o => ({ ...o, kind: 'institution' }));
-    const fund = (data.fundOwnership?.ownershipList || []).map(o => ({ ...o, kind: 'fund' }));
-    const allHolders = [...inst, ...fund];
-
-    // Major holder breakdown summary (insidersPercentHeld, institutionsPercentHeld, etc.)
-    const majors = data.majorHoldersBreakdown || {};
-    const instPctHeld = majors.institutionsPercentHeld?.raw != null ? (majors.institutionsPercentHeld.raw * 100) : null;
-    const insidersPct = majors.insidersPercentHeld?.raw != null ? (majors.insidersPercentHeld.raw * 100) : null;
-    const instCount = majors.institutionsCount?.raw ?? null;
-    const instFloatPct = majors.institutionsFloatPercentHeld?.raw != null ? (majors.institutionsFloatPercentHeld.raw * 100) : null;
-
-    // Tiles
-    g('detail-instit-tiles').innerHTML = `
-      <div class="detail-tile">
-        <div class="detail-tile-lbl">Total Institutions</div>
-        <div class="detail-tile-val">${instCount != null ? fmtNum(instCount) : '—'}</div>
-      </div>
-      <div class="detail-tile">
-        <div class="detail-tile-lbl">Institutional %</div>
-        <div class="detail-tile-val ${instPctHeld >= 70 ? 'green' : instPctHeld >= 40 ? 'amber' : ''}">${instPctHeld != null ? instPctHeld.toFixed(1) + '%' : '—'}</div>
-        <div class="detail-tile-sub">of shares outstanding</div>
-      </div>
-      <div class="detail-tile">
-        <div class="detail-tile-lbl">% of Float</div>
-        <div class="detail-tile-val">${instFloatPct != null ? instFloatPct.toFixed(1) + '%' : '—'}</div>
-      </div>
-      <div class="detail-tile">
-        <div class="detail-tile-lbl">Insiders Hold</div>
-        <div class="detail-tile-val ${insidersPct >= 10 ? 'amber' : ''}">${insidersPct != null ? insidersPct.toFixed(2) + '%' : '—'}</div>
-      </div>
-    `;
-
-    const tbody = g('detail-instit-tbl').querySelector('tbody');
-    if (!allHolders.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No detailed holder data available for this ticker</td></tr>';
-      return;
-    }
-
-    // Sort by position size descending
-    allHolders.sort((a,b) => (b.position?.raw || 0) - (a.position?.raw || 0));
-
-    // Top 5
-    const top5 = allHolders.slice(0, 5);
-    tbody.innerHTML = top5.map(h => {
-      const shares = h.position?.raw || 0;
-      const pctHeld = h.pctHeld?.raw != null ? (h.pctHeld.raw * 100) : null;
-      const change = h.pctChange?.raw != null ? (h.pctChange.raw * 100) : null;
-      const changeCls = change > 0 ? 'green' : change < 0 ? 'red' : 'muted';
-      const changeStr = change != null
-        ? (change >= 0 ? '+' : '') + change.toFixed(1) + '%'
-        : '—';
-      const kindBadge = h.kind === 'fund'
-        ? '<span style="font-size:8px;color:var(--cyan);margin-left:6px;letter-spacing:1px">FUND</span>'
-        : '';
-      return `<tr>
-        <td class="sm-name" style="font-size:11px;white-space:normal;max-width:200px;line-height:1.4">${h.organization || '—'}${kindBadge}</td>
-        <td class="num">${fmtNum(shares)}</td>
-        <td class="num">${pctHeld != null ? pctHeld.toFixed(2) + '%' : '—'}</td>
-        <td class="num" style="color:var(--${changeCls})">${changeStr}</td>
-      </tr>`;
-    }).join('');
-  } catch(e) {
-    g('detail-instit-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ Parse error: ${e.message}</td></tr>`;
+  if (whaleCacheHits.length) {
+    renderWhaleCacheOnly(whaleCacheHits, TK);
+    return;
   }
+
+  // Nothing from either source — show helpful fallback
+  el.innerHTML = `
+    <tr><td colspan="4" style="padding:16px">
+      <div style="font-size:10px;color:var(--muted);line-height:1.8;letter-spacing:.3px">
+        <div style="color:var(--orange);font-weight:600;margin-bottom:8px;letter-spacing:1px">⚠ Live institutional data unavailable</div>
+        <div style="margin-bottom:10px">Yahoo Finance is blocking automated requests. <b style="color:var(--text)">Two ways to get this data:</b></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="padding:10px 12px;background:var(--bg);border:1px solid rgba(78,232,255,.25)">
+            <div style="color:var(--cyan);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Option 1 — Full data online</div>
+            <a href="https://stockanalysis.com/stocks/${TK.toLowerCase()}/institutional/" target="_blank"
+              style="color:var(--cyan);text-decoration:none">
+              stockanalysis.com → ${TK} → Institutional ↗
+            </a>
+            <div style="color:var(--muted);font-size:9px;margin-top:3px">Free, always up to date, shows all holders</div>
+          </div>
+          <div style="padding:10px 12px;background:var(--bg);border:1px solid rgba(180,125,255,.25)">
+            <div style="color:var(--purple);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Option 2 — Check whale cache</div>
+            <div style="color:var(--text)">Run <b>Smart Alerts</b> (Smart Money tab) on a watchlist containing <b>${TK}</b> — whale 13F holdings are then cached and shown here automatically.</div>
+          </div>
+          <div style="padding:10px 12px;background:var(--bg);border:1px solid rgba(61,255,160,.2)">
+            <div style="color:var(--green);font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Option 3 — Fetch one fund manually</div>
+            <div style="color:var(--text)">Open the <b>🐋 13F Whales</b> sub-tab → pick any fund → click Fetch Filing. Holdings are cached and shown here for any ticker they contain.</div>
+          </div>
+        </div>
+      </div>
+    </td></tr>`;
+  if (tilesEl) tilesEl.innerHTML = '';
+}
+
+function renderYahooInstitutional(data, ticker, whaleCacheHits) {
+  const tilesEl = g('detail-instit-tiles');
+  const tbody   = g('detail-instit-tbl')?.querySelector('tbody');
+  if (!tbody) return;
+
+  // Tiles from majorHoldersBreakdown
+  const majors        = data.majorHoldersBreakdown || {};
+  const instPctHeld   = majors.institutionsPercentHeld?.raw   != null ? (majors.institutionsPercentHeld.raw * 100)   : null;
+  const insidersPct   = majors.insidersPercentHeld?.raw       != null ? (majors.insidersPercentHeld.raw * 100)       : null;
+  const instCount     = majors.institutionsCount?.raw         ?? null;
+  const instFloatPct  = majors.institutionsFloatPercentHeld?.raw != null ? (majors.institutionsFloatPercentHeld.raw * 100) : null;
+
+  if (tilesEl) tilesEl.innerHTML = `
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Total Institutions</div>
+      <div class="detail-tile-val">${instCount != null ? fmtNum(instCount) : '—'}</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Institutional %</div>
+      <div class="detail-tile-val ${instPctHeld >= 70 ? 'green' : instPctHeld >= 40 ? 'amber' : ''}">${instPctHeld != null ? instPctHeld.toFixed(1) + '%' : '—'}</div>
+      <div class="detail-tile-sub">of shares outstanding</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">% of Float</div>
+      <div class="detail-tile-val">${instFloatPct != null ? instFloatPct.toFixed(1) + '%' : '—'}</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Insiders Hold</div>
+      <div class="detail-tile-val ${insidersPct >= 10 ? 'amber' : ''}">${insidersPct != null ? insidersPct.toFixed(2) + '%' : '—'}</div>
+    </div>`;
+
+  // Holders list
+  const inst = (data.institutionOwnership?.ownershipList || []).map(o => ({ ...o, kind: 'institution' }));
+  const allHolders = [...inst].sort((a,b) => (b.position?.raw || 0) - (a.position?.raw || 0));
+
+  // Merge whale cache hits alongside Yahoo data
+  const whaleSection = whaleCacheHits.length
+    ? `<tr><td colspan="4" style="padding:6px 12px;background:rgba(180,125,255,.07);font-size:9px;letter-spacing:2px;color:var(--purple);text-transform:uppercase">🐋 Famous Funds (from cached 13F)</td></tr>`
+    + whaleCacheHits.sort((a,b) => (b.value||0)-(a.value||0)).map(h => `
+      <tr>
+        <td style="font-size:10px;color:var(--purple)">${h.fund}</td>
+        <td class="num" style="font-size:10px">${fmtNum(h.shares)}</td>
+        <td class="num" style="font-size:10px">${fmtMoney(h.value)}</td>
+        <td style="font-size:9px;color:var(--muted)">${h.reportDate || '—'}</td>
+      </tr>`).join('')
+    : '';
+
+  if (!allHolders.length && !whaleCacheHits.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No holder detail available — <a href="https://stockanalysis.com/stocks/${ticker.toLowerCase()}/institutional/" target="_blank" style="color:var(--cyan)">view on Stock Analysis ↗</a></td></tr>`;
+    return;
+  }
+
+  const topRows = allHolders.slice(0, 8).map(h => {
+    const shares    = h.position?.raw || 0;
+    const pctHeld   = h.pctHeld?.raw   != null ? (h.pctHeld.raw * 100)   : null;
+    const change    = h.pctChange?.raw  != null ? (h.pctChange.raw * 100) : null;
+    const changeCls = change > 0 ? 'green' : change < 0 ? 'red' : '';
+    const changeStr = change != null ? (change >= 0 ? '+' : '') + change.toFixed(1) + '%' : '—';
+    return `<tr>
+      <td style="font-size:11px;font-weight:500">${h.organization || '—'}</td>
+      <td class="num" style="font-size:10px">${fmtNum(shares)}</td>
+      <td class="num" style="font-size:10px;color:${change > 0 ? 'var(--green)' : change < 0 ? 'var(--red)' : 'var(--muted)'}">${changeStr}</td>
+      <td class="num" style="font-size:10px">${pctHeld != null ? pctHeld.toFixed(2) + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = `
+    <tr style="background:var(--surface2)">
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px">Holder</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">Shares</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">Change</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">% Held</th>
+    </tr>
+    ${topRows}
+    ${whaleSection}
+    <tr><td colspan="4" style="padding:6px 12px;font-size:9px;color:var(--muted)">
+      <a href="https://stockanalysis.com/stocks/${ticker.toLowerCase()}/institutional/" target="_blank" style="color:var(--cyan)">View all holders on Stock Analysis ↗</a>
+    </td></tr>`;
+}
+
+function renderWhaleCacheOnly(cacheHits, ticker) {
+  const tbody   = g('detail-instit-tbl')?.querySelector('tbody');
+  const tilesEl = g('detail-instit-tiles');
+  if (!tbody) return;
+
+  if (tilesEl) tilesEl.innerHTML = `
+    <div class="detail-tile" style="border-color:rgba(180,125,255,.3)">
+      <div class="detail-tile-lbl">Famous Funds Holding</div>
+      <div class="detail-tile-val" style="color:var(--purple)">${cacheHits.length}</div>
+      <div class="detail-tile-sub">from 13F cache</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Total Cached Value</div>
+      <div class="detail-tile-val">${fmtMoney(cacheHits.reduce((a,b) => a+(b.value||0), 0))}</div>
+    </div>`;
+
+  const sorted = [...cacheHits].sort((a,b) => (b.value||0)-(a.value||0));
+  tbody.innerHTML = `
+    <tr><td colspan="4" style="padding:6px 12px;background:rgba(180,125,255,.07);font-size:9px;letter-spacing:2px;color:var(--purple);text-transform:uppercase">🐋 Famous Funds — Cached 13F Data</td></tr>
+    ${sorted.map(h => `
+      <tr>
+        <td style="font-size:11px;font-weight:500;color:var(--purple)">${h.fund}</td>
+        <td class="num" style="font-size:10px">${fmtNum(h.shares)}</td>
+        <td class="num" style="font-size:10px">${fmtMoney(h.value)}</td>
+        <td style="font-size:9px;color:var(--muted)">${h.reportDate || '—'}</td>
+      </tr>`).join('')}
+    <tr><td colspan="4" style="padding:8px 12px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
+      Yahoo Finance unavailable — only whale cache shown ·
+      <a href="https://stockanalysis.com/stocks/${ticker.toLowerCase()}/institutional/" target="_blank" style="color:var(--cyan)">Full data on Stock Analysis ↗</a>
+    </td></tr>`;
 }
 
 // ─── Congressional (cached from earlier fetch if available, else fetch fresh) ───
@@ -6729,19 +6854,19 @@ function calcCompositeScore(r) {
   else if (rvol >= 0.7) volPts = 3;
 
   // ── 3. Relative Strength vs SPY (20 pts) ────────────────────────
-  // Uses 63-day (3-month) lookback — more meaningful for swing trading
-  // Falls back to 20-day if insufficient data
-  let rsPts = 0;
+  // Uses 63-day (3-month) lookback — standard swing trading RS period
+  // Falls back to neutral (8 pts) when SPY data not yet loaded
+  let rsPts = 8; // neutral default when SPY unavailable
   if (scanState.spyBars && n >= 10) {
     const spyC    = scanState.spyBars.map(b => b.c);
-    const period  = Math.min(63, n - 1, spyC.length - 1); // 63d preferred, shorter if less data
+    const period  = Math.min(63, n - 1, spyC.length - 1);
     const spyCur  = spyC[spyC.length - 1];
     const spyPast = spyC[Math.max(0, spyC.length - 1 - period)];
     const spyRet  = spyPast ? ((spyCur - spyPast) / spyPast) * 100 : 0;
     const stCur   = closes[n - 1];
     const stPast  = closes[Math.max(0, n - 1 - period)];
     const stRet   = stPast ? ((stCur - stPast) / stPast) * 100 : 0;
-    const diff    = stRet - spyRet; // positive = outperforming SPY
+    const diff    = stRet - spyRet;
     if      (diff >= 15) rsPts = 20;
     else if (diff >= 8)  rsPts = 16;
     else if (diff >= 4)  rsPts = 12;
