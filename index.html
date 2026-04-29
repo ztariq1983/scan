@@ -5710,48 +5710,320 @@ g('backup-file').addEventListener('change', e => {
 // ANALYST RATINGS + PRICE TARGET (Finnhub)
 // ═════════════════════════════════════════════════════════════════════════════
 async function loadDetailAnalyst(ticker) {
-  const key = getFinnhubKey();
-  const el = g('detail-analyst-content');
+  const key    = getFinnhubKey();
+  const alpaca = getKeys();
+  const el     = g('detail-analyst-content');
   if (!key) { el.innerHTML='<div style="color:var(--orange);font-size:10px;padding:10px">⚠ Finnhub key not set</div>'; return; }
+
+  el.innerHTML = '<div class="detail-loading">Loading analyst data…</div>';
+
   try {
-    const [recR, ptR] = await Promise.all([
+    // Fetch analyst data + 1yr price history in parallel
+    const [recR, ptR, barsRaw] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${encodeURIComponent(key)}`),
       fetch(`https://finnhub.io/api/v1/stock/price-target?symbol=${ticker}&token=${encodeURIComponent(key)}`),
+      alpaca.key ? fetchDaily(ticker).catch(()=>null) : Promise.resolve(null),
     ]);
     const rec = await recR.json();
     const pt  = await ptR.json();
+
     const latest = Array.isArray(rec) && rec.length ? rec[0] : null;
-    if (!latest && !pt.targetMean) { el.innerHTML='<div style="color:var(--muted);font-size:10px;padding:10px">No analyst coverage found</div>'; return; }
-    const buy  = latest?.strongBuy + latest?.buy || 0;
-    const hold = latest?.hold || 0;
-    const sell = latest?.sell + latest?.strongSell || 0;
+    if (!latest && !pt.targetMean) {
+      el.innerHTML='<div style="color:var(--muted);font-size:10px;padding:10px">No analyst coverage found for this ticker</div>';
+      return;
+    }
+
+    // ── Consensus numbers ─────────────────────────────────────────────────────
+    const buy   = (latest?.strongBuy  || 0) + (latest?.buy  || 0);
+    const hold  =  latest?.hold       || 0;
+    const sell  = (latest?.sell       || 0) + (latest?.strongSell || 0);
     const total = buy + hold + sell;
-    const target = pt.targetMean || 0;
-    const curPrice = parseFloat(g('detail-price').textContent.replace('$','')) || 0;
-    const upside = curPrice && target ? ((target - curPrice)/curPrice*100) : null;
+    const targetMean = pt.targetMean || 0;
+    const targetLow  = pt.targetLow  || 0;
+    const targetHigh = pt.targetHigh || 0;
+    const curPrice   = parseFloat(g('detail-price')?.textContent?.replace('$','')) || (barsRaw ? barsRaw[barsRaw.length-1].c : 0);
+    const upside1y   = curPrice && targetMean ? ((targetMean - curPrice) / curPrice * 100) : null;
+
+    // Consensus label
+    const buyPct  = total ? buy  / total : 0;
+    const sellPct = total ? sell / total : 0;
+    const consensus = buyPct >= 0.65 ? { label:'Strong Buy', cls:'#3dffa0' }
+                    : buyPct >= 0.45 ? { label:'Buy',         cls:'#3dffa0' }
+                    : sellPct >= 0.45 ? { label:'Sell',        cls:'#ff5277' }
+                    : sellPct >= 0.25 ? { label:'Underperform',cls:'#ff9b4e' }
+                    :                   { label:'Hold',         cls:'#ff9b4e' };
+
+    // ── Last 12 months of bars from Alpaca ────────────────────────────────────
+    const now        = Date.now();
+    const oneYearAgo = now - 365 * 864e5;
+    let histBars = [];
+    if (barsRaw) {
+      histBars = barsRaw
+        .filter(b => {
+          const t = new Date(b.t || b.time || b.timestamp || b.date).getTime();
+          return t >= oneYearAgo && t <= now;
+        })
+        .map(b => ({
+          t: new Date(b.t || b.time || b.timestamp || b.date).getTime(),
+          c: b.c,
+        }))
+        .sort((a,b) => a.t - b.t);
+    }
+
+    // ── Build SVG chart ───────────────────────────────────────────────────────
+    const chartHTML = targetMean && curPrice
+      ? buildAnalystChart(histBars, curPrice, targetMean, targetLow, targetHigh, ticker)
+      : '';
+
+    // ── Recommendation trend sparklines (last 3 periods) ──────────────────────
+    const trendHTML = Array.isArray(rec) && rec.length >= 2
+      ? buildRecTrend(rec.slice(0, 4))
+      : '';
+
+    // ── Render ────────────────────────────────────────────────────────────────
     el.innerHTML = `
-      <div class="detail-analyst-grid">
-        <div class="analyst-tile"><div class="analyst-tile-n buy">${buy}</div><div class="analyst-tile-lbl">Buy / Strong Buy</div></div>
-        <div class="analyst-tile"><div class="analyst-tile-n hold">${hold}</div><div class="analyst-tile-lbl">Hold</div></div>
-        <div class="analyst-tile"><div class="analyst-tile-n sell">${sell}</div><div class="analyst-tile-lbl">Sell</div></div>
-        <div class="analyst-tile"><div class="analyst-tile-n" style="color:var(--text)">${total}</div><div class="analyst-tile-lbl">Total Analysts</div></div>
-      </div>
-      ${target ? `<div class="price-target-bar">
-        <span class="pt-label">Price Target</span>
-        <div class="pt-track">
-          <div class="pt-fill" style="width:${curPrice&&target?Math.min(100,(curPrice/target)*100):50}%"></div>
-          ${curPrice&&target?`<div class="pt-marker" style="left:${Math.min(95,(curPrice/target)*100)}%"></div>`:''}
+      ${chartHTML}
+
+      <!-- Consensus tiles -->
+      <div class="detail-analyst-grid" style="margin-top:${chartHTML?'0':'0'}">
+        <div class="analyst-tile">
+          <div class="analyst-tile-n buy">${buy}</div>
+          <div class="analyst-tile-lbl">Buy / Strong Buy</div>
         </div>
-        <div class="pt-vals">
-          <span class="pt-cur">Now: $${curPrice.toFixed(2)}</span>
-          <span class="pt-avg">Avg: $${target.toFixed(2)}</span>
-          ${upside!=null?`<span class="pt-upside">${upside>=0?'+':''}${upside.toFixed(1)}% upside</span>`:''}
+        <div class="analyst-tile">
+          <div class="analyst-tile-n hold">${hold}</div>
+          <div class="analyst-tile-lbl">Hold</div>
+        </div>
+        <div class="analyst-tile">
+          <div class="analyst-tile-n sell">${sell}</div>
+          <div class="analyst-tile-lbl">Sell</div>
+        </div>
+        <div class="analyst-tile">
+          <div class="analyst-tile-n" style="color:${consensus.cls};font-size:11px;letter-spacing:.5px">${consensus.label}</div>
+          <div class="analyst-tile-lbl">${total} analysts</div>
+        </div>
+      </div>
+
+      <!-- Target range -->
+      ${targetMean ? `<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 0;border-top:1px solid var(--border2)">
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Low Target</div>
+          <div style="font-family:var(--font-display);font-size:15px;color:var(--red)">$${targetLow.toFixed(2)}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Mean Target</div>
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent)">$${targetMean.toFixed(2)}</div>
+          ${upside1y!=null?`<div style="font-size:10px;color:${upside1y>=0?'var(--green)':'var(--red)'}">${upside1y>=0?'+':''}${upside1y.toFixed(1)}% 1-yr upside</div>`:''}
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">High Target</div>
+          <div style="font-family:var(--font-display);font-size:15px;color:var(--green)">$${targetHigh.toFixed(2)}</div>
+        </div>
+        <div style="text-align:center;margin-left:auto">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Updated</div>
+          <div style="font-size:11px;color:var(--text)">${pt.lastUpdated ? fmtSmDate(pt.lastUpdated) : '—'}</div>
         </div>
       </div>` : ''}
-      <div style="font-size:9px;color:var(--muted);margin-top:8px;letter-spacing:.5px">Period: ${latest?.period||'—'} · Low: $${pt.targetLow?.toFixed(2)||'—'} · High: $${pt.targetHigh?.toFixed(2)||'—'}</div>`;
+
+      <!-- Recommendation trend -->
+      ${trendHTML}`;
+
   } catch(e) {
     el.innerHTML=`<div style="color:var(--red);font-size:10px;padding:10px">⚠ ${e.message}</div>`;
   }
+}
+
+function buildAnalystChart(histBars, curPrice, targetMean, targetLow, targetHigh, ticker) {
+  const W = 640, H = 200, PL = 48, PR = 16, PT = 18, PB = 28;
+  const CW = W - PL - PR, CH = H - PT - PB;
+
+  const now   = Date.now();
+  const start = now - 365 * 864e5;     // 1 year ago
+  const end1y = now + 365 * 864e5;     // 1 year ahead
+  const end2y = now + 730 * 864e5;     // 2 years ahead
+
+  // 2-year extrapolation: apply same % growth rate as 1-year target implies
+  const growthRate  = curPrice ? (targetMean - curPrice) / curPrice : 0;
+  const target2yMean= curPrice * (1 + growthRate * 2);
+  const target2yLow = targetLow  > 0 ? targetLow  * (1 + growthRate) : target2yMean * 0.85;
+  const target2yHigh= targetHigh > 0 ? targetHigh * (1 + growthRate) : target2yMean * 1.15;
+
+  // Price range across entire chart
+  const allPrices = [
+    ...histBars.map(b=>b.c),
+    curPrice, targetMean, targetLow, targetHigh, target2yMean, target2yLow, target2yHigh,
+  ].filter(v=>v>0);
+  const minP = Math.min(...allPrices) * 0.93;
+  const maxP = Math.max(...allPrices) * 1.05;
+  const priceRange = maxP - minP || 1;
+  const timeRange  = end2y - start;
+
+  // Coordinate helpers
+  const px = t  => PL + ((t - start) / timeRange) * CW;
+  const py = p  => PT + CH - ((p - minP) / priceRange) * CH;
+  const nowX    = px(now);
+  const end1yX  = px(end1y);
+  const end2yX  = px(end2y);
+
+  // Historical price polyline
+  let histLine = '';
+  if (histBars.length >= 2) {
+    const pts = histBars.map(b => `${px(b.t).toFixed(1)},${py(b.c).toFixed(1)}`).join(' ');
+    // Area fill under hist line
+    const areaPath = `${px(histBars[0].t).toFixed(1)},${(PT+CH).toFixed(1)} ${pts} ${px(histBars[histBars.length-1].t).toFixed(1)},${(PT+CH).toFixed(1)}`;
+    histLine = `
+      <defs>
+        <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e8ff47" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#e8ff47" stop-opacity="0.01"/>
+        </linearGradient>
+        <linearGradient id="projGrad1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3dffa0" stop-opacity="0.12"/>
+          <stop offset="100%" stop-color="#3dffa0" stop-opacity="0.02"/>
+        </linearGradient>
+        <linearGradient id="projGrad2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4ee8ff" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#4ee8ff" stop-opacity="0.01"/>
+        </linearGradient>
+      </defs>
+      <polygon points="${areaPath}" fill="url(#histGrad)"/>
+      <polyline points="${pts}" fill="none" stroke="#e8ff47" stroke-width="1.5"/>`;
+  } else {
+    histLine = `<defs>
+      <linearGradient id="projGrad1" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3dffa0" stop-opacity="0.12"/><stop offset="100%" stop-color="#3dffa0" stop-opacity="0.02"/>
+      </linearGradient>
+      <linearGradient id="projGrad2" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#4ee8ff" stop-opacity="0.08"/><stop offset="100%" stop-color="#4ee8ff" stop-opacity="0.01"/>
+      </linearGradient>
+    </defs>`;
+  }
+
+  // Y-axis price labels (5 ticks)
+  const yLabels = Array.from({length:5}, (_,i) => {
+    const p = minP + (priceRange * i / 4);
+    return `<text x="${PL-5}" y="${py(p)+4}" fill="rgba(255,255,255,.35)" font-size="9" font-family="Fira Code,monospace" text-anchor="end">$${p.toFixed(0)}</text>
+      <line x1="${PL}" y1="${py(p)}" x2="${W-PR}" y2="${py(p)}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+  }).join('');
+
+  // X-axis time labels
+  const xLabels = [
+    {t: start,  label: '1Y ago'},
+    {t: now,    label: 'Today'},
+    {t: end1y,  label: '+1Y'},
+    {t: end2y,  label: '+2Y'},
+  ].map(({t,label}) =>
+    `<text x="${px(t)}" y="${H-4}" fill="rgba(255,255,255,.35)" font-size="9" font-family="Fira Code,monospace" text-anchor="middle">${label}</text>`
+  ).join('');
+
+  // 1-year projection band (today → +1Y)
+  const proj1Area = `${nowX.toFixed(1)},${py(targetLow||curPrice*0.85).toFixed(1)} ${end1yX.toFixed(1)},${py(targetLow).toFixed(1)} ${end1yX.toFixed(1)},${py(targetHigh).toFixed(1)} ${nowX.toFixed(1)},${py(targetHigh||curPrice*1.15).toFixed(1)}`;
+
+  // 2-year projection band (+1Y → +2Y)
+  const proj2Area = `${end1yX.toFixed(1)},${py(targetLow).toFixed(1)} ${end2yX.toFixed(1)},${py(target2yLow).toFixed(1)} ${end2yX.toFixed(1)},${py(target2yHigh).toFixed(1)} ${end1yX.toFixed(1)},${py(targetHigh).toFixed(1)}`;
+
+  // Mean target lines
+  const mean1Line = `M${nowX.toFixed(1)},${py(curPrice).toFixed(1)} L${end1yX.toFixed(1)},${py(targetMean).toFixed(1)}`;
+  const mean2Line = `M${end1yX.toFixed(1)},${py(targetMean).toFixed(1)} L${end2yX.toFixed(1)},${py(target2yMean).toFixed(1)}`;
+  const high1Line = `M${nowX.toFixed(1)},${py(curPrice).toFixed(1)} L${end1yX.toFixed(1)},${py(targetHigh).toFixed(1)}`;
+  const low1Line  = `M${nowX.toFixed(1)},${py(curPrice).toFixed(1)} L${end1yX.toFixed(1)},${py(targetLow).toFixed(1)}`;
+
+  return `<div style="background:var(--bg);border:1px solid var(--border2);padding:8px 0 0;margin-bottom:12px;overflow:hidden">
+    <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0 14px 6px;display:flex;justify-content:space-between">
+      <span>Price History + Analyst Target Projection — ${ticker}</span>
+      <span style="color:var(--accent)">━ actual &nbsp; <span style="color:#3dffa0">━</span> mean target &nbsp; <span style="opacity:.5">▓</span> target range</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+      ${histLine}
+
+      <!-- Chart border box -->
+      <rect x="${PL}" y="${PT}" width="${CW}" height="${CH}" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+
+      <!-- Y grid + labels -->
+      ${yLabels}
+      <!-- X labels -->
+      ${xLabels}
+
+      <!-- TODAY vertical divider -->
+      <line x1="${nowX.toFixed(1)}" y1="${PT}" x2="${nowX.toFixed(1)}" y2="${PT+CH}" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="3,3"/>
+      <!-- +1Y vertical divider -->
+      <line x1="${end1yX.toFixed(1)}" y1="${PT}" x2="${end1yX.toFixed(1)}" y2="${PT+CH}" stroke="rgba(61,255,160,.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- 1Y projection band -->
+      <polygon points="${proj1Area}" fill="url(#projGrad1)" opacity="0.9"/>
+      <!-- 2Y projection band -->
+      <polygon points="${proj2Area}" fill="url(#projGrad2)" opacity="0.9"/>
+
+      <!-- Target range lines (1Y) -->
+      <path d="${high1Line}" fill="none" stroke="rgba(61,255,160,.3)" stroke-width="1" stroke-dasharray="4,3"/>
+      <path d="${low1Line}"  fill="none" stroke="rgba(255,82,119,.3)"  stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Mean target lines -->
+      <path d="${mean1Line}" fill="none" stroke="#3dffa0" stroke-width="2"/>
+      <path d="${mean2Line}" fill="none" stroke="rgba(78,232,255,.6)" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+      <!-- 2Y mean/high/low endpoint lines -->
+      <path d="M${end1yX.toFixed(1)},${py(targetMean).toFixed(1)} L${end2yX.toFixed(1)},${py(target2yHigh).toFixed(1)}" fill="none" stroke="rgba(61,255,160,.2)" stroke-width="1" stroke-dasharray="3,4"/>
+      <path d="M${end1yX.toFixed(1)},${py(targetMean).toFixed(1)} L${end2yX.toFixed(1)},${py(target2yLow).toFixed(1)}" fill="none" stroke="rgba(255,82,119,.2)" stroke-width="1" stroke-dasharray="3,4"/>
+
+      <!-- Current price dot -->
+      <circle cx="${nowX.toFixed(1)}" cy="${py(curPrice).toFixed(1)}" r="4" fill="#e8ff47"/>
+      <text x="${(nowX+6).toFixed(1)}" y="${(py(curPrice)-4).toFixed(1)}" fill="#e8ff47" font-size="9" font-family="Fira Code,monospace">$${curPrice.toFixed(2)}</text>
+
+      <!-- 1Y mean target dot + label -->
+      <circle cx="${end1yX.toFixed(1)}" cy="${py(targetMean).toFixed(1)}" r="4" fill="#3dffa0"/>
+      <text x="${(end1yX+6).toFixed(1)}" y="${(py(targetMean)-4).toFixed(1)}" fill="#3dffa0" font-size="9" font-family="Fira Code,monospace">$${targetMean.toFixed(2)}</text>
+
+      <!-- 2Y mean target dot + label -->
+      <circle cx="${end2yX.toFixed(1)}" cy="${py(target2yMean).toFixed(1)}" r="3" fill="rgba(78,232,255,.8)"/>
+      <text x="${(end2yX-4).toFixed(1)}" y="${(py(target2yMean)-5).toFixed(1)}" fill="rgba(78,232,255,.8)" font-size="9" font-family="Fira Code,monospace" text-anchor="end">$${target2yMean.toFixed(2)}</text>
+
+      <!-- TODAY label -->
+      <text x="${nowX.toFixed(1)}" y="${PT-3}" fill="rgba(255,255,255,.4)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">TODAY</text>
+
+      <!-- 1Y target label top -->
+      <text x="${end1yX.toFixed(1)}" y="${PT-3}" fill="rgba(61,255,160,.6)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">ANALYST 1Y</text>
+
+      <!-- 2Y label top -->
+      <text x="${end2yX.toFixed(1)}" y="${PT-3}" fill="rgba(78,232,255,.5)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">EXTRAP 2Y</text>
+
+      <!-- Shaded region labels -->
+      <text x="${((nowX+end1yX)/2).toFixed(1)}" y="${(PT+CH-6).toFixed(1)}" fill="rgba(61,255,160,.35)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">1Y PROJECTION</text>
+      <text x="${((end1yX+end2yX)/2).toFixed(1)}" y="${(PT+CH-6).toFixed(1)}" fill="rgba(78,232,255,.25)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">2Y EXTRAPOLATION</text>
+    </svg>
+  </div>`;
+}
+
+function buildRecTrend(periods) {
+  if (!periods.length) return '';
+  // Recent 4 periods = bar chart showing buy/hold/sell splits over time
+  const maxTotal = Math.max(...periods.map(p => (p.strongBuy+p.buy+p.hold+p.sell+p.strongSell)));
+  const rows = periods.reverse().map(p => {
+    const b = p.strongBuy + p.buy, h = p.hold, s = p.sell + p.strongSell;
+    const tot = b + h + s || 1;
+    const bW = (b/tot*100).toFixed(0), hW = (h/tot*100).toFixed(0), sW = (s/tot*100).toFixed(0);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="font-size:9px;color:var(--muted);min-width:48px;letter-spacing:.5px">${p.period || '—'}</span>
+      <div style="flex:1;height:14px;display:flex;border-radius:2px;overflow:hidden;gap:1px">
+        <div style="width:${bW}%;background:rgba(61,255,160,.7);display:flex;align-items:center;justify-content:center">
+          <span style="font-size:8px;color:#000;font-weight:700">${b||''}</span></div>
+        <div style="width:${hW}%;background:rgba(255,155,78,.6);display:flex;align-items:center;justify-content:center">
+          <span style="font-size:8px;color:#000;font-weight:700">${h||''}</span></div>
+        <div style="width:${sW}%;background:rgba(255,82,119,.7);display:flex;align-items:center;justify-content:center">
+          <span style="font-size:8px;color:#fff;font-weight:700">${s||''}</span></div>
+      </div>
+      <span style="font-size:9px;color:var(--muted);min-width:24px;text-align:right">${tot}</span>
+    </div>`;
+  }).join('');
+  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)">
+    <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Recommendation Trend</div>
+    <div style="display:flex;gap:12px;margin-bottom:6px">
+      <span style="font-size:9px;color:rgba(61,255,160,.8)">■ Buy</span>
+      <span style="font-size:9px;color:rgba(255,155,78,.8)">■ Hold</span>
+      <span style="font-size:9px;color:rgba(255,82,119,.8)">■ Sell</span>
+    </div>
+    ${rows}
+  </div>`;
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
