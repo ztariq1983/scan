@@ -5741,8 +5741,13 @@ async function loadDetailAnalyst(ticker) {
     const targetMean = pt.targetMean || 0;
     const targetLow  = pt.targetLow  || 0;
     const targetHigh = pt.targetHigh || 0;
-    const curPrice   = parseFloat(g('detail-price')?.textContent?.replace('$','')) || (barsRaw ? barsRaw[barsRaw.length-1].c : 0);
-    const upside1y   = curPrice && targetMean ? ((targetMean - curPrice) / curPrice * 100) : null;
+
+    // curPrice: try detail-price element first, then last Alpaca bar, then
+    // fall back to targetMean * 0.9 so the chart always has something to plot
+    const priceEl   = parseFloat(g('detail-price')?.textContent?.replace(/[^0-9.]/g,'')) || 0;
+    const lastBar   = barsRaw?.length ? barsRaw[barsRaw.length - 1].c : 0;
+    const curPrice  = priceEl || lastBar || (targetMean ? targetMean * 0.9 : 0);
+    const upside1y  = curPrice && targetMean ? ((targetMean - curPrice) / curPrice * 100) : null;
 
     // Consensus label
     const buyPct  = total ? buy  / total : 0;
@@ -5757,22 +5762,21 @@ async function loadDetailAnalyst(ticker) {
     const now        = Date.now();
     const oneYearAgo = now - 365 * 864e5;
     let histBars = [];
-    if (barsRaw) {
+    if (barsRaw && barsRaw.length) {
       histBars = barsRaw
-        .filter(b => {
-          const t = new Date(b.t || b.time || b.timestamp || b.date).getTime();
-          return t >= oneYearAgo && t <= now;
+        .map(b => {
+          // Alpaca returns t as ISO string e.g. "2024-01-05T00:00:00Z"
+          const raw = b.t || b.time || b.timestamp || b.date || '';
+          const ms  = typeof raw === 'number' ? raw : new Date(raw).getTime();
+          return { t: ms, c: b.c };
         })
-        .map(b => ({
-          t: new Date(b.t || b.time || b.timestamp || b.date).getTime(),
-          c: b.c,
-        }))
+        .filter(b => !isNaN(b.t) && b.t >= oneYearAgo && b.t <= now)
         .sort((a,b) => a.t - b.t);
     }
 
     // ── Build SVG chart ───────────────────────────────────────────────────────
-    const chartHTML = targetMean && curPrice
-      ? buildAnalystChart(histBars, curPrice, targetMean, targetLow, targetHigh, ticker)
+    const chartHTML = targetMean
+      ? buildAnalystChart(histBars, curPrice || targetMean * 0.85, targetMean, targetLow, targetHigh, ticker)
       : '';
 
     // ── Recommendation trend sparklines (last 3 periods) ──────────────────────
