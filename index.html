@@ -5132,58 +5132,70 @@ async function loadDetailInsider(ticker) {
 
     const allData = (j.data || []).sort((a,b) => (b.transactionDate||'').localeCompare(a.transactionDate||''));
 
-    // ── FIX 1: Only show OPEN MARKET PURCHASES ────────────────────────────────
-    // Transaction codes: P = open market purchase (the only one we want)
+    // ── FIX: Show open market PURCHASES (P) and open market SALES (S) only ────
     // Excluded: A (award), M (option exercise), G (gift), F (tax withholding),
-    //           S (open market sale), D (disposition), L (small acquisition)
-    const isPurchase = d => {
+    //           D (disposition other), L (small acquisition), J (other)
+    const OPEN_MKT_CODES = new Set(['P','S']);
+    const isOpenMarket = d => {
       const code = (d.transactionCode || '').toUpperCase();
-      // 'P' = open market purchase — the only definitive insider buy signal
-      if (code === 'P') return true;
-      // Also include when code is missing but change is clearly positive and has a real price
-      // (some filings omit the code but price > 0 + positive change = likely a purchase)
-      if (!code && d.change > 0 && d.transactionPrice > 0) return true;
+      if (OPEN_MKT_CODES.has(code)) return true;
+      // Fallback: no code but has a real transaction price (likely open market)
+      if (!code && d.transactionPrice > 0) return true;
       return false;
     };
 
-    const purchases = allData.filter(isPurchase);
-    const allBuys   = allData.filter(d => d.change > 0);   // for tiles (broader count)
-    const allSells  = allData.filter(d => d.change < 0);
+    const openMktData  = allData.filter(isOpenMarket);
+    const purchases    = openMktData.filter(d => d.change > 0 || (d.transactionCode||'').toUpperCase() === 'P');
+    const openSells    = openMktData.filter(d => d.change < 0 || (d.transactionCode||'').toUpperCase() === 'S');
+    const excluded     = allData.length - openMktData.length;
 
-    const buyValue  = allBuys.reduce((s,d)  => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
-    const sellValue = allSells.reduce((s,d) => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
-    const purchaseValue = purchases.reduce((s,d) => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
-    const netCls = buyValue >= sellValue ? 'green' : 'red';
+    const buyValue     = purchases.reduce((s,d) => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
+    const sellValue    = openSells.reduce((s,d) => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
+    const netCls       = buyValue >= sellValue ? 'green' : 'red';
 
     g('detail-insider-tiles').innerHTML = `
-      <div class="detail-tile"><div class="detail-tile-lbl">Total Filings</div><div class="detail-tile-val">${allData.length}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Total Filings</div><div class="detail-tile-val">${allData.length}</div>
+        ${excluded?`<div class="detail-tile-sub">${excluded} awards/options excl.</div>`:''}
+      </div>
       <div class="detail-tile" style="border-color:rgba(61,255,160,.35)">
         <div class="detail-tile-lbl">Open Mkt Purchases</div>
         <div class="detail-tile-val green">${purchases.length}</div>
-        <div class="detail-tile-sub">${fmtMoney(purchaseValue)}</div>
+        <div class="detail-tile-sub">${fmtMoney(buyValue)}</div>
       </div>
-      <div class="detail-tile"><div class="detail-tile-lbl">All Sells</div><div class="detail-tile-val red">${allSells.length}</div><div class="detail-tile-sub">${fmtMoney(sellValue)}</div></div>
-      <div class="detail-tile"><div class="detail-tile-lbl">Net Sentiment</div><div class="detail-tile-val ${netCls}">${buyValue >= sellValue ? '↑ Buying' : '↓ Selling'}</div></div>
+      <div class="detail-tile" style="border-color:rgba(255,82,119,.25)">
+        <div class="detail-tile-lbl">Open Mkt Sales</div>
+        <div class="detail-tile-val red">${openSells.length}</div>
+        <div class="detail-tile-sub">${fmtMoney(sellValue)}</div>
+      </div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Net Sentiment</div>
+        <div class="detail-tile-val ${netCls}">${buyValue >= sellValue ? '↑ Buying' : '↓ Selling'}</div>
+      </div>
     `;
 
     const tbody = g('detail-insider-tbl').querySelector('tbody');
 
-    // Show purchases only in the table
-    if (!purchases.length) {
+    if (!openMktData.length) {
       tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">
-        No open market purchases in last 90 days
-        ${allBuys.length ? `<br><span style="color:var(--orange)">${allBuys.length} other acquisitions (awards/options) excluded</span>` : ''}
+        No open market transactions in last 90 days
+        ${excluded ? `<br><span style="color:var(--orange)">${excluded} award/option filings excluded</span>` : ''}
       </td></tr>`;
       return;
     }
 
-    tbody.innerHTML = purchases.slice(0, 10).map(d => {
-      const shares = d.share != null ? d.share : Math.abs(d.change || 0);
-      const value  = shares * (d.transactionPrice || 0);
+    // Show purchases first (green), then sells (red), sorted by date within each group
+    const displayRows = [
+      ...purchases.sort((a,b) => (b.transactionDate||'').localeCompare(a.transactionDate||'')),
+      ...openSells.sort((a,b)  => (b.transactionDate||'').localeCompare(a.transactionDate||'')),
+    ].slice(0, 12);
+
+    tbody.innerHTML = displayRows.map(d => {
+      const isPurch = (d.transactionCode||'').toUpperCase() === 'P' || d.change > 0;
+      const shares  = d.share != null ? d.share : Math.abs(d.change || 0);
+      const value   = shares * (d.transactionPrice || 0);
       return `<tr>
         <td>${fmtSmDate(d.transactionDate)}</td>
         <td class="sm-name" style="font-size:10px">${d.name || '—'}<br><span class="sm-role" style="margin:0">${d.position || ''}</span></td>
-        <td class="num" style="color:var(--green)">+${fmtNum(shares)}</td>
+        <td class="num" style="color:${isPurch?'var(--green)':'var(--red)'}">${isPurch?'+':'-'}${fmtNum(shares)}</td>
         <td class="num">${fmtMoney(value)}</td>
       </tr>`;
     }).join('');
@@ -5282,8 +5294,10 @@ async function loadDetailInstitutional(ticker) {
   const fhKey = getFinnhubKey();
   if (fhKey) {
     try {
-      const foR = await fetch(`https://finnhub.io/api/v1/stock/fund-ownership?symbol=${TK}&limit=10&token=${encodeURIComponent(fhKey)}`,
-        { signal: AbortSignal.timeout(8000) });
+      const foR = await fetch(
+        `https://finnhub.io/api/v1/stock/fund-ownership?symbol=${TK}&limit=10&token=${encodeURIComponent(fhKey)}`,
+        { signal: AbortSignal.timeout(8000) }
+      );
       if (foR.ok) {
         const foJ = await foR.json();
         const holders = (foJ.ownership || []).filter(h => h.share > 0);
@@ -5295,7 +5309,46 @@ async function loadDetailInstitutional(ticker) {
     } catch {}
   }
 
-  // ── Layer 5: Still nothing — show SEC direct query option ─────────────────
+  // ── Layer 5: Try stockanalysis.com via proxy ──────────────────────────────
+  try {
+    const saUrl = `https://stockanalysis.com/stocks/${TK.toLowerCase()}/institutional/`;
+    const proxies2 = [
+      u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+      u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    ];
+    for (const proxy of proxies2) {
+      try {
+        const r = await fetch(proxy(saUrl), { signal: AbortSignal.timeout(10000) });
+        if (!r.ok) continue;
+        const html = await r.text();
+        // Parse the ownership percentage from the page
+        const pctMatch = html.match(/(\d+\.?\d*)\s*%\s*of\s*shares\s*outstanding/i)
+                      || html.match(/Institutional Ownership.*?(\d+\.?\d*)\s*%/i);
+        const countMatch = html.match(/(\d[\d,]*)\s*institutional\s*holders?/i);
+        if (pctMatch || countMatch) {
+          const pct   = pctMatch   ? parseFloat(pctMatch[1])   : null;
+          const count = countMatch ? parseInt(countMatch[1].replace(/,/g,'')) : null;
+          if (tilesEl) tilesEl.innerHTML = `
+            <div class="detail-tile">
+              <div class="detail-tile-lbl">Institutional %</div>
+              <div class="detail-tile-val ${pct>=50?'green':pct>=20?'':'red'}">${pct!=null ? pct.toFixed(1)+'%' : '—'}</div>
+              <div class="detail-tile-sub">of shares outstanding</div>
+            </div>
+            <div class="detail-tile">
+              <div class="detail-tile-lbl"># Institutions</div>
+              <div class="detail-tile-val">${count != null ? fmtNum(count) : '—'}</div>
+            </div>`;
+          el.innerHTML = `<tr><td colspan="4" style="padding:12px;font-size:10px;color:var(--muted)">
+            Detailed holder breakdown unavailable — live data extracted from Stock Analysis
+            <br><a href="${saUrl}" target="_blank" style="color:var(--cyan)">View full institutional data ↗</a>
+          </td></tr>`;
+          return;
+        }
+      } catch {}
+    }
+  } catch {}
+
+  // ── Layer 6: Full fallback ────────────────────────────────────────────────
   el.innerHTML = `
     <tr><td colspan="4" style="padding:16px">
       <div style="font-size:10px;color:var(--muted);line-height:1.8">
@@ -5968,166 +6021,145 @@ async function loadDetailAnalyst(ticker) {
 }
 
 function buildAnalystChart(histBars, curPrice, targetMean, targetLow, targetHigh, ticker) {
-  const W = 640, H = 200, PL = 48, PR = 16, PT = 18, PB = 28;
+  const W = 640, H = 220, PL = 52, PR = 90, PT = 22, PB = 28;
   const CW = W - PL - PR, CH = H - PT - PB;
 
-  const now   = Date.now();
-  const start = now - 365 * 864e5;     // 1 year ago
-  const end1y = now + 365 * 864e5;     // 1 year ahead
-  const end2y = now + 730 * 864e5;     // 2 years ahead
+  const now        = Date.now();
+  const start      = now - 365 * 864e5;   // 1 year ago
+  const end        = now + 365 * 864e5;   // 1 year forward (for target zone)
+  const timeRange  = end - start;
 
-  // 2-year extrapolation: apply same % growth rate as 1-year target implies
-  const growthRate  = curPrice ? (targetMean - curPrice) / curPrice : 0;
-  const target2yMean= curPrice * (1 + growthRate * 2);
-  const target2yLow = targetLow  > 0 ? targetLow  * (1 + growthRate) : target2yMean * 0.85;
-  const target2yHigh= targetHigh > 0 ? targetHigh * (1 + growthRate) : target2yMean * 1.15;
+  const hasTargets = targetMean > 0;
+  const hasHistory = histBars.length >= 2;
 
-  // Price range across entire chart
-  const allPrices = [
-    ...histBars.map(b=>b.c),
-    curPrice, targetMean, targetLow, targetHigh, target2yMean, target2yLow, target2yHigh,
-  ].filter(v=>v>0);
-  const minP = Math.min(...allPrices) * 0.93;
-  const maxP = Math.max(...allPrices) * 1.05;
+  // ── Price range ────────────────────────────────────────────────────────────
+  const histPrices = hasHistory ? histBars.map(b => b.c) : [curPrice];
+  const allPrices  = [
+    ...histPrices,
+    curPrice,
+    ...(hasTargets ? [targetMean, targetLow, targetHigh] : []),
+  ].filter(v => v > 0);
+
+  const padding = 0.12;
+  const minP = Math.min(...allPrices) * (1 - padding);
+  const maxP = Math.max(...allPrices) * (1 + padding);
   const priceRange = maxP - minP || 1;
-  const timeRange  = end2y - start;
 
-  // Coordinate helpers
-  const px = t  => PL + ((t - start) / timeRange) * CW;
-  const py = p  => PT + CH - ((p - minP) / priceRange) * CH;
-  const nowX    = px(now);
-  const end1yX  = px(end1y);
-  const end2yX  = px(end2y);
+  const px = t => PL + ((t - start) / timeRange) * CW;
+  const py = p => PT + CH - ((p - minP) / priceRange) * CH;
+  const nowX = px(now);
+  const endX = px(end);
 
-  // Historical price polyline
-  let histLine = '';
-  if (histBars.length >= 2) {
-    const pts = histBars.map(b => `${px(b.t).toFixed(1)},${py(b.c).toFixed(1)}`).join(' ');
-    // Area fill under hist line
-    const areaPath = `${px(histBars[0].t).toFixed(1)},${(PT+CH).toFixed(1)} ${pts} ${px(histBars[histBars.length-1].t).toFixed(1)},${(PT+CH).toFixed(1)}`;
-    histLine = `
-      <defs>
-        <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#e8ff47" stop-opacity="0.18"/>
-          <stop offset="100%" stop-color="#e8ff47" stop-opacity="0.01"/>
-        </linearGradient>
-        <linearGradient id="projGrad1" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3dffa0" stop-opacity="0.12"/>
-          <stop offset="100%" stop-color="#3dffa0" stop-opacity="0.02"/>
-        </linearGradient>
-        <linearGradient id="projGrad2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#4ee8ff" stop-opacity="0.08"/>
-          <stop offset="100%" stop-color="#4ee8ff" stop-opacity="0.01"/>
-        </linearGradient>
-      </defs>
-      <polygon points="${areaPath}" fill="url(#histGrad)"/>
-      <polyline points="${pts}" fill="none" stroke="#e8ff47" stroke-width="1.5"/>`;
-  } else {
-    histLine = `<defs>
-      <linearGradient id="projGrad1" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#3dffa0" stop-opacity="0.12"/><stop offset="100%" stop-color="#3dffa0" stop-opacity="0.02"/>
-      </linearGradient>
-      <linearGradient id="projGrad2" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#4ee8ff" stop-opacity="0.08"/><stop offset="100%" stop-color="#4ee8ff" stop-opacity="0.01"/>
-      </linearGradient>
-    </defs>`;
-  }
-
-  // Y-axis price labels (5 ticks)
-  const yLabels = Array.from({length:5}, (_,i) => {
+  // ── Y-axis labels (5 ticks) ────────────────────────────────────────────────
+  const yLabels = [0,1,2,3,4].map(i => {
     const p = minP + (priceRange * i / 4);
-    return `<text x="${PL-5}" y="${py(p)+4}" fill="rgba(255,255,255,.35)" font-size="9" font-family="Fira Code,monospace" text-anchor="end">$${p.toFixed(0)}</text>
-      <line x1="${PL}" y1="${py(p)}" x2="${W-PR}" y2="${py(p)}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+    const y = py(p);
+    return `<text x="${PL-6}" y="${y+4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code,monospace" text-anchor="end">$${p<10?p.toFixed(1):p.toFixed(0)}</text>
+      <line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="rgba(255,255,255,.04)" stroke-width="1"/>`;
   }).join('');
 
-  // X-axis time labels
+  // ── X-axis labels ──────────────────────────────────────────────────────────
   const xLabels = [
-    {t: start,  label: '1Y ago'},
-    {t: now,    label: 'Today'},
-    {t: end1y,  label: '+1Y'},
-    {t: end2y,  label: '+2Y'},
+    {t: start, label:'1Y ago'},
+    {t: now,   label:'Today'},
+    {t: end,   label:'+1Y'},
   ].map(({t,label}) =>
-    `<text x="${px(t)}" y="${H-4}" fill="rgba(255,255,255,.35)" font-size="9" font-family="Fira Code,monospace" text-anchor="middle">${label}</text>`
+    `<text x="${px(t).toFixed(1)}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code,monospace" text-anchor="middle">${label}</text>`
   ).join('');
 
-  // 1-year projection band (today → +1Y)
-  const proj1Area = `${nowX.toFixed(1)},${py(targetLow||curPrice*0.85).toFixed(1)} ${end1yX.toFixed(1)},${py(targetLow).toFixed(1)} ${end1yX.toFixed(1)},${py(targetHigh).toFixed(1)} ${nowX.toFixed(1)},${py(targetHigh||curPrice*1.15).toFixed(1)}`;
+  // ── Historical price line + area fill ─────────────────────────────────────
+  let histSVG = '';
+  if (hasHistory) {
+    const pts   = histBars.map(b => `${px(b.t).toFixed(1)},${py(b.c).toFixed(1)}`).join(' ');
+    const areaP = `${px(histBars[0].t).toFixed(1)},${(PT+CH).toFixed(1)} ${pts} ${px(histBars[histBars.length-1].t).toFixed(1)},${(PT+CH).toFixed(1)}`;
+    histSVG = `
+      <defs>
+        <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#e8ff47" stop-opacity="0.20"/>
+          <stop offset="100%" stop-color="#e8ff47" stop-opacity="0.01"/>
+        </linearGradient>
+      </defs>
+      <polygon points="${areaP}" fill="url(#hg)"/>
+      <polyline points="${pts}" fill="none" stroke="#e8ff47" stroke-width="1.5"/>`;
+  }
 
-  // 2-year projection band (+1Y → +2Y)
-  const proj2Area = `${end1yX.toFixed(1)},${py(targetLow).toFixed(1)} ${end2yX.toFixed(1)},${py(target2yLow).toFixed(1)} ${end2yX.toFixed(1)},${py(target2yHigh).toFixed(1)} ${end1yX.toFixed(1)},${py(targetHigh).toFixed(1)}`;
+  // ── Analyst target lines — HORIZONTAL from TODAY to +1Y ───────────────────
+  // This is the correct way to show targets: they are PRICE LEVELS, not trajectories
+  let targetSVG = '';
+  if (hasTargets) {
+    const meanY = py(targetMean);
+    const lowY  = py(targetLow  || targetMean * 0.85);
+    const highY = py(targetHigh || targetMean * 1.15);
 
-  // Mean target lines
-  const mean1Line = `M${nowX.toFixed(1)},${py(curPrice).toFixed(1)} L${end1yX.toFixed(1)},${py(targetMean).toFixed(1)}`;
-  const mean2Line = `M${end1yX.toFixed(1)},${py(targetMean).toFixed(1)} L${end2yX.toFixed(1)},${py(target2yMean).toFixed(1)}`;
-  const high1Line = `M${nowX.toFixed(1)},${py(curPrice).toFixed(1)} L${end1yX.toFixed(1)},${py(targetHigh).toFixed(1)}`;
-  const low1Line  = `M${nowX.toFixed(1)},${py(curPrice).toFixed(1)} L${end1yX.toFixed(1)},${py(targetLow).toFixed(1)}`;
+    // Shaded target range band (horizontal)
+    targetSVG = `
+      <!-- Target range band -->
+      <rect x="${nowX.toFixed(1)}" y="${highY.toFixed(1)}" width="${(endX-nowX).toFixed(1)}" height="${(lowY-highY).toFixed(1)}"
+        fill="rgba(61,255,160,0.08)" stroke="none"/>
+      <!-- High target line -->
+      <line x1="${nowX.toFixed(1)}" y1="${highY.toFixed(1)}" x2="${endX.toFixed(1)}" y2="${highY.toFixed(1)}"
+        stroke="rgba(61,255,160,.35)" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- Low target line -->
+      <line x1="${nowX.toFixed(1)}" y1="${lowY.toFixed(1)}" x2="${endX.toFixed(1)}" y2="${lowY.toFixed(1)}"
+        stroke="rgba(255,82,119,.35)" stroke-width="1" stroke-dasharray="4,3"/>
+      <!-- Mean target line — solid, prominent -->
+      <line x1="${nowX.toFixed(1)}" y1="${meanY.toFixed(1)}" x2="${endX.toFixed(1)}" y2="${meanY.toFixed(1)}"
+        stroke="#3dffa0" stroke-width="2"/>
+      <!-- Mean target dot at TODAY -->
+      <circle cx="${nowX.toFixed(1)}" cy="${meanY.toFixed(1)}" r="3" fill="#3dffa0" opacity="0.5"/>
+      <!-- Mean target dot at +1Y end -->
+      <circle cx="${endX.toFixed(1)}" cy="${meanY.toFixed(1)}" r="4" fill="#3dffa0"/>
+      <!-- Labels on right side -->
+      <text x="${(endX+6).toFixed(1)}" y="${(highY+4).toFixed(1)}" fill="rgba(61,255,160,.6)" font-size="9" font-family="Fira Code,monospace">$${(targetHigh||0).toFixed(2)}</text>
+      <text x="${(endX+6).toFixed(1)}" y="${(meanY+4).toFixed(1)}" fill="#3dffa0" font-size="10" font-family="Fira Code,monospace" font-weight="700">$${targetMean.toFixed(2)}</text>
+      <text x="${(endX+6).toFixed(1)}" y="${(lowY+4).toFixed(1)}" fill="rgba(255,82,119,.6)" font-size="9" font-family="Fira Code,monospace">$${(targetLow||0).toFixed(2)}</text>`;
 
-  return `<div style="background:var(--bg);border:1px solid var(--border2);padding:8px 0 0;margin-bottom:12px;overflow:hidden">
-    <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0 14px 6px;display:flex;justify-content:space-between">
-      <span>Price History + Analyst Target Projection — ${ticker}</span>
-      <span style="color:var(--accent)">━ actual &nbsp; <span style="color:#3dffa0">━</span> mean target &nbsp; <span style="opacity:.5">▓</span> target range</span>
+    // Upside/downside arrow at TODAY vertical
+    const upside = curPrice ? ((targetMean - curPrice) / curPrice * 100) : 0;
+    const arrowCol = upside >= 0 ? '#3dffa0' : '#ff5277';
+    const curY  = py(curPrice);
+    const midY  = (curY + meanY) / 2;
+    targetSVG += `
+      <!-- Upside arrow from current price to mean target -->
+      <line x1="${(nowX+10).toFixed(1)}" y1="${curY.toFixed(1)}" x2="${(nowX+10).toFixed(1)}" y2="${meanY.toFixed(1)}"
+        stroke="${arrowCol}" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.7"/>
+      <text x="${(nowX+14).toFixed(1)}" y="${(midY+4).toFixed(1)}" fill="${arrowCol}" font-size="10" font-family="Fira Code,monospace" font-weight="700">${upside>=0?'+':''}${upside.toFixed(1)}%</text>`;
+  }
+
+  // ── Current price dot ─────────────────────────────────────────────────────
+  const curDot = curPrice ? `
+    <circle cx="${nowX.toFixed(1)}" cy="${py(curPrice).toFixed(1)}" r="4" fill="#e8ff47"/>
+    <text x="${(nowX-6).toFixed(1)}" y="${(py(curPrice)-7).toFixed(1)}" fill="#e8ff47" font-size="10" font-family="Fira Code,monospace" font-weight="700" text-anchor="end">$${curPrice.toFixed(2)}</text>` : '';
+
+  // ── Legend ─────────────────────────────────────────────────────────────────
+  const legendY = PT - 6;
+
+  return `<div style="background:var(--bg);border:1px solid var(--border2);overflow:hidden;margin-bottom:12px">
+    <div style="font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;padding:8px 14px 4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+      <span>Price History + Analyst Targets — ${ticker}</span>
+      <span style="margin-left:auto;display:flex;gap:12px">
+        <span style="color:#e8ff47">━ Actual</span>
+        <span style="color:#3dffa0">━ Mean Target</span>
+        ${hasTargets?`<span style="color:rgba(61,255,160,.5)">▓ Target Range</span>`:''}
+      </span>
     </div>
     <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-      ${histLine}
-
-      <!-- Chart border box -->
-      <rect x="${PL}" y="${PT}" width="${CW}" height="${CH}" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
-
-      <!-- Y grid + labels -->
+      <!-- Chart box -->
+      <rect x="${PL}" y="${PT}" width="${CW}" height="${CH}" fill="none" stroke="rgba(255,255,255,.05)"/>
       ${yLabels}
-      <!-- X labels -->
       ${xLabels}
-
-      <!-- TODAY vertical divider -->
-      <line x1="${nowX.toFixed(1)}" y1="${PT}" x2="${nowX.toFixed(1)}" y2="${PT+CH}" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="3,3"/>
-      <!-- +1Y vertical divider -->
-      <line x1="${end1yX.toFixed(1)}" y1="${PT}" x2="${end1yX.toFixed(1)}" y2="${PT+CH}" stroke="rgba(61,255,160,.15)" stroke-width="1" stroke-dasharray="3,3"/>
-
-      <!-- 1Y projection band -->
-      <polygon points="${proj1Area}" fill="url(#projGrad1)" opacity="0.9"/>
-      <!-- 2Y projection band -->
-      <polygon points="${proj2Area}" fill="url(#projGrad2)" opacity="0.9"/>
-
-      <!-- Target range lines (1Y) -->
-      <path d="${high1Line}" fill="none" stroke="rgba(61,255,160,.3)" stroke-width="1" stroke-dasharray="4,3"/>
-      <path d="${low1Line}"  fill="none" stroke="rgba(255,82,119,.3)"  stroke-width="1" stroke-dasharray="4,3"/>
-
-      <!-- Mean target lines -->
-      <path d="${mean1Line}" fill="none" stroke="#3dffa0" stroke-width="2"/>
-      <path d="${mean2Line}" fill="none" stroke="rgba(78,232,255,.6)" stroke-width="1.5" stroke-dasharray="5,3"/>
-
-      <!-- 2Y mean/high/low endpoint lines -->
-      <path d="M${end1yX.toFixed(1)},${py(targetMean).toFixed(1)} L${end2yX.toFixed(1)},${py(target2yHigh).toFixed(1)}" fill="none" stroke="rgba(61,255,160,.2)" stroke-width="1" stroke-dasharray="3,4"/>
-      <path d="M${end1yX.toFixed(1)},${py(targetMean).toFixed(1)} L${end2yX.toFixed(1)},${py(target2yLow).toFixed(1)}" fill="none" stroke="rgba(255,82,119,.2)" stroke-width="1" stroke-dasharray="3,4"/>
-
-      <!-- Current price dot -->
-      <circle cx="${nowX.toFixed(1)}" cy="${py(curPrice).toFixed(1)}" r="4" fill="#e8ff47"/>
-      <text x="${(nowX+6).toFixed(1)}" y="${(py(curPrice)-4).toFixed(1)}" fill="#e8ff47" font-size="9" font-family="Fira Code,monospace">$${curPrice.toFixed(2)}</text>
-
-      <!-- 1Y mean target dot + label -->
-      <circle cx="${end1yX.toFixed(1)}" cy="${py(targetMean).toFixed(1)}" r="4" fill="#3dffa0"/>
-      <text x="${(end1yX+6).toFixed(1)}" y="${(py(targetMean)-4).toFixed(1)}" fill="#3dffa0" font-size="9" font-family="Fira Code,monospace">$${targetMean.toFixed(2)}</text>
-
-      <!-- 2Y mean target dot + label -->
-      <circle cx="${end2yX.toFixed(1)}" cy="${py(target2yMean).toFixed(1)}" r="3" fill="rgba(78,232,255,.8)"/>
-      <text x="${(end2yX-4).toFixed(1)}" y="${(py(target2yMean)-5).toFixed(1)}" fill="rgba(78,232,255,.8)" font-size="9" font-family="Fira Code,monospace" text-anchor="end">$${target2yMean.toFixed(2)}</text>
-
-      <!-- TODAY label -->
-      <text x="${nowX.toFixed(1)}" y="${PT-3}" fill="rgba(255,255,255,.4)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">TODAY</text>
-
-      <!-- 1Y target label top -->
-      <text x="${end1yX.toFixed(1)}" y="${PT-3}" fill="rgba(61,255,160,.6)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">ANALYST 1Y</text>
-
-      <!-- 2Y label top -->
-      <text x="${end2yX.toFixed(1)}" y="${PT-3}" fill="rgba(78,232,255,.5)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">EXTRAP 2Y</text>
-
-      <!-- Shaded region labels -->
-      <text x="${((nowX+end1yX)/2).toFixed(1)}" y="${(PT+CH-6).toFixed(1)}" fill="rgba(61,255,160,.35)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">1Y PROJECTION</text>
-      <text x="${((end1yX+end2yX)/2).toFixed(1)}" y="${(PT+CH-6).toFixed(1)}" fill="rgba(78,232,255,.25)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">2Y EXTRAPOLATION</text>
+      ${histSVG}
+      <!-- TODAY divider -->
+      <line x1="${nowX.toFixed(1)}" y1="${PT}" x2="${nowX.toFixed(1)}" y2="${PT+CH}"
+        stroke="rgba(255,255,255,.3)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="${nowX.toFixed(1)}" y="${PT-5}" fill="rgba(255,255,255,.4)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">TODAY</text>
+      <!-- ANALYST TARGETS label -->
+      ${hasTargets ? `<text x="${((nowX+endX)/2).toFixed(1)}" y="${PT-5}" fill="rgba(61,255,160,.5)" font-size="8" font-family="Fira Code,monospace" text-anchor="middle">ANALYST 1Y TARGETS</text>` : ''}
+      ${targetSVG}
+      ${curDot}
     </svg>
   </div>`;
 }
-
 function buildRecTrend(periods) {
   if (!periods.length) return '';
   // Recent 4 periods = bar chart showing buy/hold/sell splits over time
