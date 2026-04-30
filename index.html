@@ -7836,6 +7836,29 @@ renderInsider = function(data) {
 // ── New strategy detectors ────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
+// QULLAMAGGIE HELPERS (ema/emaArr not defined globally in this file)
+// ─────────────────────────────────────────────────────────────────────────────
+function ema(closes, period) {
+  if (!closes || closes.length < period) return null;
+  const k = 2 / (period + 1);
+  let e = closes[0];
+  for (let i = 1; i < closes.length; i++) e = closes[i] * k + e * (1 - k);
+  return e;
+}
+
+function emaArr(closes, period) {
+  if (!closes || closes.length < 1) return [];
+  const k = 2 / (period + 1);
+  let e = closes[0];
+  const out = [e];
+  for (let i = 1; i < closes.length; i++) {
+    e = closes[i] * k + e * (1 - k);
+    out.push(e);
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // QULLAMAGGIE 5-STAR: Momentum Breakout from Tight Base
 // RS leader + above all MAs + tight base + vol dryup + breakout on volume
 // ─────────────────────────────────────────────────────────────────────────────
