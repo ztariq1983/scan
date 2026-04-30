@@ -677,6 +677,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .stag.cons_bo{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.35)}
 .stag.gap_hold{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.4);font-weight:600}
 .stag.mean_rev{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.35)}
+.stag.qm5{background:rgba(255,215,0,.12);color:gold;border:1px solid rgba(255,215,0,.4);font-weight:700}
+.stag.qm7{background:rgba(255,215,0,.22);color:gold;border:2px solid rgba(255,215,0,.7);font-weight:800;letter-spacing:.5px}
 
 /* ─── Sector Heatmap ──────────────────────────────────────────────── */
 .heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:3px;margin-top:14px}
@@ -949,6 +951,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="strat-btn active" data-strat="cons_bo"  data-color="purple">Consol. Breakout</button>
     <button class="strat-btn active" data-strat="gap_hold" data-color="orange">Earnings Gap Hold</button>
     <button class="strat-btn active" data-strat="mean_rev" data-color="red">Mean Reversion</button>
+    <button class="strat-btn active" data-strat="qm5" data-color="gold">⭐ QM 5-Star</button>
+    <button class="strat-btn active" data-strat="qm7" data-color="gold">🌟 QM 7-Star EP</button>
   </div>
 
   <!-- Action bar -->
@@ -974,6 +978,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <div class="stat-box cp"><div class="stat-n cp" id="st-cons_bo">0</div><div class="stat-lbl">Consol BO</div></div>
     <div class="stat-box co"><div class="stat-n co" id="st-gap_hold">0</div><div class="stat-lbl">Gap Hold</div></div>
     <div class="stat-box cm"><div class="stat-n" id="st-mean_rev">0</div><div class="stat-lbl">Mean Rev</div></div>
+    <div class="stat-box" style="border-color:rgba(255,215,0,.3)"><div class="stat-n" id="st-qm5" style="color:gold">0</div><div class="stat-lbl">QM 5★</div></div>
+    <div class="stat-box" style="border-color:rgba(255,215,0,.5)"><div class="stat-n" id="st-qm7" style="color:gold">0</div><div class="stat-lbl">QM 7★ EP</div></div>
   </div>
 
   <!-- Results -->
@@ -1626,6 +1632,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <option value="cons_bo">Consolidation BO</option>
           <option value="gap_hold">Earnings Gap Hold</option>
           <option value="mean_rev">Mean Reversion</option>
+          <option value="qm5">QM 5-Star</option>
+          <option value="qm7">QM 7-Star EP</option>
           <option value="other">Other</option>
         </select>
         <select id="trade-sort">
@@ -1756,6 +1764,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
       <button class="learn-nav-btn" data-learn="cons_bo" style="border-color:var(--purple);color:var(--muted)">Consol. Breakout</button>
       <button class="learn-nav-btn" data-learn="gap_hold" style="border-color:var(--orange);color:var(--muted)">Earnings Gap Hold</button>
       <button class="learn-nav-btn" data-learn="mean_rev" style="border-color:var(--red);color:var(--muted)">Mean Reversion</button>
+      <button class="learn-nav-btn" data-learn="qm5" style="border-color:gold;color:var(--muted)">⭐ QM 5-Star</button>
+      <button class="learn-nav-btn" data-learn="qm7" style="border-color:gold;color:var(--muted)">🌟 QM 7-Star EP</button>
       <button class="learn-nav-btn" data-learn="exits" style="border-color:var(--green);color:var(--muted)">Exit Strategies</button>
     </div>
 
@@ -2577,7 +2587,7 @@ function renderTable() {
     return;
   }
 
-  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev'};
+  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev',qm5:'⭐ QM 5-Star',qm7:'🌟 QM 7-Star EP'};
 
   tbody.innerHTML=rows.map((r,i)=>{
     if (r.error) return `
@@ -6863,6 +6873,56 @@ const LEARN_DATA = {
       {h:`Connecting to this scanner's tools`, b:`Use the <b>Position Sizer</b> (top of Scanner tab) to define your stop and size simultaneously — it calculates shares so that hitting your stop equals exactly 2% of account. Use the <b>Journal</b> to track your exit reasons over time. The Mistake Tracker will show you whether "Held Too Long" or "Sold Too Early" costs you more. Over 20+ trades, patterns emerge that are unique to your psychology. That data is more valuable than any strategy guide.`},
     ],
   },
+
+  qm5: {
+    title:`Qullamaggie 5-Star Momentum Setup`, subtitle:`Buy the strongest stock in the world at the tightest point before the next leg`, color:`gold`,
+    rules:[
+      {t:`<b>RS Leader:</b> Stock must be outperforming SPY by 20%+ over the last 3 months. This is non-negotiable — you only buy the strongest stocks in existence.`,cls:`green-rule`},
+      {t:`<b>MA Stack above:</b> Price above 10 EMA, 21 EMA, and 50 SMA. All three must be rising. This confirms the uptrend is intact at all timeframes.`,cls:`green-rule`},
+      {t:`<b>Tight base:</b> 3–6 week consolidation with a range of less than 15%. The tighter the better — Kristjan's best setups are often under 8%.`,cls:`green-rule`},
+      {t:`<b>Volume dryup:</b> Volume during the base contracts to well below average — ideally 50–70% of normal. Sellers exhausted, institutions quietly holding.`,cls:`green-rule`},
+      {t:`<b>Breakout on surge:</b> Price closes above the base high on 2×+ average volume. This is the entry trigger — buy on the breakout day.`,cls:`green-rule`},
+      {t:`<b>Do not buy extended stocks.</b> If the stock has already moved 20%+ from its last base, wait for the next consolidation. Extended = high risk.`,cls:`red-rule`},
+      {t:`<b>Market must not be in a confirmed downtrend.</b> In a bear market, even the best 5-star setups fail. Check the regime bar before scanning.`,cls:`red-rule`},
+    ],
+    entry:`Break above the base high on 2×+ average volume. Enter the same day — do not wait for a pullback.`,
+    stop:`Below the midpoint of the base. A close back inside the base = the setup failed, no ego, exit.`,
+    target:`Trail with the 10 EMA daily close. Hold as long as price stays above the 10 EMA. First close below = exit or reduce.`,
+    stats:[{n:`RS minimum`,v:`+20% vs SPY over 63d`},{n:`Base range`,v:`< 15% (8% ideal)`},{n:`Volume on break`,v:`≥ 2× average`},{n:`MA requirement`,v:`10 EMA > 21 EMA > 50 SMA`}],
+    walkthrough:[
+      {h:`Who is Qullamaggie and why does this matter?`, b:`Kristjan Qullamaggie (Kristjan Kullamägi) is a Swedish trader who turned a small account into tens of millions trading US momentum stocks. His edge isn't a secret indicator — it's <code>focus</code>. He only trades the absolute strongest stocks, only at the best setups, and sizes aggressively into those setups. His public posts and interviews have documented his methodology in detail. The 5-star setup is his bread-and-butter: a proven RS leader, tight consolidation, clean breakout.`},
+      {h:`Why relative strength is the foundation`, b:`Before looking at any chart pattern, Qullamaggie asks: is this stock a leader? Not a decent stock — a <code>leader</code>. In any market environment, a small number of stocks dramatically outperform everything else. These are the only stocks worth trading long. If a stock isn't outperforming SPY by a significant margin over 3 months, it's not worth your attention regardless of how pretty the chart looks. The RS filter alone eliminates 85% of candidates.`},
+      {h:`What the 5-star base looks like`, b:`After a strong initial move, the stock enters a tight consolidation. Volume dries up — this is critical. The daily price ranges shrink. Closes cluster within a small zone. This is not a base forming at the bottom of a downtrend — it's a <code>pause within an uptrend</code>. The MAs (10/21/50) are all rising beneath the price. Sometimes you see NR4 or NR7 candles forming near the top of the base. The tighter and quieter the base, the more powerful the eventual breakout.`},
+      {h:`The breakout — what a real one looks like`, b:`On the breakout day, price closes above the base high — not just touches it intraday, but <code>closes</code> above it — on volume that is clearly above average (2× or more). The bar itself should be strong: a wide range, close near the high, no large upper wick. This shows urgency. Buyers are not waiting. If the breakout bar is a doji or has a large upper wick, it's a warning sign. If volume is below average, it's not a real breakout — wait.`},
+      {h:`Adding to winners — Qullamaggie's pyramid approach`, b:`Once you're in a 5-star trade and it's working, the move is to add to the position on the first pullback to the 10 EMA. This is called pyramiding. Your initial position was your highest-risk entry (at the breakout). Adding at the 10 EMA pullback is lower risk because the stock has already proven itself. The result: your average cost goes up slightly but your total position in a winning trade grows. This is how 20% gains become 50% gains in your account.`},
+      {h:`The 10 EMA trailing exit`, b:`Unlike many systems with fixed targets, Qullamaggie trails his stop to the 10 EMA. Each day the stock stays above the 10 EMA, he holds. The day it closes below the 10 EMA, he exits or reduces significantly. This approach captures the full length of strong trends while getting you out quickly when momentum fades. For this strategy, do not set a fixed profit target — let the stock show you when the trend is over.`},
+    ],
+  },
+
+  qm7: {
+    title:`Qullamaggie 7-Star Episodic Pivot (EP)`, subtitle:`The highest-conviction trade: a fundamental catalyst changes the story, creating a new base overnight`, color:`gold`,
+    rules:[
+      {t:`<b>Catalyst event:</b> Earnings beat, FDA approval, major contract, M&A news, analyst upgrade. Something that <em>fundamentally changes</em> what the company is worth. Rumours don't count.`,cls:`green-rule`},
+      {t:`<b>Gap up 5%+ at open</b> on the catalyst day, with volume 3×+ the 20-day average. The market is violently repricing the stock. This is the Episodic Pivot.`,cls:`green-rule`},
+      {t:`<b>Tight flag/consolidation</b> for 2–8 days after the EP gap. The range must be less than 8%. Volume dries up to near nothing. This is the setup forming.`,cls:`green-rule`},
+      {t:`<b>Re-breakout above the flag high</b> on 2×+ volume. This is the actual entry trigger — not the EP day itself, but the re-break after the flag.`,cls:`green-rule`},
+      {t:`<b>Gap day must close in upper half of range.</b> If the EP day closes in the lower half, sellers won the battle — avoid or wait for more evidence.`,cls:`green-rule`},
+      {t:`<b>Do not chase the gap on day one.</b> Wait for the flag to form. The entry after the flag is significantly better risk/reward than buying the gap.`,cls:`red-rule`},
+      {t:`<b>Do not hold through the next earnings</b> if you're up significantly. The EP trade is days to weeks, not a position trade through another catalyst.`,cls:`red-rule`},
+    ],
+    entry:`Re-break above the flag high after the EP consolidation, on 2×+ volume. Enter same day — the re-break is the signal.`,
+    stop:`Below the flag low. If the stock falls back into the flag, the setup is invalidated. The flag IS the thesis.`,
+    target:`Trail with the 10 EMA. EP setups regularly make 50–200%+ in weeks. The trailing stop keeps you in for the full run.`,
+    stats:[{n:`EP gap minimum`,v:`5% on 3×+ volume`},{n:`Flag duration`,v:`2–8 days`},{n:`Flag range`,v:`< 8% high to low`},{n:`Re-break volume`,v:`≥ 2× average`}],
+    walkthrough:[
+      {h:`What makes an Episodic Pivot different from a regular gap`, b:`Most gap-ups are noise — a stock gaps 2% on mild earnings, fades back within days. An Episodic Pivot is structurally different. The catalyst is a <code>regime change</code>: the company's earnings power, competitive position, or growth trajectory has been fundamentally altered. A 20% EPS beat, an FDA approval unlocking a $5B market, a surprise buyout offer — these create a new reference price that investors must accept. The stock is not going back to where it was. That's the foundation of the trade.`},
+      {h:`Why you wait for the flag, not the gap`, b:`On the EP day itself, the price action is chaotic. Sellers who owned the stock pre-gap are taking profits. Short sellers are covering. Momentum buyers are chasing. Volume is extreme. This is not a good time to enter — your stop would need to be enormous. Instead, watch what happens next. If the stock is truly repriced, it will consolidate tightly over the next few days. Volume will dry up. The range will narrow. <code>This quiet period is where smart money is accumulating.</code> Entering after the flag means a tight stop, clear invalidation level, and the full move still ahead.`},
+      {h:`What the ideal EP flag looks like`, b:`The ideal flag after an EP: 3–5 bars (days), daily closes within a 5–7% range, volume declining each day, last bar has the lowest volume of all. Sometimes you see an NR4 or NR7 inside the flag. The flag should be positioned near the top of the EP candle's range — not filling back down to the bottom of the gap. If the stock retreats to fill most of the gap within the first week, the EP is weakening. The tighter and higher the flag, the more explosive the re-breakout.`},
+      {h:`Sizing an EP trade — Qullamaggie's approach`, b:`Qullamaggie's most famous EP trades are also his largest position sizes. Why? Because the EP setup is the <code>highest conviction, clearest thesis, most defined risk</code> combination available. Your stop is the flag low — a defined level. Your thesis is the catalyst — a fundamental event. Your confirmation is the re-breakout — a timing signal. When all three align, this is a 10–15% account position, not a 2% "let's see what happens" position. This is the trade you size up on.`},
+      {h:`Managing the EP trade after entry`, b:`Once you're in, the 10 EMA becomes your trailing stop guide. EP breakouts that work typically don't come back to the flag level. They move up, pull back briefly to the 10 EMA, and continue. The first test of the 10 EMA post-breakout is an add point if you want to pyramid. After that, trail the 10 EMA daily. Qullamaggie has documented cases where he held an EP trade for 2–4 weeks through multiple 10 EMA tests, capturing 100%+ moves. The key is patience once you're in a winner.`},
+      {h:`EP vs 5-Star: when to use which`, b:`Think of them as a spectrum. The 5-star is a stock that has already proven itself over months, building RS through consistent outperformance. The EP is a stock that may have been ordinary until the catalyst event created an instant RS leader. The 5-star is lower variance — you know the stock has been acting well. The EP is higher variance but higher upside — you're betting on a new story. In practice, the best 7-star setups are stocks that were already 5-star candidates (strong RS, above all MAs) AND then had an EP catalyst — two tectonic forces combining into one trade.`},
+    ],
+  },
 };
 function renderLearnPanel(stratKey) {
   const d = LEARN_DATA[stratKey];
@@ -7372,6 +7432,20 @@ const PLAYBOOK = {
     risk: 'med', riskLabel:'Medium',
     note: 'Counter-trend trade. Take profits at 20 SMA, do not overstay.'
   },
+  qm5: {
+    entry: 'Break above tight base high on 2×+ volume. Must be a clear RS leader above all MAs.',
+    stop: 'Below base midpoint — if it falls back into the base the setup failed.',
+    targets: ['T1: 2×R minimum (this setup runs)', 'T2: Trail with 10 EMA daily close'],
+    risk: 'low', riskLabel:'Low',
+    note: 'Only 5-stars if RS is top 10% vs SPY. Add to position if it holds 10 EMA on first pullback.'
+  },
+  qm7: {
+    entry: 'Re-break above EP flag high on 2×+ volume. Enter same day — do not wait.',
+    stop: 'Below flag low. Tight stop — the flag is the thesis.',
+    targets: ['T1: EP gap size projected from flag high', 'T2: Trail 10 EMA — this can run 50–200%'],
+    risk: 'high', riskLabel:'High (best R/R)',
+    note: 'Largest positions go here. The EP created a new fundamental reality. Size up, hold through noise.'
+  },
 };
 
 function getPlaybookHTML(r) {
@@ -7633,7 +7707,8 @@ function renderShortlistV2() {
 
   const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base',
     cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d', ema21:'21 EMA',
-    ema_rev:'EMA Rev', cons_bo:'Consol BO', gap_hold:'Gap Hold', mean_rev:'Mean Rev' };
+    ema_rev:'EMA Rev', cons_bo:'Consol BO', gap_hold:'Gap Hold', mean_rev:'Mean Rev',
+    qm5:'⭐ QM 5-Star', qm7:'🌟 QM 7-Star EP' };
 
   g('shortlist-tbody').innerHTML = shortlistResults.map((r, i) => {
     const tags = r.signals.map(s => {
@@ -7759,6 +7834,162 @@ renderInsider = function(data) {
 };
 
 // ── New strategy detectors ────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QULLAMAGGIE 5-STAR: Momentum Breakout from Tight Base
+// RS leader + above all MAs + tight base + vol dryup + breakout on volume
+// ─────────────────────────────────────────────────────────────────────────────
+function detectQM5(data, spyBars) {
+  if (data.length < 65) return { signal: false };
+
+  const closes  = data.map(d => d.c);
+  const n       = closes.length;
+  const today   = data[n - 1];
+  const avv     = avgVol(data, 20);
+
+  // ── 1. Price above 10 EMA, 21 EMA, 50 SMA (MA stack) ──────────────────────
+  const ema10val = ema(closes, 10);
+  const ema21val = ema(closes, 21);
+  const sma50val = sma(closes, 50);
+  if (!ema10val || !ema21val || !sma50val) return { signal: false };
+  if (today.c < ema10val || today.c < ema21val || today.c < sma50val) return { signal: false };
+
+  // All three MAs must be rising
+  const ema10arr_ = emaArr(closes, 10);
+  const ema21arr_ = emaArr(closes, 21);
+  if (ema10arr_[n-1] <= ema10arr_[n-6]) return { signal: false };
+  if (ema21arr_[n-1] <= ema21arr_[n-6]) return { signal: false };
+  if (sma50val <= sma(closes.slice(0,-5), 50)) return { signal: false };
+
+  // ── 2. RS Leader: outperforming SPY by 20%+ over 63 days ──────────────────
+  let rsScore = 0;
+  if (spyBars && n >= 64) {
+    const spyC    = spyBars.map(b => b.c);
+    const period  = Math.min(63, n - 1, spyC.length - 1);
+    const spyCur  = spyC[spyC.length - 1];
+    const spyPast = spyC[Math.max(0, spyC.length - 1 - period)];
+    const spyRet  = spyPast ? ((spyCur - spyPast) / spyPast) * 100 : 0;
+    const stPast  = closes[Math.max(0, n - 1 - period)];
+    const stRet   = stPast ? ((closes[n-1] - stPast) / stPast) * 100 : 0;
+    rsScore = stRet - spyRet;
+    if (rsScore < 15) return { signal: false }; // must outperform SPY by 15%+
+  }
+
+  // ── 3. Tight base: last 15–30 bars range < 15% ────────────────────────────
+  let baseHigh = 0, baseLow = 0, baseLen = 0;
+  let tightBase = false;
+  for (const bl of [15, 20, 25, 30]) {
+    if (n < bl + 2) continue;
+    const base = data.slice(-bl - 1, -1);
+    const bhi  = Math.max(...base.map(b => b.h));
+    const blo  = Math.min(...base.map(b => b.l));
+    const rng  = (bhi - blo) / bhi;
+    if (rng < 0.15) {
+      tightBase = true; baseHigh = bhi; baseLow = blo; baseLen = bl;
+      break;
+    }
+  }
+  if (!tightBase) return { signal: false };
+
+  // ── 4. Volume dryup during base (last 5 bars avg < 70% of 20d avg) ─────────
+  const baseVols  = data.slice(-Math.min(baseLen, 10), -1).map(d => d.v);
+  const baseAvgV  = baseVols.reduce((a, b) => a + b, 0) / (baseVols.length || 1);
+  const volDryup  = baseAvgV < avv * 0.75;
+
+  // ── 5. Breakout above base high on surge volume ────────────────────────────
+  const breakout  = today.c > baseHigh * 1.001 && today.v >= avv * 1.8;
+  if (!breakout) return { signal: false };
+
+  const baseRangePct = ((baseHigh - baseLow) / baseHigh * 100).toFixed(1);
+  return {
+    signal: true,
+    rsScore: rsScore.toFixed(1),
+    baseHigh: baseHigh.toFixed(2),
+    baseLen, baseRangePct,
+    volDryup,
+    volRatio: (today.v / avv).toFixed(1),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QULLAMAGGIE 7-STAR: Episodic Pivot (EP) + Tight Flag Re-Breakout
+// Gap 5%+ on catalyst → tight flag 2–8 days → re-break above flag on volume
+// ─────────────────────────────────────────────────────────────────────────────
+function detectQM7(data, spyBars) {
+  if (data.length < 30) return { signal: false };
+
+  const closes = data.map(d => d.c);
+  const n      = closes.length;
+  const today  = data[n - 1];
+  const avv    = avgVol(data, 20);
+
+  // ── 1. Find an Episodic Pivot: gap up 5%+ within the last 4–15 bars ────────
+  let epIdx = -1, epGapPct = 0, epHigh = 0, epLow = 0, epVol = 0;
+  for (let i = 5; i <= 18; i++) {
+    if (n - i - 1 < 0) continue;
+    const gapBar  = data[n - i];
+    const prevBar = data[n - i - 1];
+    const gapPct  = (gapBar.o - prevBar.c) / prevBar.c * 100;
+    if (gapPct >= 5 && gapBar.v >= avv * 2.5) {
+      epIdx    = n - i;
+      epGapPct = gapPct;
+      epHigh   = gapBar.h;
+      epLow    = gapBar.l;
+      epVol    = gapBar.v;
+      break;
+    }
+  }
+  if (epIdx < 0) return { signal: false };
+
+  // ── 2. Tight flag after the EP: bars between EP and today ─────────────────
+  const flagBars = data.slice(epIdx + 1, n - 1); // bars after EP, before today
+  if (flagBars.length < 2 || flagBars.length > 12) return { signal: false };
+
+  const flagHigh  = Math.max(...flagBars.map(b => b.h));
+  const flagLow   = Math.min(...flagBars.map(b => b.l));
+  const flagRange = (flagHigh - flagLow) / flagHigh;
+
+  // Flag must be tight: < 8% range
+  if (flagRange > 0.08) return { signal: false };
+
+  // Flag must sit above EP low (not filling the gap)
+  if (flagLow < epLow * 0.98) return { signal: false };
+
+  // ── 3. Volume dryup during flag ────────────────────────────────────────────
+  const flagAvgVol  = flagBars.reduce((a, b) => a + b.v, 0) / flagBars.length;
+  const flagVolDry  = flagAvgVol < avv * 0.8;
+
+  // ── 4. Today breaks above flag high on volume ─────────────────────────────
+  const reBreakout = today.c > flagHigh * 1.001 && today.v >= avv * 2.0;
+  if (!reBreakout) return { signal: false };
+
+  // ── 5. RS: must be exceptional — outperforming SPY by 25%+ ────────────────
+  let rsScore = 0;
+  if (spyBars && n >= 30) {
+    const spyC   = spyBars.map(b => b.c);
+    const period = Math.min(63, n - 1, spyC.length - 1);
+    const spyCur = spyC[spyC.length - 1];
+    const spyPst = spyC[Math.max(0, spyC.length - 1 - period)];
+    const spyRet = spyPst ? ((spyCur - spyPst) / spyPst) * 100 : 0;
+    const stPst  = closes[Math.max(0, n - 1 - period)];
+    const stRet  = stPst ? ((closes[n-1] - stPst) / stPst) * 100 : 0;
+    rsScore      = stRet - spyRet;
+    // EP setups can fire even if RS is new (the gap created the RS), so lower threshold
+    if (rsScore < -5) return { signal: false }; // only exclude genuine laggards
+  }
+
+  return {
+    signal: true,
+    epGapPct: epGapPct.toFixed(1),
+    epVolRatio: (epVol / avv).toFixed(1),
+    flagDays: flagBars.length,
+    flagRange: (flagRange * 100).toFixed(1),
+    flagHigh: flagHigh.toFixed(2),
+    flagVolDry,
+    breakoutVol: (today.v / avv).toFixed(1),
+    rsScore: rsScore.toFixed(1),
+  };
+}
 
 // EMA Reversion: price > 200 EMA (uptrend filter) + touch 21 EMA on low vol + RSI 40-55
 function calcEMA200(data) {
@@ -7896,6 +8127,20 @@ analyzeStock = function(ticker, data) {
     r.details.push(`Mean Reversion: ${mean_rev.distPct}% below 20 SMA · lower BB $${mean_rev.lowerBand}`);
   }
 
+  // Qullamaggie 5-Star Momentum Breakout
+  const qm5 = detectQM5(data, scanState.spyBars);
+  if (qm5.signal) {
+    r.signals.push('qm5');
+    r.details.push(`⭐ QM 5-Star: RS +${qm5.rsScore}% vs SPY · ${qm5.baseLen}d base ${qm5.baseRangePct}% · vol ${qm5.volRatio}×${qm5.volDryup ? ' (dryup ✓)' : ''}`);
+  }
+
+  // Qullamaggie 7-Star Episodic Pivot
+  const qm7 = detectQM7(data, scanState.spyBars);
+  if (qm7.signal) {
+    r.signals.push('qm7');
+    r.details.push(`🌟 QM 7-Star EP: +${qm7.epGapPct}% gap ${qm7.epVolRatio}×vol · ${qm7.flagDays}d flag ${qm7.flagRange}% · re-break ${qm7.breakoutVol}×vol`);
+  }
+
   return r;
 };
 
@@ -7909,6 +8154,8 @@ updateStats = function() {
   if (g('st-cons_bo'))  g('st-cons_bo').textContent  = v.filter(r=>r.signals.includes('cons_bo')).length;
   if (g('st-gap_hold')) g('st-gap_hold').textContent = v.filter(r=>r.signals.includes('gap_hold')).length;
   if (g('st-mean_rev')) g('st-mean_rev').textContent = v.filter(r=>r.signals.includes('mean_rev')).length;
+  if (g('st-qm5'))     g('st-qm5').textContent     = v.filter(r=>r.signals.includes('qm5')).length;
+  if (g('st-qm7'))     g('st-qm7').textContent     = v.filter(r=>r.signals.includes('qm7')).length;
 };
 
 // Add ema21 to all label maps
@@ -8310,9 +8557,11 @@ if (typeof STRAT_NAMES !== 'undefined') {
   STRAT_NAMES.cons_bo  = 'Consolidation Breakout';
   STRAT_NAMES.gap_hold = 'Earnings Gap Hold';
   STRAT_NAMES.mean_rev = 'Mean Reversion (BB)';
+  STRAT_NAMES.qm5      = 'QM 5-Star Momentum';
+  STRAT_NAMES.qm7      = 'QM 7-Star Episodic Pivot';
 }
 // Add to activeStrats
-['ema21','ema_rev','cons_bo','gap_hold','mean_rev'].forEach(s => activeStrats.add(s));
+['ema21','ema_rev','cons_bo','gap_hold','mean_rev','qm5','qm7'].forEach(s => activeStrats.add(s));
 
 // Add to journal filter dropdown
 const tradeFilterStrat = g('trade-filter-strat');
@@ -8322,6 +8571,8 @@ const newStratOpts = [
   {v:'cons_bo',  t:'Consolidation BO'},
   {v:'gap_hold', t:'Earnings Gap Hold'},
   {v:'mean_rev', t:'Mean Reversion'},
+  {v:'qm5',      t:'⭐ QM 5-Star'},
+  {v:'qm7',      t:'🌟 QM 7-Star EP'},
 ];
 newStratOpts.forEach(({v,t}) => {
   if (tradeFilterStrat && !tradeFilterStrat.querySelector(`[value="${v}"]`)) {
@@ -8339,6 +8590,8 @@ const newChips = [
   {k:'cons_bo', l:'Consol. Breakout'},
   {k:'gap_hold',l:'Earnings Gap Hold'},
   {k:'mean_rev',l:'Mean Reversion'},
+  {k:'qm5',     l:'⭐ QM 5-Star'},
+  {k:'qm7',     l:'🌟 QM 7-Star EP'},
 ];
 newChips.forEach(({k,l}) => {
   if (entryStratRow && !entryStratRow.querySelector(`[data-strat="${k}"]`)) {
