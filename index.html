@@ -5130,41 +5130,64 @@ async function loadDetailInsider(ticker) {
     const j = await r.json();
     if (!r.ok || j?.error) throw new Error(j?.error || `HTTP ${r.status}`);
 
-    const data = (j.data || []).sort((a,b) => (b.transactionDate||'').localeCompare(a.transactionDate||''));
+    const allData = (j.data || []).sort((a,b) => (b.transactionDate||'').localeCompare(a.transactionDate||''));
 
-    // Tiles
-    const buys = data.filter(d => d.change > 0);
-    const sells = data.filter(d => d.change < 0);
-    const buyValue = buys.reduce((s,d) => s + ((d.share || Math.abs(d.change||0)) * (d.transactionPrice || 0)), 0);
-    const sellValue = sells.reduce((s,d) => s + ((d.share || Math.abs(d.change||0)) * (d.transactionPrice || 0)), 0);
+    // ── FIX 1: Only show OPEN MARKET PURCHASES ────────────────────────────────
+    // Transaction codes: P = open market purchase (the only one we want)
+    // Excluded: A (award), M (option exercise), G (gift), F (tax withholding),
+    //           S (open market sale), D (disposition), L (small acquisition)
+    const isPurchase = d => {
+      const code = (d.transactionCode || '').toUpperCase();
+      // 'P' = open market purchase — the only definitive insider buy signal
+      if (code === 'P') return true;
+      // Also include when code is missing but change is clearly positive and has a real price
+      // (some filings omit the code but price > 0 + positive change = likely a purchase)
+      if (!code && d.change > 0 && d.transactionPrice > 0) return true;
+      return false;
+    };
+
+    const purchases = allData.filter(isPurchase);
+    const allBuys   = allData.filter(d => d.change > 0);   // for tiles (broader count)
+    const allSells  = allData.filter(d => d.change < 0);
+
+    const buyValue  = allBuys.reduce((s,d)  => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
+    const sellValue = allSells.reduce((s,d) => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
+    const purchaseValue = purchases.reduce((s,d) => s + ((d.share||Math.abs(d.change||0))*(d.transactionPrice||0)), 0);
     const netCls = buyValue >= sellValue ? 'green' : 'red';
 
     g('detail-insider-tiles').innerHTML = `
-      <div class="detail-tile"><div class="detail-tile-lbl">Total Filings</div><div class="detail-tile-val">${data.length}</div></div>
-      <div class="detail-tile"><div class="detail-tile-lbl">Buys</div><div class="detail-tile-val green">${buys.length}</div><div class="detail-tile-sub">${fmtMoney(buyValue)}</div></div>
-      <div class="detail-tile"><div class="detail-tile-lbl">Sells</div><div class="detail-tile-val red">${sells.length}</div><div class="detail-tile-sub">${fmtMoney(sellValue)}</div></div>
+      <div class="detail-tile"><div class="detail-tile-lbl">Total Filings</div><div class="detail-tile-val">${allData.length}</div></div>
+      <div class="detail-tile" style="border-color:rgba(61,255,160,.35)">
+        <div class="detail-tile-lbl">Open Mkt Purchases</div>
+        <div class="detail-tile-val green">${purchases.length}</div>
+        <div class="detail-tile-sub">${fmtMoney(purchaseValue)}</div>
+      </div>
+      <div class="detail-tile"><div class="detail-tile-lbl">All Sells</div><div class="detail-tile-val red">${allSells.length}</div><div class="detail-tile-sub">${fmtMoney(sellValue)}</div></div>
       <div class="detail-tile"><div class="detail-tile-lbl">Net Sentiment</div><div class="detail-tile-val ${netCls}">${buyValue >= sellValue ? '↑ Buying' : '↓ Selling'}</div></div>
     `;
 
     const tbody = g('detail-insider-tbl').querySelector('tbody');
-    if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">No insider activity in last 90 days</td></tr>';
+
+    // Show purchases only in the table
+    if (!purchases.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--muted);font-size:10px">
+        No open market purchases in last 90 days
+        ${allBuys.length ? `<br><span style="color:var(--orange)">${allBuys.length} other acquisitions (awards/options) excluded</span>` : ''}
+      </td></tr>`;
       return;
     }
 
-    // Show top 10 by absolute value
-    const top = data.slice(0, 10);
-    tbody.innerHTML = top.map(d => {
-      const isBuy = d.change > 0;
+    tbody.innerHTML = purchases.slice(0, 10).map(d => {
       const shares = d.share != null ? d.share : Math.abs(d.change || 0);
-      const value = shares * (d.transactionPrice || 0);
+      const value  = shares * (d.transactionPrice || 0);
       return `<tr>
         <td>${fmtSmDate(d.transactionDate)}</td>
         <td class="sm-name" style="font-size:10px">${d.name || '—'}<br><span class="sm-role" style="margin:0">${d.position || ''}</span></td>
-        <td class="num" style="color:${isBuy?'var(--green)':'var(--red)'}">${isBuy?'+':'-'}${fmtNum(shares)}</td>
+        <td class="num" style="color:var(--green)">+${fmtNum(shares)}</td>
         <td class="num">${fmtMoney(value)}</td>
       </tr>`;
     }).join('');
+
   } catch(e) {
     g('detail-insider-tbl').querySelector('tbody').innerHTML = `<tr><td colspan="4" style="color:var(--red);font-size:10px;padding:14px">⚠ ${e.message}</td></tr>`;
   }
@@ -5244,10 +5267,38 @@ async function loadDetailInstitutional(ticker) {
     return;
   }
 
-  // Nothing from either source — show helpful fallback
+  // ── Layer 3: Render — Yahoo data, whale cache, or SEC aggregate fallback ──
+  if (yahooData) {
+    renderYahooInstitutional(yahooData, TK, whaleCacheHits);
+    return;
+  }
+
+  if (whaleCacheHits.length) {
+    renderWhaleCacheOnly(whaleCacheHits, TK);
+    return;
+  }
+
+  // ── Layer 4: No cache — try Finnhub fund ownership (free tier) ────────────
+  const fhKey = getFinnhubKey();
+  if (fhKey) {
+    try {
+      const foR = await fetch(`https://finnhub.io/api/v1/stock/fund-ownership?symbol=${TK}&limit=10&token=${encodeURIComponent(fhKey)}`,
+        { signal: AbortSignal.timeout(8000) });
+      if (foR.ok) {
+        const foJ = await foR.json();
+        const holders = (foJ.ownership || []).filter(h => h.share > 0);
+        if (holders.length) {
+          renderFinnhubFundOwnership(holders, TK);
+          return;
+        }
+      }
+    } catch {}
+  }
+
+  // ── Layer 5: Still nothing — show SEC direct query option ─────────────────
   el.innerHTML = `
     <tr><td colspan="4" style="padding:16px">
-      <div style="font-size:10px;color:var(--muted);line-height:1.8;letter-spacing:.3px">
+      <div style="font-size:10px;color:var(--muted);line-height:1.8">
         <div style="color:var(--orange);font-weight:600;margin-bottom:8px;letter-spacing:1px">⚠ Live institutional data unavailable</div>
         <div style="margin-bottom:10px">Yahoo Finance is blocking automated requests. <b style="color:var(--text)">Two ways to get this data:</b></div>
         <div style="display:flex;flex-direction:column;gap:8px">
@@ -5353,25 +5404,99 @@ function renderYahooInstitutional(data, ticker, whaleCacheHits) {
     </td></tr>`;
 }
 
+function renderFinnhubFundOwnership(holders, ticker) {
+  const tbody   = g('detail-instit-tbl')?.querySelector('tbody');
+  const tilesEl = g('detail-instit-tiles');
+  if (!tbody) return;
+
+  const totalShares = holders.reduce((a,h) => a + (h.share||0), 0);
+  const totalValue  = holders.reduce((a,h) => a + (h.share||0)*(h.currentPrice||0), 0);
+
+  // Aggregate buy/sell from change field (positive = bought, negative = sold)
+  const bought = holders.filter(h => (h.change||0) > 0);
+  const sold   = holders.filter(h => (h.change||0) < 0);
+  const netChange = holders.reduce((a,h) => a + (h.change||0), 0);
+
+  if (tilesEl) tilesEl.innerHTML = `
+    <div class="detail-tile"><div class="detail-tile-lbl">Fund Holders</div><div class="detail-tile-val">${holders.length}</div></div>
+    <div class="detail-tile" style="border-color:rgba(61,255,160,.3)">
+      <div class="detail-tile-lbl">Increased / New</div>
+      <div class="detail-tile-val green">${bought.length}</div>
+      <div class="detail-tile-sub">last quarter</div>
+    </div>
+    <div class="detail-tile" style="border-color:rgba(255,82,119,.25)">
+      <div class="detail-tile-lbl">Reduced / Closed</div>
+      <div class="detail-tile-val red">${sold.length}</div>
+      <div class="detail-tile-sub">last quarter</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Net Share Change</div>
+      <div class="detail-tile-val ${netChange>=0?'green':'red'}">${netChange>=0?'+':''}${fmtNum(Math.round(netChange))}</div>
+    </div>`;
+
+  tbody.innerHTML = `
+    <tr style="background:var(--surface2)">
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px">Fund</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">Shares</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">Qtr Change</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">% Portfolio</th>
+    </tr>
+    ${holders.map(h => {
+      const chg     = h.change || 0;
+      const chgCls  = chg > 0 ? 'var(--green)' : chg < 0 ? 'var(--red)' : 'var(--muted)';
+      const chgStr  = chg > 0 ? `+${fmtNum(chg)}` : chg < 0 ? fmtNum(chg) : '—';
+      const pctPort = h.ownershipPercent ? (h.ownershipPercent * 100).toFixed(2) + '%' : '—';
+      return `<tr>
+        <td style="font-size:11px">${h.name || '—'}</td>
+        <td class="num" style="font-size:10px">${fmtNum(h.share||0)}</td>
+        <td class="num" style="font-size:10px;color:${chgCls}">${chgStr}</td>
+        <td class="num" style="font-size:10px">${pctPort}</td>
+      </tr>`;
+    }).join('')}
+    <tr><td colspan="4" style="padding:6px 12px;font-size:9px;color:var(--muted)">
+      Via Finnhub fund ownership · <a href="https://stockanalysis.com/stocks/${ticker.toLowerCase()}/institutional/" target="_blank" style="color:var(--cyan)">Full data on Stock Analysis ↗</a>
+    </td></tr>`;
+}
+
 function renderWhaleCacheOnly(cacheHits, ticker) {
   const tbody   = g('detail-instit-tbl')?.querySelector('tbody');
   const tilesEl = g('detail-instit-tiles');
   if (!tbody) return;
 
+  const sorted    = [...cacheHits].sort((a,b) => (b.value||0)-(a.value||0));
+  const totalVal  = cacheHits.reduce((a,b) => a+(b.value||0), 0);
+  const totalShrs = cacheHits.reduce((a,b) => a+(b.shares||0), 0);
+
+  // Aggregate 3-month buy/sell from cached positions
+  // Since 13F is a snapshot, we compare current vs previous where available
+  // For now show as "held" since we only have one snapshot
   if (tilesEl) tilesEl.innerHTML = `
-    <div class="detail-tile" style="border-color:rgba(180,125,255,.3)">
+    <div class="detail-tile" style="border-color:rgba(180,125,255,.4)">
       <div class="detail-tile-lbl">Famous Funds Holding</div>
       <div class="detail-tile-val" style="color:var(--purple)">${cacheHits.length}</div>
       <div class="detail-tile-sub">from 13F cache</div>
     </div>
     <div class="detail-tile">
-      <div class="detail-tile-lbl">Total Cached Value</div>
-      <div class="detail-tile-val">${fmtMoney(cacheHits.reduce((a,b) => a+(b.value||0), 0))}</div>
+      <div class="detail-tile-lbl">Total Shares (Whales)</div>
+      <div class="detail-tile-val">${fmtNum(Math.round(totalShrs))}</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Total Value (Whales)</div>
+      <div class="detail-tile-val">${fmtMoney(totalVal)}</div>
+    </div>
+    <div class="detail-tile">
+      <div class="detail-tile-lbl">Conviction</div>
+      <div class="detail-tile-val" style="color:${cacheHits.length>=3?'var(--green)':cacheHits.length>=2?'var(--orange)':'var(--muted)'}">${cacheHits.length>=3?'HIGH':cacheHits.length>=2?'MEDIUM':'LOW'}</div>
+      <div class="detail-tile-sub">${cacheHits.length}+ funds agree</div>
     </div>`;
 
-  const sorted = [...cacheHits].sort((a,b) => (b.value||0)-(a.value||0));
   tbody.innerHTML = `
-    <tr><td colspan="4" style="padding:6px 12px;background:rgba(180,125,255,.07);font-size:9px;letter-spacing:2px;color:var(--purple);text-transform:uppercase">🐋 Famous Funds — Cached 13F Data</td></tr>
+    <tr style="background:var(--surface2)">
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px">Fund</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">Shares</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;text-align:right">Value</th>
+      <th style="padding:6px 12px;font-size:9px;color:var(--muted);letter-spacing:1px">Filed</th>
+    </tr>
     ${sorted.map(h => `
       <tr>
         <td style="font-size:11px;font-weight:500;color:var(--purple)">${h.fund}</td>
@@ -5380,7 +5505,7 @@ function renderWhaleCacheOnly(cacheHits, ticker) {
         <td style="font-size:9px;color:var(--muted)">${h.reportDate || '—'}</td>
       </tr>`).join('')}
     <tr><td colspan="4" style="padding:8px 12px;font-size:9px;color:var(--muted);border-top:1px solid var(--border)">
-      Yahoo Finance unavailable — only whale cache shown ·
+      🐋 Cached 13F data ·
       <a href="https://stockanalysis.com/stocks/${ticker.toLowerCase()}/institutional/" target="_blank" style="color:var(--cyan)">Full data on Stock Analysis ↗</a>
     </td></tr>`;
 }
@@ -5728,119 +5853,114 @@ async function loadDetailAnalyst(ticker) {
   el.innerHTML = '<div class="detail-loading">Loading analyst data…</div>';
 
   try {
-    // Fetch analyst data + 1yr price history in parallel
+    // Fetch everything in parallel
     const [recR, ptR, barsRaw] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${encodeURIComponent(key)}`),
       fetch(`https://finnhub.io/api/v1/stock/price-target?symbol=${ticker}&token=${encodeURIComponent(key)}`),
       alpaca.key ? fetchDaily(ticker).catch(()=>null) : Promise.resolve(null),
     ]);
-    const rec = await recR.json();
-    const pt  = await ptR.json();
+
+    const rec = recR.ok ? await recR.json() : [];
+    const pt  = ptR.ok  ? await ptR.json()  : {};
 
     const latest = Array.isArray(rec) && rec.length ? rec[0] : null;
-    if (!latest && !pt.targetMean) {
-      el.innerHTML='<div style="color:var(--muted);font-size:10px;padding:10px">No analyst coverage found for this ticker</div>';
-      return;
-    }
 
-    // ── Consensus numbers ─────────────────────────────────────────────────────
-    const buy   = (latest?.strongBuy  || 0) + (latest?.buy  || 0);
-    const hold  =  latest?.hold       || 0;
-    const sell  = (latest?.sell       || 0) + (latest?.strongSell || 0);
-    const total = buy + hold + sell;
-    const targetMean = pt.targetMean || 0;
-    const targetLow  = pt.targetLow  || 0;
-    const targetHigh = pt.targetHigh || 0;
-
-    // curPrice: try detail-price element first, then last Alpaca bar, then
-    // fall back to targetMean * 0.9 so the chart always has something to plot
-    const priceEl   = parseFloat(g('detail-price')?.textContent?.replace(/[^0-9.]/g,'')) || 0;
-    const lastBar   = barsRaw?.length ? barsRaw[barsRaw.length - 1].c : 0;
-    const curPrice  = priceEl || lastBar || (targetMean ? targetMean * 0.9 : 0);
-    const upside1y  = curPrice && targetMean ? ((targetMean - curPrice) / curPrice * 100) : null;
-
-    // Consensus label
-    const buyPct  = total ? buy  / total : 0;
-    const sellPct = total ? sell / total : 0;
-    const consensus = buyPct >= 0.65 ? { label:'Strong Buy', cls:'#3dffa0' }
-                    : buyPct >= 0.45 ? { label:'Buy',         cls:'#3dffa0' }
-                    : sellPct >= 0.45 ? { label:'Sell',        cls:'#ff5277' }
-                    : sellPct >= 0.25 ? { label:'Underperform',cls:'#ff9b4e' }
-                    :                   { label:'Hold',         cls:'#ff9b4e' };
-
-    // ── Last 12 months of bars from Alpaca ────────────────────────────────────
+    // ── Price + bars ──────────────────────────────────────────────────────────
     const now        = Date.now();
     const oneYearAgo = now - 365 * 864e5;
     let histBars = [];
     if (barsRaw && barsRaw.length) {
-      histBars = barsRaw
-        .map(b => {
-          // Alpaca returns t as ISO string e.g. "2024-01-05T00:00:00Z"
-          const raw = b.t || b.time || b.timestamp || b.date || '';
-          const ms  = typeof raw === 'number' ? raw : new Date(raw).getTime();
-          return { t: ms, c: b.c };
-        })
-        .filter(b => !isNaN(b.t) && b.t >= oneYearAgo && b.t <= now)
+      histBars = barsRaw.map(b => {
+        const raw = b.t || b.time || b.timestamp || b.date || '';
+        const ms  = typeof raw === 'number' ? raw : new Date(raw).getTime();
+        return { t: ms, c: b.c };
+      }).filter(b => !isNaN(b.t) && b.t >= oneYearAgo && b.t <= now)
         .sort((a,b) => a.t - b.t);
     }
 
-    // ── Build SVG chart ───────────────────────────────────────────────────────
-    const chartHTML = targetMean
-      ? buildAnalystChart(histBars, curPrice || targetMean * 0.85, targetMean, targetLow, targetHigh, ticker)
-      : '';
+    // Current price: price element → last Alpaca bar → 0
+    const priceEl  = parseFloat(g('detail-price')?.textContent?.replace(/[^0-9.]/g,'')) || 0;
+    const lastBar  = histBars.length ? histBars[histBars.length-1].c : 0;
+    const curPrice = priceEl || lastBar || 0;
 
-    // ── Recommendation trend sparklines (last 3 periods) ──────────────────────
-    const trendHTML = Array.isArray(rec) && rec.length >= 2
-      ? buildRecTrend(rec.slice(0, 4))
+    // ── Analyst consensus ─────────────────────────────────────────────────────
+    const buy   = (latest?.strongBuy  || 0) + (latest?.buy  || 0);
+    const hold  =  latest?.hold       || 0;
+    const sell  = (latest?.sell       || 0) + (latest?.strongSell || 0);
+    const total = buy + hold + sell;
+
+    const buyPct  = total ? buy  / total : 0;
+    const sellPct = total ? sell / total : 0;
+    const consensus = buyPct >= 0.65 ? { label:'Strong Buy',   col:'#3dffa0' }
+                    : buyPct >= 0.45 ? { label:'Buy',           col:'#3dffa0' }
+                    : sellPct >= 0.45? { label:'Sell',          col:'#ff5277' }
+                    : sellPct >= 0.25? { label:'Underperform',  col:'#ff9b4e' }
+                    :                  { label:'Hold',           col:'#ff9b4e' };
+
+    // ── Price targets ─────────────────────────────────────────────────────────
+    const targetMean = parseFloat(pt.targetMean) || 0;
+    const targetLow  = parseFloat(pt.targetLow)  || 0;
+    const targetHigh = parseFloat(pt.targetHigh) || 0;
+    const upside1y   = curPrice && targetMean ? ((targetMean - curPrice) / curPrice * 100) : null;
+    const hasTargets = targetMean > 0;
+
+    // ── Chart ─────────────────────────────────────────────────────────────────
+    // Build chart whenever we have at least curPrice (even without analyst targets)
+    const chartHTML = (histBars.length || curPrice)
+      ? buildAnalystChart(
+          histBars,
+          curPrice || targetMean * 0.85,
+          hasTargets ? targetMean : 0,
+          hasTargets ? targetLow  : 0,
+          hasTargets ? targetHigh : 0,
+          ticker
+        )
       : '';
 
     // ── Render ────────────────────────────────────────────────────────────────
     el.innerHTML = `
       ${chartHTML}
 
-      <!-- Consensus tiles -->
-      <div class="detail-analyst-grid" style="margin-top:${chartHTML?'0':'0'}">
-        <div class="analyst-tile">
-          <div class="analyst-tile-n buy">${buy}</div>
-          <div class="analyst-tile-lbl">Buy / Strong Buy</div>
-        </div>
-        <div class="analyst-tile">
-          <div class="analyst-tile-n hold">${hold}</div>
-          <div class="analyst-tile-lbl">Hold</div>
-        </div>
-        <div class="analyst-tile">
-          <div class="analyst-tile-n sell">${sell}</div>
-          <div class="analyst-tile-lbl">Sell</div>
-        </div>
-        <div class="analyst-tile">
-          <div class="analyst-tile-n" style="color:${consensus.cls};font-size:11px;letter-spacing:.5px">${consensus.label}</div>
-          <div class="analyst-tile-lbl">${total} analysts</div>
-        </div>
-      </div>
+      ${total || hasTargets ? `
+        <!-- Consensus tiles -->
+        <div class="detail-analyst-grid">
+          <div class="analyst-tile"><div class="analyst-tile-n buy">${buy}</div><div class="analyst-tile-lbl">Buy / Strong Buy</div></div>
+          <div class="analyst-tile"><div class="analyst-tile-n hold">${hold}</div><div class="analyst-tile-lbl">Hold</div></div>
+          <div class="analyst-tile"><div class="analyst-tile-n sell">${sell}</div><div class="analyst-tile-lbl">Sell</div></div>
+          <div class="analyst-tile">
+            <div class="analyst-tile-n" style="color:${consensus.col};font-size:11px">${consensus.label}</div>
+            <div class="analyst-tile-lbl">${total} analyst${total!==1?'s':''}</div>
+          </div>
+        </div>` : ''}
 
-      <!-- Target range -->
-      ${targetMean ? `<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 0;border-top:1px solid var(--border2)">
-        <div style="text-align:center">
-          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Low Target</div>
-          <div style="font-family:var(--font-display);font-size:15px;color:var(--red)">$${targetLow.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Mean Target</div>
-          <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent)">$${targetMean.toFixed(2)}</div>
-          ${upside1y!=null?`<div style="font-size:10px;color:${upside1y>=0?'var(--green)':'var(--red)'}">${upside1y>=0?'+':''}${upside1y.toFixed(1)}% 1-yr upside</div>`:''}
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">High Target</div>
-          <div style="font-family:var(--font-display);font-size:15px;color:var(--green)">$${targetHigh.toFixed(2)}</div>
-        </div>
-        <div style="text-align:center;margin-left:auto">
-          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Updated</div>
-          <div style="font-size:11px;color:var(--text)">${pt.lastUpdated ? fmtSmDate(pt.lastUpdated) : '—'}</div>
-        </div>
-      </div>` : ''}
+      ${hasTargets ? `
+        <!-- Price target range -->
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 0;border-top:1px solid var(--border2);align-items:flex-end">
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Low Target</div>
+            <div style="font-family:var(--font-display);font-size:15px;color:var(--red)">$${targetLow.toFixed(2)}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Mean Target</div>
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--accent)">$${targetMean.toFixed(2)}</div>
+            ${upside1y!=null?`<div style="font-size:10px;color:${upside1y>=0?'var(--green)':'var(--red)'};margin-top:2px">${upside1y>=0?'+':''}${upside1y.toFixed(1)}% 1-yr upside</div>`:''}
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">High Target</div>
+            <div style="font-family:var(--font-display);font-size:15px;color:var(--green)">$${targetHigh.toFixed(2)}</div>
+          </div>
+          ${curPrice?`<div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase">Current</div>
+            <div style="font-family:var(--font-display);font-size:15px;color:var(--accent)">$${curPrice.toFixed(2)}</div>
+          </div>`:''}
+          <div style="margin-left:auto;text-align:right;font-size:9px;color:var(--muted)">
+            Updated: ${pt.lastUpdated ? fmtSmDate(pt.lastUpdated) : '—'}<br>
+            via Finnhub
+          </div>
+        </div>` : `
+        <div style="padding:8px 0;font-size:10px;color:var(--muted)">No price targets available for this ticker</div>`}
 
-      <!-- Recommendation trend -->
-      ${trendHTML}`;
+      ${buildRecTrend(Array.isArray(rec) ? rec.slice(0,4) : [])}`;
 
   } catch(e) {
     el.innerHTML=`<div style="color:var(--red);font-size:10px;padding:10px">⚠ ${e.message}</div>`;
