@@ -161,6 +161,7 @@ table.trade-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
 .act-btn.exit{color:var(--green);border-color:rgba(61,255,160,.3)}
 .act-btn.exit:hover{background:var(--green);color:#000;border-color:var(--green)}
 .act-btn.del:hover{color:var(--red);border-color:var(--red);background:var(--red-dim)}
+.bulk-del-opt:hover{background:var(--surface2);color:var(--text)!important}
 
 /* ─── ORB Scanner ─────────────────────────────────────────────────── */
 .orb-stat-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--bg);border:1px solid var(--border2)}
@@ -1532,6 +1533,14 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
         <button class="btn btn-ghost" id="btn-export-journal">⬇ Export JSON</button>
         <button class="btn btn-ghost" id="btn-import-journal">⬆ Import JSON</button>
         <button class="btn" id="btn-import-t212" style="background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.3)">📥 Import Trading 212 CSV</button>
+        <div style="position:relative;display:inline-block">
+          <button class="btn btn-ghost" id="btn-bulk-delete" style="color:var(--red);border-color:rgba(255,82,119,.3)">🗑 Bulk Delete ▾</button>
+          <div id="bulk-delete-menu" style="display:none;position:absolute;top:100%;left:0;z-index:200;background:var(--surface);border:1px solid var(--border);min-width:200px;padding:6px 0;margin-top:2px">
+            <div class="bulk-del-opt" id="bulk-del-t212" style="padding:8px 14px;font-size:11px;cursor:pointer;color:var(--muted)">Delete all T212 imports</div>
+            <div class="bulk-del-opt" id="bulk-del-open" style="padding:8px 14px;font-size:11px;cursor:pointer;color:var(--muted)">Delete all open trades</div>
+            <div class="bulk-del-opt" id="bulk-del-all"  style="padding:8px 14px;font-size:11px;cursor:pointer;color:var(--red)">Delete ALL trades ⚠</div>
+          </div>
+        </div>
         <input type="file" id="journal-file"    accept=".json" style="display:none">
         <input type="file" id="t212-csv-file"   accept=".csv"  style="display:none">
         <div style="font-size:10px;color:var(--muted);letter-spacing:.5px;flex:1;min-width:200px">
@@ -1666,6 +1675,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
               <th class="num">Realised P/L £</th>
               <th class="ctr">Trades</th>
               <th class="ctr">Status</th>
+              <th class="ctr">Actions</th>
             </tr></thead>
             <tbody id="aggregate-tbody"></tbody>
           </table>
@@ -3227,10 +3237,17 @@ function saveExit() {
 }
 
 function deleteTrade(tradeId) {
-  const t = getTrades().find(x => x.id === tradeId);
+  const trades = getTrades();
+  const t = trades.find(x => x.id === tradeId);
   if (!t) return;
-  if (!confirm(`Delete trade: ${t.ticker} (${fmtDate(t.entryDate)})?\nThis cannot be undone.`)) return;
-  saveTrades(getTrades().filter(x => x.id !== tradeId));
+
+  const plStr = t.plPct != null ? ` · P/L: ${t.plPct >= 0 ? '+' : ''}${t.plPct.toFixed(2)}%` : '';
+  const msg   = `Delete this trade?\n\n`
+              + `${t.ticker} — entered ${fmtDate(t.entryDate)} @ $${t.entryPrice?.toFixed(2) || '?'}${plStr}\n\n`
+              + `This removes it from all journal stats, equity curve, and expectancy calculations.`;
+
+  if (!confirm(msg)) return;
+  saveTrades(trades.filter(x => x.id !== tradeId));
   renderJournal();
 }
 
@@ -3371,9 +3388,16 @@ function renderTradeLog() {
   }).join('');
 
   tbody.querySelectorAll('[data-exit]').forEach(b => b.addEventListener('click', () => openExitModal(b.dataset.exit)));
-  tbody.querySelectorAll('[data-del-trade]').forEach(b => b.addEventListener('click', () => deleteTrade(b.dataset.delTrade)));
   tbody.querySelectorAll('[data-change-strat]').forEach(b => b.addEventListener('click', () => changeTradeStrategy(b.dataset.changeStrat)));
+  // Note: [data-del-trade] uses a delegated listener below (never needs re-attaching)
 }
+
+// ── Single delegated delete listener on trade tbody ────────────────────────
+// Attached once — survives all re-renders because it's on the container not the buttons
+g('trade-tbody').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del-trade]');
+  if (btn) deleteTrade(btn.dataset.delTrade);
+});
 
 // ─── Aggregate Position View ──────────────────────────────────────────────────
 let aggregateViewActive = false;
@@ -3515,9 +3539,44 @@ function renderAggregateView() {
         ${pos.openCount ? `<br><span style="color:var(--accent)">${pos.openCount} open</span>` : ''}
       </td>
       <td class="ctr">${statusBadge}</td>
+      <td class="ctr">
+        <div class="td-act">
+          <button class="act-btn del" data-del-ticker="${pos.ticker}"
+            title="Delete all ${pos.tradeCount} trade${pos.tradeCount!==1?'s':''} for ${pos.ticker}">
+            🗑 All
+          </button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 }
+
+// ── Delegated delete listener on aggregate tbody ───────────────────────────
+g('aggregate-tbody').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del-ticker]');
+  if (!btn) return;
+  const ticker = btn.dataset.delTicker;
+  const trades = getTrades();
+  const matching = trades.filter(t => t.ticker.toUpperCase() === ticker.toUpperCase());
+  if (!matching.length) return;
+
+  const closed = matching.filter(t => t.status !== 'open');
+  const open   = matching.filter(t => t.status === 'open');
+  const plSum  = closed.reduce((a,t) => a + (t.plPct||0), 0);
+  const plAvg  = closed.length ? (plSum / closed.length).toFixed(2) : null;
+
+  const msg = `Delete ALL trades for ${ticker}?\n\n`
+    + `${matching.length} total trades\n`
+    + `${closed.length} closed${plAvg != null ? ` · avg P/L ${plAvg >= 0 ? '+' : ''}${plAvg}%` : ''}\n`
+    + `${open.length} open positions\n\n`
+    + `This removes them from all journal stats and cannot be undone.`;
+
+  if (!confirm(msg)) return;
+  saveTrades(trades.filter(t => t.ticker.toUpperCase() !== ticker.toUpperCase()));
+  renderJournal();
+  // Stay in aggregate view and refresh it
+  renderAggregateView();
+});
 
 // ─── Toggle handler ────────────────────────────────────────────────────────
 g('btn-aggregate-view').addEventListener('click', () => {
@@ -3808,6 +3867,50 @@ g('btn-import-journal').addEventListener('click', () => g('journal-file').click(
 g('journal-file').addEventListener('change', e => { if (e.target.files[0]) importJournal(e.target.files[0]); });
 g('btn-import-t212').addEventListener('click', () => g('t212-csv-file').click());
 g('t212-csv-file').addEventListener('change', e => { if (e.target.files[0]) importT212CSV(e.target.files[0]); });
+
+// ── Bulk delete dropdown ───────────────────────────────────────────────────
+g('btn-bulk-delete').addEventListener('click', e => {
+  e.stopPropagation();
+  const menu = g('bulk-delete-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+});
+// Close when clicking outside
+document.addEventListener('click', () => {
+  const menu = g('bulk-delete-menu');
+  if (menu) menu.style.display = 'none';
+});
+
+g('bulk-del-t212').addEventListener('click', () => {
+  const trades  = getTrades();
+  const t212    = trades.filter(t => t.source === 't212');
+  if (!t212.length) { alert('No Trading 212 imported trades found.'); return; }
+  if (!confirm(`Delete all ${t212.length} Trading 212 imported trades?\n\nThis will remove them from all stats and cannot be undone.`)) return;
+  saveTrades(trades.filter(t => t.source !== 't212'));
+  renderJournal();
+  alert(`✓ Deleted ${t212.length} T212 trades.`);
+});
+
+g('bulk-del-open').addEventListener('click', () => {
+  const trades = getTrades();
+  const open   = trades.filter(t => t.status === 'open');
+  if (!open.length) { alert('No open trades found.'); return; }
+  if (!confirm(`Delete all ${open.length} open trades?\n\nThese are trades without an exit price.\nThis cannot be undone.`)) return;
+  saveTrades(trades.filter(t => t.status !== 'open'));
+  renderJournal();
+  alert(`✓ Deleted ${open.length} open trades.`);
+});
+
+g('bulk-del-all').addEventListener('click', () => {
+  const trades = getTrades();
+  if (!trades.length) { alert('Journal is already empty.'); return; }
+  const confirm1 = confirm(`⚠ Delete ALL ${trades.length} trades?\n\nThis wipes your entire journal including all stats, equity curve, and history.\n\nThis CANNOT be undone.`);
+  if (!confirm1) return;
+  const confirm2 = prompt(`Type DELETE to confirm wiping all ${trades.length} trades:`);
+  if (confirm2?.trim().toUpperCase() !== 'DELETE') { alert('Cancelled — nothing deleted.'); return; }
+  saveTrades([]);
+  renderJournal();
+  alert('✓ Journal cleared.');
+});
 
 g('entry-cancel').addEventListener('click', closeEntryModal);
 g('entry-save').addEventListener('click', saveEntry);
