@@ -1644,6 +1644,32 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <option value="pl-desc">Best P/L first</option>
           <option value="pl-asc">Worst P/L first</option>
         </select>
+        <button id="btn-aggregate-view" class="btn btn-ghost" style="font-size:10px;padding:5px 12px;letter-spacing:1px" title="Group all buys/sells per ticker into a single net position">
+          ⊞ Aggregate by Ticker
+        </button>
+      </div>
+
+      <!-- Aggregate position view (hidden by default) -->
+      <div id="aggregate-panel" style="display:none">
+        <div style="font-size:9px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;padding:10px 0 8px;border-bottom:1px solid var(--border2);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span>⊞ Aggregate Positions — Net shares after all buys &amp; sells</span>
+          <span id="aggregate-summary" style="color:var(--muted)"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="trade-tbl" id="aggregate-tbl">
+            <thead><tr>
+              <th>Ticker</th>
+              <th class="num">Net Shares</th>
+              <th class="num">Avg Cost</th>
+              <th class="num">Total Invested</th>
+              <th class="num">Realised P/L%</th>
+              <th class="num">Realised P/L £</th>
+              <th class="ctr">Trades</th>
+              <th class="ctr">Status</th>
+            </tr></thead>
+            <tbody id="aggregate-tbody"></tbody>
+          </table>
+        </div>
       </div>
       <div class="tbl-wrap">
         <table class="trade-tbl">
@@ -3349,6 +3375,177 @@ function renderTradeLog() {
   tbody.querySelectorAll('[data-change-strat]').forEach(b => b.addEventListener('click', () => changeTradeStrategy(b.dataset.changeStrat)));
 }
 
+// ─── Aggregate Position View ──────────────────────────────────────────────────
+let aggregateViewActive = false;
+
+function buildAggregatePositions(trades) {
+  // Group all trades by ticker, aggregate net shares, avg cost, realised P&L
+  const map = {};
+
+  for (const t of trades) {
+    const tk = t.ticker.toUpperCase().trim();
+    if (!map[tk]) {
+      map[tk] = {
+        ticker:          tk,
+        totalBuyShares:  0,
+        totalBuyCost:    0,   // sum of (shares × price) for all buys
+        totalSellShares: 0,
+        totalSellValue:  0,   // sum of (shares × price) for all sells
+        realisedPL:      0,   // £ value from T212 result field if available
+        realisedPLPct:   [],  // array of individual plPct values to avg
+        tradeCount:      0,
+        openCount:       0,
+        closedCount:     0,
+        strategies:      new Set(),
+        firstDate:       t.entryDate,
+        lastDate:        t.entryDate,
+      };
+    }
+
+    const pos = map[tk];
+    pos.tradeCount++;
+
+    const shares = parseFloat(t.shares) || 0;
+    const entryPx = parseFloat(t.entryPrice) || 0;
+    const exitPx  = parseFloat(t.exitPrice)  || 0;
+
+    if (t.status === 'open') {
+      pos.openCount++;
+      pos.totalBuyShares += shares || 0;
+      pos.totalBuyCost   += (shares || 0) * entryPx;
+    } else {
+      pos.closedCount++;
+      // Entry side
+      const buyShares = shares || 0;
+      pos.totalBuyShares  += buyShares;
+      pos.totalBuyCost    += buyShares * entryPx;
+      // Exit side
+      pos.totalSellShares += buyShares;
+      pos.totalSellValue  += buyShares * exitPx;
+
+      if (t.plPct != null) pos.realisedPLPct.push(t.plPct);
+    }
+
+    if (t.strategy && t.strategy !== 'other') pos.strategies.add(t.strategy);
+    if (t.entryDate && t.entryDate < pos.firstDate) pos.firstDate = t.entryDate;
+    if (t.exitDate  && t.exitDate  > pos.lastDate)  pos.lastDate  = t.exitDate;
+    if (t.entryDate && t.entryDate > pos.lastDate)  pos.lastDate  = t.entryDate;
+  }
+
+  return Object.values(map).map(pos => {
+    const netShares   = pos.totalBuyShares - pos.totalSellShares;
+    const avgCost     = pos.totalBuyShares > 0 ? pos.totalBuyCost / pos.totalBuyShares : 0;
+    const totalInvested = netShares > 0 ? netShares * avgCost : pos.totalBuyCost;
+    // Realised P&L in currency (sell proceeds - buy cost for closed portion)
+    const realisedPLGBP = pos.totalSellValue - (pos.totalSellShares * avgCost);
+    // Weighted avg P&L% from individual trades
+    const avgPLPct = pos.realisedPLPct.length
+      ? pos.realisedPLPct.reduce((a,b) => a+b, 0) / pos.realisedPLPct.length
+      : null;
+
+    const status = netShares > 0.001 ? 'open' : 'closed';
+
+    return {
+      ...pos,
+      netShares,
+      avgCost,
+      totalInvested,
+      realisedPLGBP,
+      avgPLPct,
+      status,
+      strategies: [...pos.strategies],
+    };
+  }).sort((a,b) => {
+    // Open positions first, then by total invested descending
+    if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
+    return Math.abs(b.totalInvested) - Math.abs(a.totalInvested);
+  });
+}
+
+function renderAggregateView() {
+  const allTrades = getTrades();
+  const positions = buildAggregatePositions(allTrades);
+  const tbody     = g('aggregate-tbody');
+  if (!tbody) return;
+
+  if (!positions.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Trades</div><div class="es">Log trades or import a Trading 212 CSV to see aggregate positions</div></div></td></tr>`;
+    return;
+  }
+
+  const totalOpen   = positions.filter(p => p.status === 'open').length;
+  const totalClosed = positions.filter(p => p.status === 'closed').length;
+  const totalPLGBP  = positions.reduce((a,b) => a + (b.realisedPLGBP || 0), 0);
+  const sumEl = g('aggregate-summary');
+  if (sumEl) sumEl.innerHTML = `${totalOpen} open · ${totalClosed} closed · Net P&L: <b style="color:${totalPLGBP>=0?'var(--green)':'var(--red)'}">${totalPLGBP>=0?'+':''}£${Math.abs(totalPLGBP).toFixed(2)}</b>`;
+
+  tbody.innerHTML = positions.map((pos, i) => {
+    const plCls    = pos.avgPLPct == null ? '' : pos.avgPLPct > 0 ? 'pl-up' : pos.avgPLPct < 0 ? 'pl-down' : '';
+    const plStr    = pos.avgPLPct != null ? (pos.avgPLPct>=0?'+':'') + pos.avgPLPct.toFixed(2) + '%' : '—';
+    const plGBPCls = pos.realisedPLGBP > 0 ? 'pl-up' : pos.realisedPLGBP < 0 ? 'pl-down' : '';
+    const plGBPStr = pos.closedCount > 0
+      ? (pos.realisedPLGBP>=0?'+':'') + '£' + Math.abs(pos.realisedPLGBP).toFixed(2)
+      : '—';
+    const netSharesStr = pos.netShares > 0.001
+      ? `<b style="color:var(--green)">+${pos.netShares.toFixed(pos.netShares<1?4:pos.netShares<10?2:0)}</b>`
+      : `<span style="color:var(--muted)">0 (closed)</span>`;
+    const avgCostStr   = pos.avgCost > 0 ? '$' + pos.avgCost.toFixed(2) : '—';
+    const investedStr  = pos.totalInvested > 0 ? '£' + pos.totalInvested.toFixed(2) : '—';
+    const stratTags    = pos.strategies.slice(0,2).map(s =>
+      `<span class="stag ${s}" style="font-size:8px;padding:1px 5px">${STRAT_LABELS[s]||s}</span>`
+    ).join('');
+    const statusBadge  = pos.status === 'open'
+      ? `<span class="trade-status open">Open</span>`
+      : `<span class="trade-status closed">Closed</span>`;
+
+    return `<tr style="animation-delay:${i*20}ms">
+      <td class="td-tick">
+        ${pos.ticker}
+        <a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${pos.ticker}" target="_blank">TV ↗</a>
+        ${pos.source === 't212' ? `<span style="font-size:8px;color:var(--cyan);background:rgba(78,232,255,.1);border:1px solid rgba(78,232,255,.2);padding:1px 4px;margin-left:4px">T212</span>` : ''}
+        <div style="margin-top:3px">${stratTags}</div>
+      </td>
+      <td class="num">${netSharesStr}</td>
+      <td class="num">${avgCostStr}</td>
+      <td class="num" style="color:var(--muted)">${investedStr}</td>
+      <td class="num ${plCls}">${plStr}</td>
+      <td class="num ${plGBPCls}">${plGBPStr}</td>
+      <td class="ctr" style="font-size:10px">
+        <span style="color:var(--green)">${pos.closedCount} closed</span>
+        ${pos.openCount ? `<br><span style="color:var(--accent)">${pos.openCount} open</span>` : ''}
+      </td>
+      <td class="ctr">${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Toggle handler ────────────────────────────────────────────────────────
+g('btn-aggregate-view').addEventListener('click', () => {
+  aggregateViewActive = !aggregateViewActive;
+  const aggPanel  = g('aggregate-panel');
+  const tblWrap   = g('aggregate-panel')?.nextElementSibling; // the normal tbl-wrap
+
+  if (aggregateViewActive) {
+    g('btn-aggregate-view').textContent  = '☰ Individual Trades';
+    g('btn-aggregate-view').style.background = 'rgba(78,232,255,.2)';
+    g('btn-aggregate-view').style.borderColor = 'var(--cyan)';
+    aggPanel.style.display = 'block';
+    renderAggregateView();
+    // Hide normal trade table
+    document.querySelectorAll('.tbl-wrap').forEach(el => {
+      if (el.contains(g('trade-tbody'))) el.style.display = 'none';
+    });
+  } else {
+    g('btn-aggregate-view').textContent  = '⊞ Aggregate by Ticker';
+    g('btn-aggregate-view').style.background = '';
+    g('btn-aggregate-view').style.borderColor = '';
+    aggPanel.style.display = 'none';
+    document.querySelectorAll('.tbl-wrap').forEach(el => {
+      if (el.contains(g('trade-tbody'))) el.style.display = '';
+    });
+  }
+});
+
 function renderJournal() {
   trades = getTrades();
   g('journal-count').textContent = trades.length + (trades.length === 1 ? ' trade' : ' trades');
@@ -3356,6 +3553,7 @@ function renderJournal() {
   renderDashboard();
   renderStrategyPerf();
   renderTradeLog();
+  if (aggregateViewActive) renderAggregateView();
 }
 
 // ─── Import / export ──────────────────────────────────────────────────────
