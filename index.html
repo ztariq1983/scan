@@ -1556,11 +1556,54 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 
     <!-- Equity Curve + Performance Engine -->
     <div class="strat-perf-wrap equity-section">
-      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <span>📈 Equity Curve</span>
-        <span style="font-size:9px;color:var(--muted);font-weight:400">Cumulative P&L from closed trades</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px;font-weight:400">
+            Starting Balance
+            <input type="number" id="equity-starting-bal" placeholder="e.g. 10000" step="100"
+              style="width:110px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:4px 8px;outline:none"
+              title="Your account balance before your first trade">
+          </label>
+          <select id="equity-mode" style="background:var(--bg);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;padding:4px 8px;outline:none">
+            <option value="compound">Compound (realistic)</option>
+            <option value="currency">Currency £/$</option>
+            <option value="pct">% stacked (legacy)</option>
+          </select>
+        </div>
       </div>
       <div style="padding:14px 20px">
+
+        <!-- Capital Injection Log -->
+        <div style="margin-bottom:14px;padding:12px 14px;background:var(--bg);border:1px solid var(--border2)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:9px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase">💰 Capital Deposits / Withdrawals</span>
+            <button id="btn-toggle-injections" style="font-size:9px;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:1px">▼ Show</button>
+          </div>
+          <div id="injection-panel" style="display:none">
+            <!-- Add injection form -->
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+              <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px">
+                Date
+                <input type="date" id="inj-date" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none;width:130px">
+              </label>
+              <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px">
+                Amount (+ deposit / − withdrawal)
+                <input type="number" id="inj-amount" placeholder="e.g. 5000 or -2000" step="100"
+                  style="width:160px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none">
+              </label>
+              <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px">
+                Note (optional)
+                <input type="text" id="inj-note" placeholder="e.g. Monthly top-up"
+                  style="width:160px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none">
+              </label>
+              <button id="btn-add-injection" class="btn" style="background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.3);padding:5px 12px;font-size:10px">+ Add</button>
+            </div>
+            <!-- Injection list -->
+            <div id="injection-list" style="max-height:140px;overflow-y:auto"></div>
+          </div>
+        </div>
+
         <div id="equity-stats-row" class="equity-stats-row"></div>
         <div class="equity-chart-wrap" style="margin-top:12px" id="equity-curve-wrap">
           <div style="color:var(--muted);font-size:11px;text-align:center;padding:30px">Close trades to see your equity curve</div>
@@ -8249,60 +8292,202 @@ function renderEquityCurve() {
     return;
   }
 
-  // Cumulative P&L
-  let cum = 0;
-  const points = closed.map(t => { cum += t.plPct; return {date:t.exitDate, cum, pl:t.plPct}; });
-  const wins   = closed.filter(t=>t.plPct>0);
-  const losses = closed.filter(t=>t.plPct<0);
-  const winRate  = (wins.length/closed.length*100).toFixed(1);
-  const avgWin   = wins.length   ? (wins.reduce((a,b)=>a+b.plPct,0)/wins.length).toFixed(2) : 0;
-  const avgLoss  = losses.length ? (losses.reduce((a,b)=>a+b.plPct,0)/losses.length).toFixed(2) : 0;
+  // ── Starting balance + mode + injections ──────────────────────────────────
+  const startingBalEl = g('equity-starting-bal');
+  const modeEl        = g('equity-mode');
+  const startBal      = parseFloat(startingBalEl?.value) || parseFloat(localStorage.getItem('apex_equity_start_bal')) || 0;
+  const mode          = modeEl?.value || 'compound';
+
+  // Save starting balance when set
+  if (startingBalEl && parseFloat(startingBalEl.value) > 0) {
+    localStorage.setItem('apex_equity_start_bal', startingBalEl.value);
+  } else if (startingBalEl && !startingBalEl.value) {
+    const saved = localStorage.getItem('apex_equity_start_bal');
+    if (saved) startingBalEl.value = saved;
+  }
+
+  // Merge capital injections into the timeline
+  const injections = getInjections().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  const totalDeposited = injections.filter(i=>i.amount>0).reduce((a,b)=>a+b.amount, startBal);
+  const netCapitalInvested = startBal + injections.reduce((a,b)=>a+b.amount, 0);
+
+  // ── Build data points ──────────────────────────────────────────────────────
+  const wins   = closed.filter(t => t.plPct > 0);
+  const losses = closed.filter(t => t.plPct < 0);
+  const winRate    = (wins.length / closed.length * 100).toFixed(1);
+  const avgWin     = wins.length   ? (wins.reduce((a,b) => a+b.plPct, 0) / wins.length).toFixed(2) : 0;
+  const avgLoss    = losses.length ? (losses.reduce((a,b) => a+b.plPct, 0) / losses.length).toFixed(2) : 0;
   const expectancy = ((wins.length/closed.length)*(+avgWin) + (losses.length/closed.length)*(+avgLoss)).toFixed(2);
 
-  // Stats tiles
-  statsEl.innerHTML = [
-    {v:`${winRate}%`, l:'Win Rate', c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
-    {v:`+${avgWin}%`, l:'Avg Win', c:'green'},
-    {v:`${avgLoss}%`, l:'Avg Loss', c:'red'},
-    {v:`${expectancy}%`, l:'Expectancy', c: +expectancy>0?'green':'red'},
-    {v:`${cum.toFixed(1)}%`, l:'Total P&L', c: cum>=0?'green':'red'},
-    {v:closed.length, l:'Closed Trades', c:''},
-  ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
+  let points = [];
+  let finalLabel = '';
+  let startLabel = '';
+  let yAxisFmt   = v => v.toFixed(1) + '%';
 
-  // SVG equity curve
-  const W=700, H=160, PAD=32;
-  const vals = points.map(p=>p.cum);
-  const minV = Math.min(0, ...vals);
-  const maxV = Math.max(0.01, ...vals);
-  const range = maxV - minV || 1;
-  const x = i => PAD + (i / (points.length-1||1)) * (W - PAD*2);
-  const y = v => H - PAD - ((v-minV)/range) * (H-PAD*2);
-  const y0 = y(0);
+  if (mode === 'compound' && startBal > 0) {
+    // Build a merged timeline: trade exits + injection events, sorted by date
+    const events = [
+      ...closed.map(t   => ({ date: t.exitDate,   type: 'trade',     plPct: t.plPct,  amount: 0 })),
+      ...injections.map(inj => ({ date: inj.date,  type: 'injection', plPct: 0,        amount: inj.amount, note: inj.note })),
+    ].sort((a,b) => (a.date||'').localeCompare(b.date||''));
 
-  // Build polyline
-  const pts = points.map((p,i) => `${x(i).toFixed(1)},${y(p.cum).toFixed(1)}`).join(' ');
-  // Area fill
-  const area = `${x(0)},${y0} ${pts} ${x(points.length-1)},${y0}`;
-  // Color based on final value
-  const finalColor = cum >= 0 ? '#3dffa0' : '#ff5277';
+    let bal = startBal;
+    points  = [{ date: events[0]?.date || closed[0].exitDate, val: startBal, type: 'start' }];
+
+    for (const ev of events) {
+      if (ev.type === 'trade') {
+        bal = bal * (1 + ev.plPct / 100);
+        points.push({ date: ev.date, val: bal, type: 'trade', pl: ev.plPct });
+      } else {
+        // Injection: add/subtract capital — this is NOT a gain, just a balance jump
+        bal += ev.amount;
+        points.push({ date: ev.date, val: bal, type: 'injection', amount: ev.amount, note: ev.note });
+      }
+    }
+
+    const finalBal   = points[points.length-1].val;
+    // True return = final balance MINUS all capital injected (only count trading gains)
+    const totalCapital = startBal + injections.reduce((a,b)=>a+b.amount, 0);
+    const tradingGain  = finalBal - totalCapital;
+    const totalReturn  = totalCapital > 0 ? (tradingGain / totalCapital * 100) : 0;
+
+    finalLabel = `£${finalBal.toLocaleString('en-GB', {maximumFractionDigits:0})} (${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%)`;
+    startLabel = `£${startBal.toLocaleString('en-GB')}`;
+    yAxisFmt   = v => '£' + v.toLocaleString('en-GB', {maximumFractionDigits:0});
+
+    const maxBal = Math.max(...points.map(p=>p.val));
+    const minBal = Math.min(...points.map(p=>p.val));
+    const maxDD  = totalCapital > 0 ? ((maxBal - minBal) / maxBal * 100).toFixed(1) : '0.0';
+
+    const injSummary = injections.length
+      ? `<div class="equity-stat"><div class="equity-stat-val" style="color:var(--cyan)">£${totalCapital.toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Total Invested</div></div>
+         <div class="equity-stat"><div class="equity-stat-val" style="color:${tradingGain>=0?'var(--green)':'var(--red)'}">${tradingGain>=0?'+':''}£${Math.abs(tradingGain).toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Trading Gain</div></div>`
+      : '';
+
+    statsEl.innerHTML = [
+      {v:`${winRate}%`,             l:'Win Rate',     c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
+      {v:`+${avgWin}%`,             l:'Avg Win',       c:'green'},
+      {v:`${avgLoss}%`,             l:'Avg Loss',      c:'red'},
+      {v:`${expectancy}%`,          l:'Expectancy',    c: +expectancy>0?'green':'red'},
+      {v:`${totalReturn.toFixed(1)}%`, l:'Trading Return', c: totalReturn>=0?'green':'red'},
+      {v:`${maxDD}%`,               l:'Max Drawdown',  c:'red'},
+      {v:closed.length,             l:'Closed Trades', c:''},
+    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('') + injSummary;
+
+  } else if (mode === 'currency' && startBal > 0) {
+    // Currency: each trade's P&L applied as % of starting balance (simple, not compound)
+    let cum = startBal;
+    points = [{date: closed[0].exitDate, val: startBal, pl: 0}];
+    for (const t of closed) {
+      cum += startBal * (t.plPct / 100);
+      points.push({date: t.exitDate, val: cum, pl: t.plPct});
+    }
+    const finalBal  = points[points.length-1].val;
+    const totalGain = finalBal - startBal;
+    finalLabel = `£${finalBal.toLocaleString('en-GB', {maximumFractionDigits:0})}`;
+    startLabel = `£${startBal.toLocaleString('en-GB')}`;
+    yAxisFmt   = v => '£' + v.toLocaleString('en-GB', {maximumFractionDigits:0});
+
+    statsEl.innerHTML = [
+      {v:`${winRate}%`,    l:'Win Rate',    c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
+      {v:`+${avgWin}%`,   l:'Avg Win',     c:'green'},
+      {v:`${avgLoss}%`,   l:'Avg Loss',    c:'red'},
+      {v:`${expectancy}%`,l:'Expectancy',  c: +expectancy>0?'green':'red'},
+      {v:`£${Math.abs(totalGain).toLocaleString('en-GB',{maximumFractionDigits:0})}`, l:'Net Gain', c: totalGain>=0?'green':'red'},
+      {v:closed.length,   l:'Trades',      c:''},
+    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
+
+  } else {
+    // Legacy % stacked mode (no starting balance needed)
+    let cum = 0;
+    points = closed.map(t => { cum += t.plPct; return {date:t.exitDate, val:cum, pl:t.plPct}; });
+    finalLabel = `${cum>=0?'+':''}${cum.toFixed(1)}%`;
+    startLabel = '0%';
+
+    statsEl.innerHTML = [
+      {v:`${winRate}%`,    l:'Win Rate',    c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
+      {v:`+${avgWin}%`,   l:'Avg Win',     c:'green'},
+      {v:`${avgLoss}%`,   l:'Avg Loss',    c:'red'},
+      {v:`${expectancy}%`,l:'Expectancy',  c: +expectancy>0?'green':'red'},
+      {v:`${cum.toFixed(1)}%`, l:'Total %',c: cum>=0?'green':'red'},
+      {v:closed.length,   l:'Trades',      c:''},
+    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
+
+    if (!startBal && mode !== 'pct') {
+      // Prompt user to set starting balance
+      const prompt = document.createElement('div');
+      prompt.style.cssText = 'padding:8px 12px;background:rgba(255,155,78,.08);border:1px solid rgba(255,155,78,.3);font-size:10px;color:var(--orange);margin-bottom:10px;letter-spacing:.3px';
+      prompt.innerHTML = '⚠ Set a <b>Starting Balance</b> above to see accurate £ values and compound returns instead of stacked percentages.';
+      statsEl.before(prompt);
+    }
+  }
+
+  // ── SVG chart ──────────────────────────────────────────────────────────────
+  const W=700, H=160, PAD=48;
+  const vals   = points.map(p => p.val);
+  const minV   = Math.min(...vals);
+  const maxV   = Math.max(...vals);
+  const range  = maxV - minV || 1;
+  const x      = i => PAD + (i / (points.length-1||1)) * (W - PAD*2);
+  const y      = v => H - PAD - ((v-minV)/range) * (H-PAD*2);
+  const finalVal = points[points.length-1].val;
+  const startVal = points[0].val;
+  const finalColor = finalVal >= (startBal || startVal) ? '#3dffa0' : '#ff5277';
+
+  const pts  = points.map((p,i) => `${x(i).toFixed(1)},${y(p.val).toFixed(1)}`).join(' ');
+  const area = `${x(0)},${y(startVal)} ${pts} ${x(points.length-1)},${y(startVal)}`;
+
+  // Y-axis labels (4 ticks)
+  const yTicks = [0,1,2,3].map(i => {
+    const v  = minV + (range * i / 3);
+    const yp = y(v);
+    return `<text x="${PAD-4}" y="${yp+4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${yAxisFmt(v)}</text>
+      <line x1="${PAD}" y1="${yp}" x2="${W-PAD}" y2="${yp}" stroke="rgba(255,255,255,.04)" stroke-width="1"/>`;
+  }).join('');
+
+  // Injection markers: vertical cyan lines where deposits/withdrawals happened
+  const injectionMarkers = points.map((p,i) => {
+    if (p.type !== 'injection') return '';
+    const xi     = x(i);
+    const isDeposit = p.amount >= 0;
+    const col    = isDeposit ? 'rgba(78,232,255,.7)' : 'rgba(255,82,119,.7)';
+    const symbol = isDeposit ? '▲' : '▼';
+    const label  = (isDeposit?'+':'') + '£' + Math.abs(p.amount).toLocaleString('en-GB',{maximumFractionDigits:0});
+    return `<line x1="${xi.toFixed(1)}" y1="${PAD}" x2="${xi.toFixed(1)}" y2="${H-PAD}"
+        stroke="${col}" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="${xi.toFixed(1)}" y="${PAD-3}" fill="${col}" font-size="8" font-family="Fira Code" text-anchor="middle">${symbol} ${label}</text>`;
+  }).join('');
+
+  // Drawdown shading
+  let ddShading = '';
+  if (mode === 'compound' || mode === 'currency') {
+    const belowPts = points.filter(p => p.val < startVal);
+    if (belowPts.length) {
+      ddShading = `<rect x="${x(points.findIndex(p=>p.val<startVal))}" y="${y(startVal)}" 
+        width="${x(points.length-1) - x(points.findIndex(p=>p.val<startVal))}" 
+        height="${Math.max(0, y(minV)-y(startVal))}" fill="rgba(255,82,119,.04)"/>`;
+    }
+  }
 
   wrapEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
-    <!-- Grid -->
-    <line x1="${PAD}" y1="${y0}" x2="${W-PAD}" y2="${y0}" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-dasharray="4"/>
+    ${yTicks}
+    ${ddShading}
+    <!-- Zero/start line -->
+    <line x1="${PAD}" y1="${y(startVal)}" x2="${W-PAD}" y2="${y(startVal)}" stroke="rgba(255,255,255,.12)" stroke-width="1" stroke-dasharray="4"/>
     <!-- Area fill -->
-    <polygon points="${area}" fill="${finalColor}" opacity=".08"/>
+    <polygon points="${area}" fill="${finalColor}" opacity=".07"/>
     <!-- Line -->
     <polyline points="${pts}" fill="none" stroke="${finalColor}" stroke-width="2"/>
-    <!-- Start dot -->
-    <circle cx="${x(0)}" cy="${y(0)}" r="3" fill="${finalColor}"/>
-    <!-- End dot -->
-    <circle cx="${x(points.length-1)}" cy="${y(cum)}" r="4" fill="${finalColor}"/>
-    <!-- Labels -->
-    <text x="${PAD-2}" y="${y0-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">0%</text>
-    <text x="${PAD-2}" y="${y(maxV)+4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">+${maxV.toFixed(1)}%</text>
-    ${minV < 0 ? `<text x="${PAD-2}" y="${y(minV)-2}" fill="rgba(255,82,119,.5)" font-size="9" font-family="Fira Code">${minV.toFixed(1)}%</text>` : ''}
-    <text x="${W-PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${closed[closed.length-1].exitDate}</text>
-    <text x="${W-PAD+2}" y="${y(cum)}" fill="${finalColor}" font-size="10" font-family="Fira Code,sans-serif" font-weight="700">${cum>=0?'+':''}${cum.toFixed(1)}%</text>
+    <!-- Injection markers -->
+    ${injectionMarkers}
+    <!-- Start dot + label -->
+    <circle cx="${x(0)}" cy="${y(points[0].val)}" r="3" fill="${finalColor}"/>
+    <text x="${PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">${points[0].date}</text>
+    <text x="${PAD}" y="${y(points[0].val)-6}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">${startLabel}</text>
+    <!-- End dot + label -->
+    <circle cx="${x(points.length-1)}" cy="${y(finalVal)}" r="4" fill="${finalColor}"/>
+    <text x="${W-PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${points[points.length-1].date}</text>
+    <text x="${W-PAD+2}" y="${y(finalVal)}" fill="${finalColor}" font-size="10" font-family="Fira Code,sans-serif" font-weight="700">${finalLabel}</text>
   </svg>`;
 }
 
@@ -8340,6 +8525,100 @@ renderJournal = function() {
   renderEquityCurve();
   renderDOWChart();
 };
+
+// Restore saved starting balance on load and wire inputs
+const savedStartBal = localStorage.getItem('apex_equity_start_bal');
+if (savedStartBal && g('equity-starting-bal')) {
+  g('equity-starting-bal').value = savedStartBal;
+}
+g('equity-starting-bal')?.addEventListener('input', renderEquityCurve);
+g('equity-mode')?.addEventListener('change', renderEquityCurve);
+
+// ─── Capital Injections / Withdrawals ─────────────────────────────────────────
+const INJECTIONS_KEY = 'apex_capital_injections';
+
+function getInjections() {
+  try { return JSON.parse(localStorage.getItem(INJECTIONS_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveInjections(list) {
+  localStorage.setItem(INJECTIONS_KEY, JSON.stringify(list));
+}
+
+function renderInjectionList() {
+  const el   = g('injection-list');
+  if (!el) return;
+  const list = getInjections().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:4px 0">No deposits or withdrawals logged yet.</div>';
+    return;
+  }
+  const totalDeposited   = list.filter(i=>i.amount>0).reduce((a,b)=>a+b.amount,0);
+  const totalWithdrawn   = list.filter(i=>i.amount<0).reduce((a,b)=>a+b.amount,0);
+  const netCapital       = totalDeposited + totalWithdrawn;
+
+  el.innerHTML = `
+    <div style="display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--green)">Total deposited: <b>£${totalDeposited.toLocaleString('en-GB',{maximumFractionDigits:0})}</b></span>
+      ${totalWithdrawn ? `<span style="font-size:10px;color:var(--red)">Withdrawn: <b>£${Math.abs(totalWithdrawn).toLocaleString('en-GB',{maximumFractionDigits:0})}</b></span>` : ''}
+      <span style="font-size:10px;color:var(--muted)">Net capital invested: <b style="color:var(--text)">£${netCapital.toLocaleString('en-GB',{maximumFractionDigits:0})}</b></span>
+    </div>
+    ${list.map((inj,i) => {
+      const isDeposit = inj.amount >= 0;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border2)">
+        <span style="font-size:10px;color:var(--muted);min-width:80px">${inj.date || '—'}</span>
+        <span style="font-family:var(--font-mono);font-size:11px;font-weight:600;color:${isDeposit?'var(--green)':'var(--red)'};min-width:80px">${isDeposit?'+':''}£${Math.abs(inj.amount).toLocaleString('en-GB',{maximumFractionDigits:0})}</span>
+        <span style="font-size:10px;color:var(--text);flex:1">${inj.note || (isDeposit ? 'Deposit' : 'Withdrawal')}</span>
+        <button data-del-inj="${i}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 4px" title="Delete">✕</button>
+      </div>`;
+    }).join('')}`;
+
+  // Wire delete buttons
+  el.querySelectorAll('[data-del-inj]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx  = parseInt(btn.dataset.delInj);
+      const list = getInjections();
+      const inj  = list[idx];
+      if (!confirm(`Remove this ${inj.amount>=0?'deposit':'withdrawal'}?\n£${Math.abs(inj.amount).toLocaleString('en-GB')} on ${inj.date}`)) return;
+      list.splice(idx, 1);
+      saveInjections(list);
+      renderInjectionList();
+      renderEquityCurve();
+    });
+  });
+}
+
+// Wire show/hide toggle
+g('btn-toggle-injections')?.addEventListener('click', () => {
+  const panel = g('injection-panel');
+  const btn   = g('btn-toggle-injections');
+  if (!panel || !btn) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? '▼ Show' : '▲ Hide';
+  if (!open) renderInjectionList();
+});
+
+// Wire add injection button
+g('btn-add-injection')?.addEventListener('click', () => {
+  const date   = g('inj-date').value;
+  const amount = parseFloat(g('inj-amount').value);
+  const note   = g('inj-note').value.trim();
+
+  if (!date)           { alert('Please enter a date.'); return; }
+  if (!amount || isNaN(amount)) { alert('Please enter an amount (positive for deposit, negative for withdrawal).'); return; }
+
+  const list = getInjections();
+  list.push({ date, amount, note });
+  saveInjections(list);
+
+  // Clear inputs
+  g('inj-amount').value = '';
+  g('inj-note').value   = '';
+
+  renderInjectionList();
+  renderEquityCurve();
+});
 
 // ═════════════════════════════════════════════════════════════════════════════
 // PIPELINE v2 — Gap scan + RVOL filter + News catalyst + Score ranking
