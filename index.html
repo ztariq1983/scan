@@ -1531,7 +1531,9 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
         <button class="btn btn-orange" id="btn-new-trade">+ Log New Trade</button>
         <button class="btn btn-ghost" id="btn-export-journal">⬇ Export JSON</button>
         <button class="btn btn-ghost" id="btn-import-journal">⬆ Import JSON</button>
-        <input type="file" id="journal-file" accept=".json" style="display:none">
+        <button class="btn" id="btn-import-t212" style="background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.3)">📥 Import Trading 212 CSV</button>
+        <input type="file" id="journal-file"    accept=".json" style="display:none">
+        <input type="file" id="t212-csv-file"   accept=".csv"  style="display:none">
         <div style="font-size:10px;color:var(--muted);letter-spacing:.5px;flex:1;min-width:200px">
           All P/L is tracked as <b style="color:var(--accent)">% gain/loss</b> (FX-neutral). Saved to browser localStorage.
         </div>
@@ -3320,8 +3322,12 @@ function renderTradeLog() {
     const stagCls = t.strategy === 'other' ? 'flat' : t.strategy;
     const statusLbl = t.status === 'open' ? 'Open' : t.status === 'win' ? 'Win' : t.status === 'loss' ? 'Loss' : 'BE';
     const titleNotes = [t.entryNotes && `Entry: ${t.entryNotes}`, t.exitNotes && `Exit: ${t.exitNotes}`].filter(Boolean).join(' | ');
+    const t212Badge = t.source === 't212'
+      ? `<span style="font-size:8px;letter-spacing:1px;color:var(--cyan);background:rgba(78,232,255,.1);border:1px solid rgba(78,232,255,.25);padding:1px 5px;margin-left:5px;vertical-align:middle">T212</span>`
+      : '';
+    const sharesStr = t.shares ? `<span style="font-size:9px;color:var(--muted);margin-left:4px">${t.shares > 0 ? t.shares.toFixed(t.shares < 1 ? 4 : 0) + ' shares' : ''}</span>` : '';
     return `<tr style="animation-delay:${i*30}ms" ${titleNotes ? `title="${titleNotes.replace(/"/g,'&quot;')}"` : ''}>
-      <td class="td-tick">${t.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${t.ticker}" target="_blank">TV ↗</a></td>
+      <td class="td-tick">${t.ticker}${t212Badge}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${t.ticker}" target="_blank">TV ↗</a>${sharesStr}</td>
       <td class="trade-date">${fmtDate(t.entryDate)}</td>
       <td class="num">$${t.entryPrice.toFixed(2)}</td>
       <td><span class="strat-pill stag ${stagCls}">${STRAT_LABELS[t.strategy] || t.strategy}</span></td>
@@ -3387,11 +3393,223 @@ function importJournal(file) {
   reader.readAsText(file);
 }
 
+// ─── Trading 212 CSV Importer ─────────────────────────────────────────────────
+function parseT212CSV(text) {
+  const lines = text.trim().split('\n');
+  if (!lines.length) throw new Error('Empty file');
+
+  // Parse header row — T212 uses comma-separated, values may be quoted
+  const parseRow = line => {
+    const cols = [];
+    let cur = '', inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; continue; }
+      if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    cols.push(cur.trim());
+    return cols;
+  };
+
+  const headers = parseRow(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+
+  // Column index helpers — T212 column names vary slightly by export version
+  const idx = name => {
+    const exact = headers.indexOf(name);
+    if (exact >= 0) return exact;
+    return headers.findIndex(h => h.includes(name.split('_')[0]));
+  };
+
+  const iAction   = idx('action');
+  const iTime     = idx('time');
+  const iTicker   = idx('ticker');
+  const iName     = idx('name');
+  const iShares   = idx('no__of_shares') >= 0 ? idx('no__of_shares') : headers.findIndex(h => h.includes('share') && !h.includes('price'));
+  const iPrice    = headers.findIndex(h => h.includes('price') && h.includes('share'));
+  const iCcy      = headers.findIndex(h => h.includes('currency') && h.includes('price'));
+  const iResult   = headers.findIndex(h => h.includes('result'));
+  const iTotal    = headers.findIndex(h => h.includes('total') && !h.includes('fee'));
+  const iNotes    = idx('notes');
+  const iID       = idx('id');
+
+  if (iAction < 0 || iTime < 0) {
+    throw new Error('Could not find required columns (Action, Time). Make sure you export from Trading 212 History → Export CSV.');
+  }
+
+  const BUY_ACTIONS  = ['market buy','limit buy','stop buy','buy'];
+  const SELL_ACTIONS = ['market sell','limit sell','stop sell','sell'];
+
+  const rows = lines.slice(1).map(l => parseRow(l)).filter(r => r.length > 2);
+
+  // Group buys and sells by ticker to match trades
+  const buyMap  = {};   // ticker → [buy rows]
+  const sellMap = {};   // ticker → [sell rows]
+
+  for (const row of rows) {
+    const action = (row[iAction] || '').toLowerCase().trim();
+    const ticker = (row[iTicker] || '').toUpperCase().trim();
+    if (!ticker || ticker === 'N/A') continue;
+    if (BUY_ACTIONS.some(a => action.includes(a))) {
+      if (!buyMap[ticker]) buyMap[ticker] = [];
+      buyMap[ticker].push(row);
+    } else if (SELL_ACTIONS.some(a => action.includes(a))) {
+      if (!sellMap[ticker]) sellMap[ticker] = [];
+      sellMap[ticker].push(row);
+    }
+  }
+
+  const trades = [];
+
+  // Match buys to sells — FIFO: earliest buy matched to earliest sell
+  const allTickers = new Set([...Object.keys(buyMap), ...Object.keys(sellMap)]);
+
+  for (const ticker of allTickers) {
+    const buys  = (buyMap[ticker]  || []).sort((a,b) => (a[iTime]||'').localeCompare(b[iTime]||''));
+    const sells = (sellMap[ticker] || []).sort((a,b) => (a[iTime]||'').localeCompare(b[iTime]||''));
+
+    // FIFO matching
+    let buyQueue = buys.map(r => ({
+      row: r,
+      date:    (r[iTime] || '').split(' ')[0],
+      price:   parseFloat(r[iPrice]) || 0,
+      shares:  parseFloat(r[iShares]) || 0,
+      remaining: parseFloat(r[iShares]) || 0,
+    }));
+
+    for (const sellRow of sells) {
+      const sellDate   = (sellRow[iTime] || '').split(' ')[0];
+      const sellPrice  = parseFloat(sellRow[iPrice]) || 0;
+      let   sellShares = parseFloat(sellRow[iShares]) || 0;
+      const t212Result = parseFloat(sellRow[iResult]) || null;
+      const t212ID     = sellRow[iID] || Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+      // Find matching buys (FIFO)
+      while (sellShares > 0 && buyQueue.length > 0) {
+        const buy = buyQueue[0];
+        const matched = Math.min(buy.remaining, sellShares);
+        sellShares     -= matched;
+        buy.remaining  -= matched;
+
+        const entryPrice = buy.price;
+        const exitPrice  = sellPrice;
+        const plPct      = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 : 0;
+
+        // Use T212's reported result for P&L in GBP if available
+        const notes = [
+          sellRow[iNotes] || '',
+          t212Result != null ? `T212 result: £${t212Result.toFixed(2)}` : '',
+          `T212 ID: ${t212ID}`,
+        ].filter(Boolean).join(' · ');
+
+        trades.push({
+          id:          't212_' + t212ID + '_' + buy.row[iID],
+          ticker,
+          entryDate:   buy.date,
+          entryPrice,
+          exitDate:    sellDate,
+          exitPrice,
+          plPct:       parseFloat(plPct.toFixed(3)),
+          shares:      matched,
+          currency:    sellRow[iCcy] || 'GBP',
+          strategy:    'other',
+          notes,
+          exitReason:  'Market Sell',
+          mistakes:    [],
+          status:      'closed',
+          source:      't212',
+        });
+
+        if (buy.remaining <= 0.0001) buyQueue.shift();
+      }
+    }
+
+    // Remaining buys with no matching sell = open positions
+    for (const buy of buyQueue) {
+      if (buy.remaining <= 0.0001) continue;
+      trades.push({
+        id:         't212_open_' + (buy.row[iID] || ticker + buy.date),
+        ticker,
+        entryDate:  buy.date,
+        entryPrice: buy.price,
+        shares:     buy.remaining,
+        currency:   buy.row[iCcy] || 'GBP',
+        strategy:   'other',
+        notes:      'Imported from Trading 212 — open position',
+        mistakes:   [],
+        status:     'open',
+        source:     't212',
+      });
+    }
+  }
+
+  return trades;
+}
+
+function importT212CSV(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const trades = parseT212CSV(ev.target.result);
+      if (!trades.length) {
+        alert('No trades found in this CSV.\n\nMake sure you exported from:\nTrading 212 → Activity → Export');
+        return;
+      }
+
+      const closed = trades.filter(t => t.status === 'closed').length;
+      const open   = trades.filter(t => t.status === 'open').length;
+      const tickers = [...new Set(trades.map(t => t.ticker))].sort();
+
+      const preview = `Trading 212 CSV — ready to import:\n\n` +
+        `📊 ${closed} closed trades\n` +
+        `📂 ${open} open positions\n` +
+        `🏷 ${tickers.length} unique tickers: ${tickers.slice(0,8).join(', ')}${tickers.length>8?'…':''}\n\n` +
+        `Trades will be MERGED with your existing journal.\n` +
+        `Duplicate imports are safely skipped (matched by T212 trade ID).\n\n` +
+        `After import:\n` +
+        `• Strategies tagged as "other" — use ✎ to update\n` +
+        `• P&L% calculated from matched buy/sell prices (FIFO)\n` +
+        `• Open positions show with no exit price\n\n` +
+        `Proceed?`;
+
+      if (!confirm(preview)) return;
+
+      const existing    = getTrades();
+      const existingIds = new Set(existing.map(t => t.id));
+      const newTrades   = trades.filter(t => !existingIds.has(t.id));
+      const skipped     = trades.length - newTrades.length;
+
+      saveTrades([...existing, ...newTrades]);
+      renderJournal();
+
+      alert(
+        `✓ Import complete!\n\n` +
+        `${newTrades.length} trades added\n` +
+        `${skipped} duplicates skipped\n\n` +
+        `Tip: Click ✎ on any row to change the strategy tag from "other" to the correct one.`
+      );
+    } catch(e) {
+      alert(
+        `✗ Import failed: ${e.message}\n\n` +
+        `Make sure you exported from:\n` +
+        `Trading 212 → Activity → History → Export\n\n` +
+        `The file should start with columns like:\n` +
+        `Action, Time, ISIN, Ticker, Name, No. of shares...`
+      );
+    }
+    // Reset file input so same file can be re-imported if needed
+    g('t212-csv-file').value = '';
+  };
+  reader.readAsText(file);
+}
+
 // ─── Wire Journal events ──────────────────────────────────────────────────
 g('btn-new-trade').addEventListener('click', openEntryModal);
 g('btn-export-journal').addEventListener('click', exportJournal);
 g('btn-import-journal').addEventListener('click', () => g('journal-file').click());
 g('journal-file').addEventListener('change', e => { if (e.target.files[0]) importJournal(e.target.files[0]); });
+g('btn-import-t212').addEventListener('click', () => g('t212-csv-file').click());
+g('t212-csv-file').addEventListener('change', e => { if (e.target.files[0]) importT212CSV(e.target.files[0]); });
 
 g('entry-cancel').addEventListener('click', closeEntryModal);
 g('entry-save').addEventListener('click', saveEntry);
