@@ -10096,90 +10096,63 @@ async function aiRunAnalyst(type) {
 window.aiRunAnalyst = aiRunAnalyst;
 
 // ── Bull / Bear debate ────────────────────────────────────────────────────
-async function aiRunDebate() {
+// ── Helpers ───────────────────────────────────────────────────────────────
+function aiGetBase() {
   const apiKey = document.getElementById('ai-api-key').value.trim() || aiLoadKey();
-  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
   const ticker = (document.getElementById('ai-ticker').value || '').trim().toUpperCase() || 'the stock';
   const date = document.getElementById('ai-date').value || new Date().toISOString().slice(0, 10);
-
   const reportsText = [
-    aiReports.market && `MARKET/TECHNICAL REPORT:\n${aiReports.market}`,
-    aiReports.news   && `NEWS/EVENT REPORT:\n${aiReports.news}`,
+    aiReports.market && `MARKET REPORT:\n${aiReports.market}`,
+    aiReports.news   && `NEWS REPORT:\n${aiReports.news}`,
     aiReports.social && `SENTIMENT REPORT:\n${aiReports.social}`,
     aiReports.fund   && `FUNDAMENTALS REPORT:\n${aiReports.fund}`,
   ].filter(Boolean).join('\n\n---\n\n');
-
-  if (!reportsText) {
-    alert('Run at least one analyst first so the researchers have material to debate.');
-    return;
-  }
-
+  return { apiKey, ticker, date, reportsText };
+}
+async function aiRunBull() {
+  const { apiKey, ticker, date, reportsText } = aiGetBase();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  if (!reportsText) { alert('Run at least one analyst first.'); return; }
+  const result = await streamClaude({ apiKey, system: `You are a bullish equity researcher. Given the analyst reports, construct the strongest BULLISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bull catalysts. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('ai-out-bull'), statusEl: document.getElementById('ai-status-bull') });
+  if (result) aiReports._bull = result;
+}
+window.aiRunBull = aiRunBull;
+async function aiRunBear() {
+  const { apiKey, ticker, date, reportsText } = aiGetBase();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  if (!reportsText) { alert('Run at least one analyst first.'); return; }
+  const result = await streamClaude({ apiKey, system: `You are a bearish equity researcher. Given the analyst reports, construct the strongest BEARISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bear risks. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('ai-out-bear'), statusEl: document.getElementById('ai-status-bear') });
+  if (result) aiReports._bear = result;
+}
+window.aiRunBear = aiRunBear;
+async function aiRunSynthesis() {
+  const { apiKey, ticker, date, reportsText } = aiGetBase();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  const bullText = aiReports._bull || document.getElementById('ai-out-bull').textContent || '(not run)';
+  const bearText = aiReports._bear || document.getElementById('ai-out-bear').textContent || '(not run)';
+  const ctx = `BULL CASE:\n${bullText}\n\nBEAR CASE:\n${bearText}` + (reportsText ? `\n\n---\nAnalyst reports:\n\n${reportsText}` : '');
   const statusEl = document.getElementById('ai-debate-status');
-
-  // Bull researcher
-  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bull Researcher…';
-  const bullOut = document.getElementById('ai-out-bull');
-  const bullResult = await streamClaude({
-    apiKey,
-    system: `You are a bullish equity researcher at a professional trading firm.
-Given the analyst reports below, construct the strongest possible BULLISH case for ${ticker} as of ${date}.
-Be specific — cite evidence from the reports. Identify the top 3-5 bull catalysts. ~200 words.`,
-    userMsg: reportsText,
-    outEl: bullOut,
-    statusEl: null
-  });
-
-  // Bear researcher
-  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bear Researcher…';
-  const bearOut = document.getElementById('ai-out-bear');
-  const bearResult = await streamClaude({
-    apiKey,
-    system: `You are a bearish equity researcher at a professional trading firm.
-Given the analyst reports below, construct the strongest possible BEARISH case for ${ticker} as of ${date}.
-Be specific — cite evidence from the reports. Identify the top 3-5 bear risks. ~200 words.`,
-    userMsg: reportsText,
-    outEl: bearOut,
-    statusEl: null
-  });
-
-  // Research Manager synthesis
-  statusEl.innerHTML = '<span class="ai-spin"></span> Research Manager synthesising…';
-  const verdictOut = document.getElementById('ai-out-verdict');
-  const debateContext = `BULL CASE:\n${bullResult || '(not available)'}\n\nBEAR CASE:\n${bearResult || '(not available)'}\n\n---\nOriginal analyst reports:\n\n${reportsText}`;
-
-  await streamClaude({
-    apiKey,
-    system: `You are a senior research manager at a professional trading firm.
-You have just received a bull and bear debate about ${ticker} (as of ${date}), along with the underlying analyst reports.
-Write a balanced but decisive research synthesis:
-1. Weigh the bull vs bear arguments.
-2. State your overall investment lean (bullish / bearish / neutral) with conviction level.
-3. Identify the 2-3 key factors that will determine the outcome.
-4. Give a suggested trade action (BUY / SELL / HOLD / WAIT) with a brief rationale.
-~250 words. Be decisive.`,
-    userMsg: debateContext,
-    outEl: verdictOut,
-    statusEl: null
-  });
-
-  statusEl.innerHTML = '✓ Debate complete';
+  statusEl.innerHTML = '<span class="ai-spin"></span> Synthesising…';
+  await streamClaude({ apiKey, system: `You are a senior research manager. Synthesise the bull vs bear debate for ${ticker} as of ${date}. State your lean (bullish/bearish/neutral) with conviction. Identify 2-3 key determinants. Give a trade action (BUY/SELL/HOLD/WAIT) with rationale. ~250 words. Be decisive.`, userMsg: ctx, outEl: document.getElementById('ai-out-verdict'), statusEl: null });
+  statusEl.innerHTML = '✓ Synthesis complete';
+}
+window.aiRunSynthesis = aiRunSynthesis;
+async function aiRunDebate() {
+  const { apiKey } = aiGetBase();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  document.getElementById('ai-debate-status').innerHTML = '<span class="ai-spin"></span> Running Bull…';
+  await aiRunBull();
+  document.getElementById('ai-debate-status').innerHTML = '<span class="ai-spin"></span> Running Bear…';
+  await aiRunBear();
+  await aiRunSynthesis();
 }
 window.aiRunDebate = aiRunDebate;
-
-// ── Run All ───────────────────────────────────────────────────────────────
 async function aiRunAll() {
   const btn = document.getElementById('ai-run-all-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="ai-spin"></span> Running…';
-
-  // Analysts in sequence (to avoid rate limiting)
-  for (const type of ['market', 'news', 'social', 'fund']) {
-    await aiRunAnalyst(type);
-  }
+  btn.disabled = true; btn.innerHTML = '<span class="ai-spin"></span> Running…';
+  for (const type of ['market', 'news', 'social', 'fund']) await aiRunAnalyst(type);
   await aiRunDebate();
-
-  btn.disabled = false;
-  btn.textContent = '▶ Run All';
+  btn.disabled = false; btn.textContent = '▶ Run All';
 }
 window.aiRunAll = aiRunAll;
 
@@ -10336,50 +10309,62 @@ async function gmRunAnalyst(type) {
 }
 window.gmRunAnalyst = gmRunAnalyst;
 
-async function gmRunDebate() {
+function gmGetBase() {
   const apiKey = document.getElementById('gm-api-key').value.trim() || gmLoadKey();
-  if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
   const ticker = (document.getElementById('gm-ticker').value || '').trim().toUpperCase() || 'the stock';
   const date = document.getElementById('gm-date').value || new Date().toISOString().slice(0, 10);
-
   const reportsText = [
     gmReports.market && `MARKET REPORT:\n${gmReports.market}`,
     gmReports.news   && `NEWS REPORT:\n${gmReports.news}`,
     gmReports.social && `SENTIMENT REPORT:\n${gmReports.social}`,
     gmReports.fund   && `FUNDAMENTALS REPORT:\n${gmReports.fund}`,
   ].filter(Boolean).join('\n\n---\n\n');
-
+  return { apiKey, ticker, date, reportsText };
+}
+async function gmRunBull() {
+  const { apiKey, ticker, date, reportsText } = gmGetBase();
+  if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
   if (!reportsText) { alert('Run at least one analyst first.'); return; }
-
+  const result = await streamGemini({ apiKey, system: `You are a bullish equity researcher. Given the analyst reports, construct the strongest BULLISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bull catalysts. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bull'), statusEl: document.getElementById('gm-status-bull') });
+  if (result) gmReports._bull = result;
+}
+window.gmRunBull = gmRunBull;
+async function gmRunBear() {
+  const { apiKey, ticker, date, reportsText } = gmGetBase();
+  if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
+  if (!reportsText) { alert('Run at least one analyst first.'); return; }
+  const result = await streamGemini({ apiKey, system: `You are a bearish equity researcher. Given the analyst reports, construct the strongest BEARISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bear risks. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bear'), statusEl: document.getElementById('gm-status-bear') });
+  if (result) gmReports._bear = result;
+}
+window.gmRunBear = gmRunBear;
+async function gmRunSynthesis() {
+  const { apiKey, ticker, date, reportsText } = gmGetBase();
+  if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
+  const bullText = gmReports._bull || document.getElementById('gm-out-bull').textContent || '(not run)';
+  const bearText = gmReports._bear || document.getElementById('gm-out-bear').textContent || '(not run)';
+  const ctx = `BULL CASE:\n${bullText}\n\nBEAR CASE:\n${bearText}` + (reportsText ? `\n\n---\nAnalyst reports:\n\n${reportsText}` : '');
   const statusEl = document.getElementById('gm-debate-status');
-
-  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bull Researcher…';
-  const bullResult = await streamGemini({ apiKey, system: `You are a bullish equity researcher. Given the analyst reports, build the strongest BULLISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bull catalysts. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bull'), statusEl: null });
-
-  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bear Researcher…';
-  const bearResult = await streamGemini({ apiKey, system: `You are a bearish equity researcher. Given the analyst reports, build the strongest BEARISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bear risks. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bear'), statusEl: null });
-
-  statusEl.innerHTML = '<span class="ai-spin"></span> Research Manager synthesising…';
-  await streamGemini({
-    apiKey,
-    system: `You are a senior research manager. Synthesise the bull vs bear debate for ${ticker} as of ${date}. State your overall lean (bullish/bearish/neutral) with conviction. Identify 2-3 key determinants. Give a trade action (BUY/SELL/HOLD/WAIT) with rationale. ~250 words. Be decisive.`,
-    userMsg: `BULL CASE:\n${bullResult||'(unavailable)'}\n\nBEAR CASE:\n${bearResult||'(unavailable)'}\n\n---\n${reportsText}`,
-    outEl: document.getElementById('gm-out-verdict'),
-    statusEl: null
-  });
-
-  statusEl.innerHTML = '✓ Debate complete';
+  statusEl.innerHTML = '<span class="ai-spin"></span> Synthesising…';
+  await streamGemini({ apiKey, system: `You are a senior research manager. Synthesise the bull vs bear debate for ${ticker} as of ${date}. State your lean (bullish/bearish/neutral) with conviction. Identify 2-3 key determinants. Give a trade action (BUY/SELL/HOLD/WAIT) with rationale. ~250 words. Be decisive.`, userMsg: ctx, outEl: document.getElementById('gm-out-verdict'), statusEl: null });
+  statusEl.innerHTML = '✓ Synthesis complete';
+}
+window.gmRunSynthesis = gmRunSynthesis;
+async function gmRunDebate() {
+  const { apiKey } = gmGetBase();
+  if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
+  document.getElementById('gm-debate-status').innerHTML = '<span class="ai-spin"></span> Running Bull…';
+  await gmRunBull();
+  document.getElementById('gm-debate-status').innerHTML = '<span class="ai-spin"></span> Running Bear…';
+  await gmRunBear();
+  await gmRunSynthesis();
 }
 window.gmRunDebate = gmRunDebate;
-
 async function gmRunAll() {
   const btn = document.getElementById('gm-run-all-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="ai-spin"></span> Running…';
+  btn.disabled = true; btn.innerHTML = '<span class="ai-spin"></span> Running…';
   for (const type of ['market', 'news', 'social', 'fund']) await gmRunAnalyst(type);
   await gmRunDebate();
-  btn.disabled = false;
-  btn.textContent = '▶ Run All';
+  btn.disabled = false; btn.textContent = '▶ Run All';
 }
 window.gmRunAll = gmRunAll;
 
@@ -10494,18 +10479,26 @@ refreshRSWatchlistDropdown();
 
       <div class="ai-debate-grid">
         <div class="ai-debater bull">
-          <div class="ai-debater-hdr">
-            <div class="ai-debater-label">🐂 Bull Researcher</div>
-            <div class="ai-debater-sub">Strongest upside case from analyst reports</div>
+          <div class="ai-debater-hdr" style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="ai-debater-label">🐂 Bull Researcher</div>
+              <div class="ai-debater-sub">Strongest upside case from analyst reports</div>
+            </div>
+            <button style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--green)';this.style.color='#000'" onmouseout="this.style.background='var(--green-dim)';this.style.color='var(--green)'" onclick="aiRunBull()">▶ Run</button>
           </div>
-          <div class="ai-debater-out" id="ai-out-bull">Runs after analysts complete…</div>
+          <div class="ai-debater-out" id="ai-out-bull">Run analysts first, then click ▶ Run…</div>
+          <div id="ai-status-bull" style="padding:6px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border)"></div>
         </div>
         <div class="ai-debater bear">
-          <div class="ai-debater-hdr">
-            <div class="ai-debater-label">🐻 Bear Researcher</div>
-            <div class="ai-debater-sub">Strongest downside case from analyst reports</div>
+          <div class="ai-debater-hdr" style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="ai-debater-label">🐻 Bear Researcher</div>
+              <div class="ai-debater-sub">Strongest downside case from analyst reports</div>
+            </div>
+            <button style="background:rgba(255,80,80,.08);border:1px solid var(--red);color:var(--red);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--red)';this.style.color='#000'" onmouseout="this.style.background='rgba(255,80,80,.08)';this.style.color='var(--red)'" onclick="aiRunBear()">▶ Run</button>
           </div>
-          <div class="ai-debater-out" id="ai-out-bear">Runs after analysts complete…</div>
+          <div class="ai-debater-out" id="ai-out-bear">Run analysts first, then click ▶ Run…</div>
+          <div id="ai-status-bear" style="padding:6px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border)"></div>
         </div>
       </div>
 
@@ -10515,10 +10508,14 @@ refreshRSWatchlistDropdown();
         <div class="ai-verdict-hdr">
           <div>
             <div class="ai-verdict-label">🧠 Research Manager — Synthesis</div>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:3px">Run Bull + Bear first, then synthesise</div>
           </div>
-          <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onclick="aiRunDebate()">▶ Run Debate</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onclick="aiRunSynthesis()">▶ Synthesise</button>
+            <button class="btn" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onclick="aiRunDebate()">▶ All 3</button>
+          </div>
         </div>
-        <div class="ai-verdict-out" id="ai-out-verdict">Runs after analysts complete…</div>
+        <div class="ai-verdict-out" id="ai-out-verdict">Run Bull + Bear researchers first…</div>
       </div>
     </div>
 
@@ -10617,18 +10614,26 @@ refreshRSWatchlistDropdown();
 
       <div class="ai-debate-grid">
         <div class="ai-debater bull">
-          <div class="ai-debater-hdr">
-            <div class="ai-debater-label">🐂 Bull Researcher</div>
-            <div class="ai-debater-sub">Strongest upside case from analyst reports</div>
+          <div class="ai-debater-hdr" style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="ai-debater-label">🐂 Bull Researcher</div>
+              <div class="ai-debater-sub">Strongest upside case from analyst reports</div>
+            </div>
+            <button style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--green)';this.style.color='#000'" onmouseout="this.style.background='var(--green-dim)';this.style.color='var(--green)'" onclick="gmRunBull()">▶ Run</button>
           </div>
-          <div class="ai-debater-out" id="gm-out-bull">Runs after analysts complete…</div>
+          <div class="ai-debater-out" id="gm-out-bull">Run analysts first, then click ▶ Run…</div>
+          <div id="gm-status-bull" style="padding:6px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border)"></div>
         </div>
         <div class="ai-debater bear">
-          <div class="ai-debater-hdr">
-            <div class="ai-debater-label">🐻 Bear Researcher</div>
-            <div class="ai-debater-sub">Strongest downside case from analyst reports</div>
+          <div class="ai-debater-hdr" style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="ai-debater-label">🐻 Bear Researcher</div>
+              <div class="ai-debater-sub">Strongest downside case from analyst reports</div>
+            </div>
+            <button style="background:rgba(255,80,80,.08);border:1px solid var(--red);color:var(--red);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--red)';this.style.color='#000'" onmouseout="this.style.background='rgba(255,80,80,.08)';this.style.color='var(--red)'" onclick="gmRunBear()">▶ Run</button>
           </div>
-          <div class="ai-debater-out" id="gm-out-bear">Runs after analysts complete…</div>
+          <div class="ai-debater-out" id="gm-out-bear">Run analysts first, then click ▶ Run…</div>
+          <div id="gm-status-bear" style="padding:6px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border)"></div>
         </div>
       </div>
 
@@ -10638,10 +10643,14 @@ refreshRSWatchlistDropdown();
         <div class="ai-verdict-hdr">
           <div>
             <div class="ai-verdict-label">🧠 Research Manager — Synthesis</div>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:3px">Run Bull + Bear first, then synthesise</div>
           </div>
-          <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase" onclick="gmRunDebate()">▶ Run Debate</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase" onclick="gmRunSynthesis()">▶ Synthesise</button>
+            <button class="btn" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase" onclick="gmRunDebate()">▶ All 3</button>
+          </div>
         </div>
-        <div class="ai-verdict-out" id="gm-out-verdict">Runs after analysts complete…</div>
+        <div class="ai-verdict-out" id="gm-out-verdict">Run Bull + Bear researchers first…</div>
       </div>
     </div>
 
