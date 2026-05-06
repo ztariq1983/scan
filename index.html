@@ -762,7 +762,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab" data-tab="etfs">ETFs <span class="tab-count" id="etf-tab-count"></span></button>
     <button class="tab" data-tab="orb">ORB Live <span class="tab-count" id="orb-tab-count"></span></button>
     <button class="tab" data-tab="smart">Smart Money</button>
-    <button class="tab" data-tab="journal">Journal <span class="tab-count" id="journal-tab-count"></span></button>
+    <button class="tab" data-tab="journal" style="display:none">Journal <span class="tab-count" id="journal-tab-count"></span></button>
     <button class="tab" data-tab="rs">📈 RS Rank</button>
     <button class="tab" data-tab="learn">📚 Learn</button>
   </div>
@@ -1520,7 +1520,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
   </div><!-- /tab-smart -->
 
   <!-- ═══ JOURNAL TAB ═══ -->
-  <div class="tab-panel" id="tab-journal">
+  <div class="tab-panel" id="tab-journal" style="display:none">
 
     <!-- New trade button + stats -->
     <div class="panel orange">
@@ -8514,54 +8514,136 @@ function renderEquityCurve() {
   let yAxisFmt   = v => v.toFixed(1) + '%';
 
   if (mode === 'compound' && startBal > 0) {
-    // Build a merged timeline: trade exits + injection events, sorted by date
-    const events = [
-      ...closed.map(t   => ({ date: t.exitDate,   type: 'trade',     plPct: t.plPct,  amount: 0 })),
-      ...injections.map(inj => ({ date: inj.date,  type: 'injection', plPct: 0,        amount: inj.amount, note: inj.note })),
-    ].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    const allTrades = getTrades(); // includes open + closed
 
-    let bal = startBal;
-    points  = [{ date: events[0]?.date || closed[0].exitDate, val: startBal, type: 'start' }];
+    // Get cost of each open position (what was actually paid)
+    const openCost = t => {
+      if (t.invested)           return parseFloat(t.invested);
+      if (t.entryPrice > 0 && t.shares > 0) return t.entryPrice * t.shares;
+      return 0;
+    };
 
-    for (const ev of events) {
-      if (ev.type === 'trade') {
-        bal = bal * (1 + ev.plPct / 100);
-        points.push({ date: ev.date, val: bal, type: 'trade', pl: ev.plPct });
-      } else {
-        // Injection: add/subtract capital — this is NOT a gain, just a balance jump
-        bal += ev.amount;
-        points.push({ date: ev.date, val: bal, type: 'injection', amount: ev.amount, note: ev.note });
+    // Build a fully-merged timeline of ALL events sorted by date:
+    //   - buy events (open trade entries) → cash OUT, deployed UP
+    //   - sell events (closed trade exits) → cash IN, deployed DOWN, P&L realised
+    //   - injections → cash IN/OUT
+    const buyEvents = allTrades
+      .filter(t => t.entryDate && openCost(t) > 0)
+      .map(t => ({
+        date:   t.entryDate,
+        type:   'buy',
+        cost:   openCost(t),
+        ticker: t.ticker,
+        id:     t.id,
+        status: t.status,
+      }));
+
+    const sellEvents = closed.map(t => ({
+      date:    t.exitDate,
+      type:    'sell',
+      cost:    openCost(t),
+      plPct:   t.plPct,
+      plGBP:   t.plGBP,
+      ticker:  t.ticker,
+      id:      t.id,
+    }));
+
+    const injEvents = injections.map(inj => ({
+      date:   inj.date,
+      type:   'injection',
+      amount: inj.amount,
+      note:   inj.note,
+    }));
+
+    const allEvents = [...buyEvents, ...sellEvents, ...injEvents]
+      .sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+    let cash     = startBal;   // free cash available
+    let deployed = 0;           // capital currently in open positions
+
+    // Track which trade IDs have been "bought" to avoid double-counting
+    const boughtIds = new Set();
+    // Track deployed by trade ID so sells can correctly unwind
+    const deployedByTrade = {};
+
+    const firstDate = allEvents[0]?.date || closed[0]?.exitDate || '';
+    points = [{ date: firstDate, val: startBal, cash: startBal, deployed: 0, type: 'start' }];
+
+    for (const ev of allEvents) {
+      if (ev.type === 'buy') {
+        if (boughtIds.has(ev.id)) continue; // skip duplicates
+        boughtIds.add(ev.id);
+        // Only deduct if we have enough cash (prevent negative)
+        const deduct = Math.min(ev.cost, cash);
+        cash -= deduct;
+        deployed += deduct;
+        deployedByTrade[ev.id] = deduct;
+        points.push({
+          date: ev.date, val: cash + deployed,
+          cash, deployed, type: 'buy',
+          ticker: ev.ticker,
+        });
+      } else if (ev.type === 'sell') {
+        // Return deployed capital + P&L to cash
+        const costBasis = deployedByTrade[ev.id] || 0;
+        const plGBP = ev.plGBP != null
+          ? ev.plGBP
+          : ev.plPct != null && costBasis > 0
+            ? costBasis * (ev.plPct / 100)
+            : 0;
+        cash     += costBasis + plGBP;
+        deployed  = Math.max(0, deployed - costBasis);
+        delete deployedByTrade[ev.id];
+        points.push({
+          date: ev.date, val: cash + deployed,
+          cash, deployed, type: 'sell',
+          ticker: ev.ticker, plGBP,
+        });
+      } else if (ev.type === 'injection') {
+        cash += ev.amount;
+        points.push({
+          date: ev.date, val: cash + deployed,
+          cash, deployed, type: 'injection',
+          amount: ev.amount, note: ev.note,
+        });
       }
     }
 
-    const finalBal   = points[points.length-1].val;
-    // True return = final balance MINUS all capital injected (only count trading gains)
-    const totalCapital = startBal + injections.reduce((a,b)=>a+b.amount, 0);
+    const finalBal     = cash + deployed;
+    const totalCapital = startBal + injections.reduce((a,b) => a+b.amount, 0);
     const tradingGain  = finalBal - totalCapital;
     const totalReturn  = totalCapital > 0 ? (tradingGain / totalCapital * 100) : 0;
+    const currentlyDeployed = deployed;
+    const freeCash     = cash;
 
-    finalLabel = `£${finalBal.toLocaleString('en-GB', {maximumFractionDigits:0})} (${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%)`;
+    finalLabel = `£${finalBal.toLocaleString('en-GB',{maximumFractionDigits:0})} (${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%)`;
     startLabel = `£${startBal.toLocaleString('en-GB')}`;
-    yAxisFmt   = v => '£' + v.toLocaleString('en-GB', {maximumFractionDigits:0});
+    yAxisFmt   = v => '£' + v.toLocaleString('en-GB',{maximumFractionDigits:0});
 
-    const maxBal = Math.max(...points.map(p=>p.val));
-    const minBal = Math.min(...points.map(p=>p.val));
-    const maxDD  = totalCapital > 0 ? ((maxBal - minBal) / maxBal * 100).toFixed(1) : '0.0';
-
-    const injSummary = injections.length
-      ? `<div class="equity-stat"><div class="equity-stat-val" style="color:var(--cyan)">£${totalCapital.toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Total Invested</div></div>
-         <div class="equity-stat"><div class="equity-stat-val" style="color:${tradingGain>=0?'var(--green)':'var(--red)'}">${tradingGain>=0?'+':''}£${Math.abs(tradingGain).toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Trading Gain</div></div>`
-      : '';
+    const allVals = points.map(p => p.val);
+    const maxBal  = Math.max(...allVals);
+    const minBal  = Math.min(...allVals);
+    const maxDD   = totalCapital > 0 ? ((maxBal - minBal) / maxBal * 100).toFixed(1) : '0.0';
 
     statsEl.innerHTML = [
-      {v:`${winRate}%`,             l:'Win Rate',     c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
-      {v:`+${avgWin}%`,             l:'Avg Win',       c:'green'},
-      {v:`${avgLoss}%`,             l:'Avg Loss',      c:'red'},
-      {v:`${expectancy}%`,          l:'Expectancy',    c: +expectancy>0?'green':'red'},
-      {v:`${totalReturn.toFixed(1)}%`, l:'Trading Return', c: totalReturn>=0?'green':'red'},
-      {v:`${maxDD}%`,               l:'Max Drawdown',  c:'red'},
-      {v:closed.length,             l:'Closed Trades', c:''},
-    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('') + injSummary;
+      {v:`${winRate}%`,               l:'Win Rate',        c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
+      {v:`+${avgWin}%`,               l:'Avg Win',          c:'green'},
+      {v:`${avgLoss}%`,               l:'Avg Loss',         c:'red'},
+      {v:`${expectancy}%`,            l:'Expectancy',       c: +expectancy>0?'green':'red'},
+      {v:`£${freeCash.toLocaleString('en-GB',{maximumFractionDigits:0})}`,
+                                      l:'Free Cash',        c:''},
+      {v:`£${currentlyDeployed.toLocaleString('en-GB',{maximumFractionDigits:0})}`,
+                                      l:'Deployed (open)',  c:'amber'},
+      {v:`${totalReturn.toFixed(1)}%`,l:'Trading Return',   c: totalReturn>=0?'green':'red'},
+      {v:`${maxDD}%`,                 l:'Max Drawdown',     c:'red'},
+    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
+
+    // Append injection + deployment summary
+    if (injections.length || currentlyDeployed > 0) {
+      statsEl.innerHTML += `
+        ${injections.length ? `<div class="equity-stat"><div class="equity-stat-val" style="color:var(--cyan)">£${totalCapital.toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Total Capital</div></div>` : ''}
+        <div class="equity-stat"><div class="equity-stat-val" style="color:${tradingGain>=0?'var(--green)':'var(--red)'}">${tradingGain>=0?'+':''}£${Math.abs(tradingGain).toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Realised Gain</div></div>`;
+    }
 
   } else if (mode === 'currency' && startBal > 0) {
     // Currency: each trade's P&L applied as % of starting balance (simple, not compound)
@@ -8612,32 +8694,53 @@ function renderEquityCurve() {
   }
 
   // ── SVG chart ──────────────────────────────────────────────────────────────
-  const W=700, H=160, PAD=48;
+  const W=700, H=180, PAD=48;
   const vals   = points.map(p => p.val);
-  const minV   = Math.min(...vals);
-  const maxV   = Math.max(...vals);
+  const minV   = Math.min(0, ...vals) * 0.98;
+  const maxV   = Math.max(...vals) * 1.04;
   const range  = maxV - minV || 1;
-  const x      = i => PAD + (i / (points.length-1||1)) * (W - PAD*2);
-  const y      = v => H - PAD - ((v-minV)/range) * (H-PAD*2);
-  const finalVal = points[points.length-1].val;
-  const startVal = points[0].val;
+  const x      = i  => PAD + (i / (points.length-1||1)) * (W - PAD*2);
+  const y      = v  => H - PAD - ((v - minV) / range) * (H - PAD*2);
+  const finalVal  = points[points.length-1].val;
+  const startVal  = points[0].val;
   const finalColor = finalVal >= (startBal || startVal) ? '#3dffa0' : '#ff5277';
 
+  // Total value polyline
   const pts  = points.map((p,i) => `${x(i).toFixed(1)},${y(p.val).toFixed(1)}`).join(' ');
   const area = `${x(0)},${y(startVal)} ${pts} ${x(points.length-1)},${y(startVal)}`;
 
-  // Y-axis labels (4 ticks)
-  const yTicks = [0,1,2,3].map(i => {
-    const v  = minV + (range * i / 3);
+  // Deployed capital area (orange fill below total, above cash line)
+  const deployedPts = points.map((p,i) =>
+    `${x(i).toFixed(1)},${y((p.cash||0) + (p.deployed||0)).toFixed(1)}`
+  ).join(' ');
+  const cashPts = points.map((p,i) =>
+    `${x(i).toFixed(1)},${y(p.cash != null ? p.cash : p.val).toFixed(1)}`
+  ).join(' ');
+  const hasCashData = points.some(p => p.cash != null);
+  const deployedArea = hasCashData
+    ? `${cashPts.split(' ').reverse().join(' ')} ${deployedPts}`
+    : '';
+
+  // Y-axis ticks
+  const yTicks = [0,1,2,3,4].map(i => {
+    const v  = minV + (range * i / 4);
     const yp = y(v);
     return `<text x="${PAD-4}" y="${yp+4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${yAxisFmt(v)}</text>
       <line x1="${PAD}" y1="${yp}" x2="${W-PAD}" y2="${yp}" stroke="rgba(255,255,255,.04)" stroke-width="1"/>`;
   }).join('');
 
-  // Injection markers: vertical cyan lines where deposits/withdrawals happened
+  // Buy markers (▽ downward triangle where cash was deployed)
+  const buyMarkers = points.map((p,i) => {
+    if (p.type !== 'buy') return '';
+    const xi = x(i);
+    return `<polygon points="${xi},${ (y(p.val)+8).toFixed(1)} ${(xi-5).toFixed(1)},${y(p.val).toFixed(1)} ${(xi+5).toFixed(1)},${y(p.val).toFixed(1)}"
+        fill="rgba(255,155,78,.7)" title="${p.ticker}"/>`;
+  }).join('');
+
+  // Injection markers
   const injectionMarkers = points.map((p,i) => {
     if (p.type !== 'injection') return '';
-    const xi     = x(i);
+    const xi = x(i);
     const isDeposit = p.amount >= 0;
     const col    = isDeposit ? 'rgba(78,232,255,.7)' : 'rgba(255,82,119,.7)';
     const symbol = isDeposit ? '▲' : '▼';
@@ -8647,36 +8750,35 @@ function renderEquityCurve() {
       <text x="${xi.toFixed(1)}" y="${PAD-3}" fill="${col}" font-size="8" font-family="Fira Code" text-anchor="middle">${symbol} ${label}</text>`;
   }).join('');
 
-  // Drawdown shading
-  let ddShading = '';
-  if (mode === 'compound' || mode === 'currency') {
-    const belowPts = points.filter(p => p.val < startVal);
-    if (belowPts.length) {
-      ddShading = `<rect x="${x(points.findIndex(p=>p.val<startVal))}" y="${y(startVal)}" 
-        width="${x(points.length-1) - x(points.findIndex(p=>p.val<startVal))}" 
-        height="${Math.max(0, y(minV)-y(startVal))}" fill="rgba(255,82,119,.04)"/>`;
-    }
-  }
-
-  wrapEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+  wrapEl.innerHTML = `<div style="font-size:9px;color:var(--muted);padding:4px 0 6px;display:flex;gap:14px;letter-spacing:.5px">
+    <span>━ <span style="color:#3dffa0">Total account value</span></span>
+    ${hasCashData ? `<span>▓ <span style="color:rgba(255,155,78,.5)">Deployed in open positions</span></span>` : ''}
+    ${hasCashData ? `<span>▽ <span style="color:rgba(255,155,78,.7)">Buy event</span></span>` : ''}
+  </div>
+  <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;width:100%;display:block">
     ${yTicks}
-    ${ddShading}
-    <!-- Zero/start line -->
-    <line x1="${PAD}" y1="${y(startVal)}" x2="${W-PAD}" y2="${y(startVal)}" stroke="rgba(255,255,255,.12)" stroke-width="1" stroke-dasharray="4"/>
-    <!-- Area fill -->
+    <!-- Start balance line -->
+    <line x1="${PAD}" y1="${y(startVal)}" x2="${W-PAD}" y2="${y(startVal)}" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-dasharray="4"/>
+    <!-- Deployed capital area (orange) -->
+    ${hasCashData && deployedArea ? `<polygon points="${deployedArea}" fill="rgba(255,155,78,.12)"/>
+    <!-- Cash line -->
+    <polyline points="${cashPts}" fill="none" stroke="rgba(255,155,78,.3)" stroke-width="1" stroke-dasharray="3,2"/>` : ''}
+    <!-- Total value area fill -->
     <polygon points="${area}" fill="${finalColor}" opacity=".07"/>
-    <!-- Line -->
+    <!-- Total value line -->
     <polyline points="${pts}" fill="none" stroke="${finalColor}" stroke-width="2"/>
+    <!-- Buy markers -->
+    ${buyMarkers}
     <!-- Injection markers -->
     ${injectionMarkers}
-    <!-- Start dot + label -->
+    <!-- Start dot -->
     <circle cx="${x(0)}" cy="${y(points[0].val)}" r="3" fill="${finalColor}"/>
     <text x="${PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">${points[0].date}</text>
-    <text x="${PAD}" y="${y(points[0].val)-6}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">${startLabel}</text>
+    <text x="${PAD}" y="${y(points[0].val)-6}" fill="rgba(255,255,255,.25)" font-size="9" font-family="Fira Code">${startLabel}</text>
     <!-- End dot + label -->
     <circle cx="${x(points.length-1)}" cy="${y(finalVal)}" r="4" fill="${finalColor}"/>
     <text x="${W-PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${points[points.length-1].date}</text>
-    <text x="${W-PAD+2}" y="${y(finalVal)}" fill="${finalColor}" font-size="10" font-family="Fira Code,sans-serif" font-weight="700">${finalLabel}</text>
+    <text x="${(W-PAD+4).toFixed(1)}" y="${y(finalVal).toFixed(1)}" fill="${finalColor}" font-size="10" font-family="Fira Code,sans-serif" font-weight="700">${finalLabel}</text>
   </svg>`;
 }
 
