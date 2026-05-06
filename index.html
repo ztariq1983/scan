@@ -827,6 +827,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab" data-tab="rs">📈 RS Rank</button>
     <button class="tab" data-tab="learn">📚 Learn</button>
     <button class="tab" data-tab="ai">⚡ AI</button>
+    <button class="tab" data-tab="gemini">♊ Gemini</button>
   </div>
 
   <!-- Account size (global — used by position sizer across tabs) -->
@@ -10203,6 +10204,194 @@ if (typeof _origSwitchTab === 'function') {
 })();
 
 
+// ═════════════════════════════════════════════════════════════════════════════
+// GEMINI ANALYSIS TAB
+// ═════════════════════════════════════════════════════════════════════════════
+
+(function() {
+
+const gmReports = { market: '', news: '', social: '', fund: '' };
+
+function gmSaveKey() {
+  const v = document.getElementById('gm-api-key').value.trim();
+  if (!v) return;
+  localStorage.setItem('apexGeminiKey', v);
+  const el = document.getElementById('gm-key-saved');
+  el.style.display = 'inline';
+  setTimeout(() => el.style.display = 'none', 2200);
+}
+window.gmSaveKey = gmSaveKey;
+
+function gmLoadKey() {
+  const k = localStorage.getItem('apexGeminiKey') || '';
+  const inp = document.getElementById('gm-api-key');
+  if (inp && k) inp.value = k;
+  return k;
+}
+
+async function streamGemini({ apiKey, system, userMsg, outEl, statusEl, useSearch = false }) {
+  outEl.textContent = '';
+  outEl.classList.remove('filled');
+  if (statusEl) statusEl.innerHTML = '<span class="ai-spin"></span> Analysing…';
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+  const body = {
+    system_instruction: { parts: [{ text: system }] },
+    contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+    generationConfig: { maxOutputTokens: 1500 }
+  };
+  if (useSearch) body.tools = [{ google_search: {} }];
+
+  let fullText = '';
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      outEl.textContent = '⚠ Gemini API error ' + resp.status + ':\n' + err;
+      if (statusEl) statusEl.textContent = 'Error';
+      return null;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    let didSearch = false;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (!raw || raw === '[DONE]') continue;
+        try {
+          const ev = JSON.parse(raw);
+          if (ev.candidates?.[0]?.groundingMetadata && !didSearch) {
+            didSearch = true;
+            if (statusEl) statusEl.innerHTML = '<span class="ai-spin"></span> 🔍 Searching web…';
+          }
+          const parts = ev.candidates?.[0]?.content?.parts;
+          if (parts) {
+            for (const part of parts) {
+              if (part.text) {
+                if (didSearch && fullText === '' && statusEl)
+                  statusEl.innerHTML = '<span class="ai-spin"></span> Writing report…';
+                fullText += part.text;
+                outEl.textContent = fullText;
+                outEl.scrollTop = outEl.scrollHeight;
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+    outEl.classList.add('filled');
+    if (statusEl) statusEl.textContent = '✓ Done';
+    return fullText || null;
+  } catch (e) {
+    outEl.textContent = '⚠ ' + e.message;
+    if (statusEl) statusEl.textContent = 'Failed';
+    return null;
+  }
+}
+
+const GM_CFG = {
+  market: { system: `You are a quantitative market and technical analyst for a professional trading firm.\nUse Google Search to find current price and technical data before writing your report.\nSearch for: "[TICKER] stock price today", "[TICKER] technical analysis [MONTH YEAR]", "[TICKER] 50 day 200 day moving average".\nWrite a structured report: current price, trend direction, key MAs (50/200-day), RSI and MACD, volume patterns, support/resistance, chart patterns.\n~250 words. Short labelled sections. Lead with actual current price found.` },
+  news:   { system: `You are a financial news and event analyst for a professional trading firm.\nUse Google Search to find current news before writing your report.\nSearch for: "[TICKER] stock news [MONTH YEAR]", "[TICKER] earnings date", "[TICKER] latest announcement".\nWrite a structured report: recent company news, upcoming catalysts, industry/sector trends, macro factors, regulatory risks.\n~250 words. Short labelled sections. Only report news actually found.` },
+  social: { system: `You are a market sentiment analyst for a professional trading firm.\nUse Google Search to find current analyst ratings and sentiment before writing your report.\nSearch for: "[TICKER] analyst ratings [YEAR]", "[TICKER] price target upgrade downgrade", "[TICKER] short interest [YEAR]".\nWrite a structured report: analyst consensus, upgrades/downgrades, price target range, short interest, options activity, retail sentiment.\n~250 words. Short labelled sections. Only report figures actually found.` },
+  fund:   { system: `You are a fundamental equity analyst for a professional trading firm.\nUse Google Search to find current financial data before writing your report.\nSearch for: "[TICKER] revenue earnings [YEAR]", "[TICKER] P/E ratio valuation", "[TICKER] quarterly results [YEAR]".\nWrite a structured report: revenue/EPS growth, margins and FCF, balance sheet health, valuation multiples vs peers, competitive moat.\n~250 words. Short labelled sections. Use actual figures found.` }
+};
+
+async function gmRunAnalyst(type) {
+  const apiKey = document.getElementById('gm-api-key').value.trim() || gmLoadKey();
+  if (!apiKey) { alert('Please enter your Google AI Studio API key at the top of the Gemini tab.'); return; }
+  const ticker = (document.getElementById('gm-ticker').value || '').trim().toUpperCase();
+  const date = document.getElementById('gm-date').value || new Date().toISOString().slice(0, 10);
+  const ctx = (document.getElementById('gm-context').value || '').trim();
+  if (!ticker) { alert('Please enter a ticker symbol.'); return; }
+
+  const d = new Date(date);
+  const monthYear = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const year = d.getFullYear();
+  const system = GM_CFG[type].system
+    .replace(/\[TICKER\]/g, ticker)
+    .replace(/\[MONTH YEAR\]/g, monthYear)
+    .replace(/\[YEAR\]/g, year);
+
+  let userMsg = `Stock: ${ticker}\nAnalysis date: ${date}`;
+  if (ctx) userMsg += `\n\nAdditional context:\n${ctx}`;
+
+  const result = await streamGemini({
+    apiKey, system, userMsg,
+    outEl: document.getElementById('gm-out-' + type),
+    statusEl: document.getElementById('gm-status-' + type),
+    useSearch: true
+  });
+  if (result) gmReports[type] = result;
+}
+window.gmRunAnalyst = gmRunAnalyst;
+
+async function gmRunDebate() {
+  const apiKey = document.getElementById('gm-api-key').value.trim() || gmLoadKey();
+  if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
+  const ticker = (document.getElementById('gm-ticker').value || '').trim().toUpperCase() || 'the stock';
+  const date = document.getElementById('gm-date').value || new Date().toISOString().slice(0, 10);
+
+  const reportsText = [
+    gmReports.market && `MARKET REPORT:\n${gmReports.market}`,
+    gmReports.news   && `NEWS REPORT:\n${gmReports.news}`,
+    gmReports.social && `SENTIMENT REPORT:\n${gmReports.social}`,
+    gmReports.fund   && `FUNDAMENTALS REPORT:\n${gmReports.fund}`,
+  ].filter(Boolean).join('\n\n---\n\n');
+
+  if (!reportsText) { alert('Run at least one analyst first.'); return; }
+
+  const statusEl = document.getElementById('gm-debate-status');
+
+  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bull Researcher…';
+  const bullResult = await streamGemini({ apiKey, system: `You are a bullish equity researcher. Given the analyst reports, build the strongest BULLISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bull catalysts. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bull'), statusEl: null });
+
+  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bear Researcher…';
+  const bearResult = await streamGemini({ apiKey, system: `You are a bearish equity researcher. Given the analyst reports, build the strongest BEARISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bear risks. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bear'), statusEl: null });
+
+  statusEl.innerHTML = '<span class="ai-spin"></span> Research Manager synthesising…';
+  await streamGemini({
+    apiKey,
+    system: `You are a senior research manager. Synthesise the bull vs bear debate for ${ticker} as of ${date}. State your overall lean (bullish/bearish/neutral) with conviction. Identify 2-3 key determinants. Give a trade action (BUY/SELL/HOLD/WAIT) with rationale. ~250 words. Be decisive.`,
+    userMsg: `BULL CASE:\n${bullResult||'(unavailable)'}\n\nBEAR CASE:\n${bearResult||'(unavailable)'}\n\n---\n${reportsText}`,
+    outEl: document.getElementById('gm-out-verdict'),
+    statusEl: null
+  });
+
+  statusEl.innerHTML = '✓ Debate complete';
+}
+window.gmRunDebate = gmRunDebate;
+
+async function gmRunAll() {
+  const btn = document.getElementById('gm-run-all-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="ai-spin"></span> Running…';
+  for (const type of ['market', 'news', 'social', 'fund']) await gmRunAnalyst(type);
+  await gmRunDebate();
+  btn.disabled = false;
+  btn.textContent = '▶ Run All';
+}
+window.gmRunAll = gmRunAll;
+
+document.addEventListener('DOMContentLoaded', () => {
+  gmLoadKey();
+  const d = document.getElementById('gm-date');
+  if (d && !d.value) d.value = new Date().toISOString().slice(0, 10);
+});
+
+})();
+
+
 loadAccountSize();
 
 // Load saved keys and watchlists on page ready
@@ -10334,6 +10523,129 @@ refreshRSWatchlistDropdown();
     </div>
 
   </div><!-- /tab-ai -->
+
+  <!-- ═══ GEMINI ANALYSIS TAB ═══ -->
+  <div class="tab-panel" id="tab-gemini">
+
+    <!-- API Key -->
+    <div class="ai-key-row">
+      <label>🔑 Google AI Studio Key</label>
+      <input class="ai-key-input" id="gm-api-key" type="text" placeholder="AIza…  — free at aistudio.google.com/apikey" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc;font-family:var(--font-mono)" onfocus="this.style.webkitTextSecurity='none'" onblur="this.style.webkitTextSecurity='disc'">
+      <button class="btn btn-purple" onclick="gmSaveKey()">Save</button>
+      <span id="gm-key-saved" style="font-size:9px;color:var(--green);letter-spacing:1px;display:none">✓ Saved</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-left:4px">Free tier · 1,500 req/day</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="ai-ctrl-row">
+      <label>Ticker</label>
+      <input class="ai-ticker-inp" id="gm-ticker" placeholder="NVDA" maxlength="8">
+      <label>Date</label>
+      <input class="ai-date-inp" id="gm-date" type="date">
+      <label>Context</label>
+      <input class="ai-context-inp" id="gm-context" placeholder="Optional: paste in any relevant news, data, or notes for Gemini to use…">
+      <button class="btn btn-cyan" id="gm-run-all-btn" onclick="gmRunAll()">▶ Run All</button>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="ai-phase">
+      <div class="ai-phase-hdr">
+        <span class="ai-phase-num">01</span>
+        <span class="ai-phase-title">Analyst Team</span>
+        <span class="ai-phase-sub">Four specialised analysts — powered by Gemini 2.5 Flash + Google Search</span>
+      </div>
+      <div class="ai-grid">
+
+        <div class="ai-card market">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">📈 Market Analyst</div>
+              <div class="ai-card-sub">Price action · technicals · momentum</div>
+            </div>
+            <button style="background:rgba(232,255,71,.08);border:1px solid var(--accent);color:var(--accent);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--accent)';this.style.color='#000'" onmouseout="this.style.background='rgba(232,255,71,.08)';this.style.color='var(--accent)'" onclick="gmRunAnalyst('market')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="gm-out-market">Waiting to run…</div>
+          <div class="ai-card-foot" id="gm-status-market" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+        <div class="ai-card news">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">📰 News Analyst</div>
+              <div class="ai-card-sub">Global news · macro · catalysts</div>
+            </div>
+            <button style="background:rgba(255,155,78,.08);border:1px solid var(--orange);color:var(--orange);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--orange)';this.style.color='#000'" onmouseout="this.style.background='rgba(255,155,78,.08)';this.style.color='var(--orange)'" onclick="gmRunAnalyst('news')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="gm-out-news">Waiting to run…</div>
+          <div class="ai-card-foot" id="gm-status-news" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+        <div class="ai-card social">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">💬 Sentiment Analyst</div>
+              <div class="ai-card-sub">Options flow · short interest · retail mood</div>
+            </div>
+            <button style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--purple)';this.style.color='#000'" onmouseout="this.style.background='var(--purple-dim)';this.style.color='var(--purple)'" onclick="gmRunAnalyst('social')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="gm-out-social">Waiting to run…</div>
+          <div class="ai-card-foot" id="gm-status-social" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+        <div class="ai-card fund">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">🏦 Fundamentals Analyst</div>
+              <div class="ai-card-sub">Financials · valuation · moat</div>
+            </div>
+            <button style="background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--cyan)';this.style.color='#000'" onmouseout="this.style.background='var(--cyan-dim)';this.style.color='var(--cyan)'" onclick="gmRunAnalyst('fund')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="gm-out-fund">Waiting to run…</div>
+          <div class="ai-card-foot" id="gm-status-fund" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="ai-phase">
+      <div class="ai-phase-hdr">
+        <span class="ai-phase-num">02</span>
+        <span class="ai-phase-title">Bull / Bear Debate</span>
+        <span class="ai-phase-sub">Researchers stress-test the thesis from both sides</span>
+      </div>
+
+      <div class="ai-debate-grid">
+        <div class="ai-debater bull">
+          <div class="ai-debater-hdr">
+            <div class="ai-debater-label">🐂 Bull Researcher</div>
+            <div class="ai-debater-sub">Strongest upside case from analyst reports</div>
+          </div>
+          <div class="ai-debater-out" id="gm-out-bull">Runs after analysts complete…</div>
+        </div>
+        <div class="ai-debater bear">
+          <div class="ai-debater-hdr">
+            <div class="ai-debater-label">🐻 Bear Researcher</div>
+            <div class="ai-debater-sub">Strongest downside case from analyst reports</div>
+          </div>
+          <div class="ai-debater-out" id="gm-out-bear">Runs after analysts complete…</div>
+        </div>
+      </div>
+
+      <div id="gm-debate-status" style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;min-height:18px"></div>
+
+      <div class="ai-verdict">
+        <div class="ai-verdict-hdr">
+          <div>
+            <div class="ai-verdict-label">🧠 Research Manager — Synthesis</div>
+          </div>
+          <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase" onclick="gmRunDebate()">▶ Run Debate</button>
+        </div>
+        <div class="ai-verdict-out" id="gm-out-verdict">Runs after analysts complete…</div>
+      </div>
+    </div>
+
+  </div><!-- /tab-gemini -->
 
 </body>
 </html>
