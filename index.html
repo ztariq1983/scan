@@ -98,6 +98,67 @@ table.etf-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .modal-hint{font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:.5px;line-height:1.7}
 .modal-footer{padding:14px 24px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);flex-wrap:wrap}
 
+/* ─── AI Analysis Tab ─────────────────────────────────────────────── */
+.ai-key-row{display:flex;gap:10px;align-items:center;padding:14px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+.ai-key-row label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.ai-key-input{flex:1;min-width:240px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;letter-spacing:1px;transition:border-color .2s}
+.ai-key-input:focus{border-color:var(--purple)}
+.ai-ctrl-row{display:flex;gap:10px;align-items:center;margin-bottom:24px;flex-wrap:wrap;padding:16px;background:var(--surface);border:1px solid var(--border)}
+.ai-ctrl-row label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.ai-ticker-inp{width:110px;background:var(--bg);border:1px solid var(--border2);color:var(--accent);font-family:var(--font-display);font-size:15px;font-weight:800;padding:9px 12px;outline:none;letter-spacing:3px;text-transform:uppercase;transition:border-color .2s}
+.ai-ticker-inp:focus{border-color:var(--accent)}
+.ai-date-inp{width:155px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;transition:border-color .2s}
+.ai-date-inp:focus{border-color:var(--accent)}
+.ai-context-inp{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:10px;padding:9px 12px;outline:none;transition:border-color .2s}
+.ai-context-inp:focus{border-color:var(--cyan)}
+.ai-phase{margin-bottom:28px}
+.ai-phase-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.ai-phase-num{font-family:var(--font-display);font-size:9px;font-weight:700;letter-spacing:3px;color:var(--bg);background:var(--cyan);padding:3px 8px;text-transform:uppercase}
+.ai-phase-title{font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--cyan);text-transform:uppercase}
+.ai-phase-sub{font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto}
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.ai-card{background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.ai-card.market::before{background:var(--accent)}
+.ai-card.news::before{background:var(--orange)}
+.ai-card.social::before{background:var(--purple)}
+.ai-card.fund::before{background:var(--cyan)}
+.ai-card-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 10px;border-bottom:1px solid var(--border)}
+.ai-card-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.ai-card.market .ai-card-label{color:var(--accent)}
+.ai-card.news .ai-card-label{color:var(--orange)}
+.ai-card.social .ai-card-label{color:var(--purple)}
+.ai-card.fund .ai-card-label{color:var(--cyan)}
+.ai-card-sub{font-size:9px;color:var(--muted);letter-spacing:.5px}
+.ai-out{padding:12px 14px;font-size:10px;line-height:1.75;color:var(--muted);min-height:150px;max-height:240px;overflow-y:auto;white-space:pre-wrap;flex:1}
+.ai-out.filled{color:var(--text)}
+.ai-card-foot{padding:8px 14px 12px;border-top:1px solid var(--border)}
+.ai-debate-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.ai-debater{background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.ai-debater::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.ai-debater.bull::before{background:var(--green)}
+.ai-debater.bear::before{background:var(--red)}
+.ai-debater-hdr{padding:12px 14px 10px;border-bottom:1px solid var(--border)}
+.ai-debater-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.ai-debater.bull .ai-debater-label{color:var(--green)}
+.ai-debater.bear .ai-debater-label{color:var(--red)}
+.ai-debater-sub{font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:2px}
+.ai-debater-out{padding:12px 14px;font-size:10px;line-height:1.75;color:var(--muted);min-height:140px;max-height:220px;overflow-y:auto;white-space:pre-wrap;flex:1}
+.ai-debater-out.filled{color:var(--text)}
+.ai-verdict{background:var(--surface);border:1px solid rgba(180,125,255,.4);position:relative;overflow:hidden}
+.ai-verdict::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--purple)}
+.ai-verdict-hdr{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.ai-verdict-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple)}
+.ai-verdict-out{padding:12px 14px;font-size:10px;line-height:1.75;color:var(--muted);min-height:80px;white-space:pre-wrap}
+.ai-verdict-out.filled{color:var(--text)}
+.ai-spin{display:inline-block;width:9px;height:9px;border:1.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .65s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-cyan{background:rgba(78,232,255,.08);border:1px solid var(--cyan);color:var(--cyan)}
+.btn-cyan:hover{background:var(--cyan);color:#000}
+.btn-green{background:var(--green-dim);border:1px solid var(--green);color:var(--green)}
+.btn-green:hover{background:var(--green);color:#000}
+@media(max-width:700px){.ai-debate-grid{grid-template-columns:1fr}}
+
 /* ─── Journal ─────────────────────────────────────────────────────── */
 .panel.orange::before{background:var(--orange)}
 .panel.orange .panel-title{color:var(--orange)}
@@ -765,6 +826,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab" data-tab="journal" style="display:none">Journal <span class="tab-count" id="journal-tab-count"></span></button>
     <button class="tab" data-tab="rs">📈 RS Rank</button>
     <button class="tab" data-tab="learn">📚 Learn</button>
+    <button class="tab" data-tab="ai">⚡ AI</button>
   </div>
 
   <!-- Account size (global — used by position sizer across tabs) -->
@@ -9869,9 +9931,267 @@ newChips.forEach(({k,l}) => {
   }
 });
 
+
 // ═════════════════════════════════════════════════════════════════════════════
-// INIT
+// AI ANALYSIS TAB
 // ═════════════════════════════════════════════════════════════════════════════
+
+(function() {
+
+// Saved analyst outputs for debate
+const aiReports = { market: '', news: '', social: '', fund: '' };
+
+// ── Key persistence ───────────────────────────────────────────────────────
+function aiSaveKey() {
+  const v = document.getElementById('ai-api-key').value.trim();
+  if (!v) return;
+  localStorage.setItem('apexAnthropicKey', v);
+  const el = document.getElementById('ai-key-saved');
+  el.style.display = 'inline';
+  setTimeout(() => el.style.display = 'none', 2200);
+}
+window.aiSaveKey = aiSaveKey;
+
+function aiLoadKey() {
+  const k = localStorage.getItem('apexAnthropicKey') || '';
+  const inp = document.getElementById('ai-api-key');
+  if (inp && k) inp.value = k;
+  return k;
+}
+
+// ── Streaming Claude call ─────────────────────────────────────────────────
+async function streamClaude({ apiKey, system, userMsg, outEl, statusEl }) {
+  outEl.textContent = '';
+  outEl.classList.remove('filled');
+  if (statusEl) statusEl.innerHTML = '<span class="ai-spin"></span> Analysing…';
+
+  let fullText = '';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 900,
+        stream: true,
+        system,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      outEl.textContent = '⚠ API error ' + resp.status + ':\n' + err;
+      if (statusEl) statusEl.textContent = 'Error';
+      return null;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const ev = JSON.parse(raw);
+          if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+            fullText += ev.delta.text;
+            outEl.textContent = fullText;
+            outEl.scrollTop = outEl.scrollHeight;
+          }
+        } catch {}
+      }
+    }
+
+    outEl.classList.add('filled');
+    if (statusEl) statusEl.textContent = '✓ Done';
+    return fullText;
+
+  } catch (e) {
+    outEl.textContent = '⚠ ' + e.message;
+    if (statusEl) statusEl.textContent = 'Failed';
+    return null;
+  }
+}
+
+// ── Individual analyst runner ─────────────────────────────────────────────
+const ANALYST_CFG = {
+  market: {
+    label: 'Market / Technical Analyst',
+    system: `You are a quantitative market and technical analyst for a professional trading firm.
+Analyse the given stock's price action, trend structure, and momentum as of the specified date.
+Cover: trend direction (short/intermediate/long-term), key moving averages, RSI/MACD signals, volume patterns, support/resistance levels, and notable chart patterns (e.g. base, breakout, NR4/NR7).
+Be precise and data-driven. Output a structured report in ~250 words. Use short labelled sections.`,
+    key: 'market'
+  },
+  news: {
+    label: 'News / Event Analyst',
+    system: `You are a financial news and event analyst for a professional trading firm.
+Analyse the news environment and macro context for the given stock as of the specified date.
+Cover: recent company-specific news, industry / sector tailwinds or headwinds, macro catalysts (rates, Fed, sector rotation), regulatory or legal risks, and any upcoming events (earnings, product launches, FDA dates, etc.).
+Be precise. Output a structured report in ~250 words. Use short labelled sections.`,
+    key: 'news'
+  },
+  social: {
+    label: 'Sentiment / Social Analyst',
+    system: `You are a market sentiment and social media analyst for a professional trading firm.
+Analyse the sentiment landscape for the given stock as of the specified date.
+Cover: general retail and institutional sentiment, analyst rating trends and price-target changes, notable options activity or unusual flow signals, short interest / days-to-cover, and any contrarian signals.
+Be precise. Output a structured report in ~250 words. Use short labelled sections.`,
+    key: 'social'
+  },
+  fund: {
+    label: 'Fundamentals Analyst',
+    system: `You are a fundamental equity analyst for a professional trading firm.
+Analyse the financial fundamentals and valuation of the given stock as of the specified date.
+Cover: revenue and earnings growth trajectory, profit margins and free cash flow, balance sheet health (debt, cash), valuation multiples vs. sector peers (P/E, EV/EBITDA, P/S), and competitive moat / business quality.
+Be precise. Output a structured report in ~250 words. Use short labelled sections.`,
+    key: 'fund'
+  }
+};
+
+async function aiRunAnalyst(type) {
+  const apiKey = document.getElementById('ai-api-key').value.trim() || aiLoadKey();
+  if (!apiKey) { alert('Please enter your Anthropic API key at the top of the AI tab.'); return; }
+  const ticker = (document.getElementById('ai-ticker').value || '').trim().toUpperCase();
+  const date = document.getElementById('ai-date').value || new Date().toISOString().slice(0, 10);
+  const ctx = (document.getElementById('ai-context').value || '').trim();
+  if (!ticker) { alert('Please enter a ticker symbol.'); return; }
+
+  const cfg = ANALYST_CFG[type];
+  const outEl = document.getElementById('ai-out-' + type);
+  const statusEl = document.getElementById('ai-status-' + type);
+
+  let userMsg = `Stock: ${ticker}\nAnalysis date: ${date}`;
+  if (ctx) userMsg += `\n\nAdditional context provided by user:\n${ctx}`;
+
+  const result = await streamClaude({ apiKey, system: cfg.system, userMsg, outEl, statusEl });
+  if (result) aiReports[type] = result;
+}
+window.aiRunAnalyst = aiRunAnalyst;
+
+// ── Bull / Bear debate ────────────────────────────────────────────────────
+async function aiRunDebate() {
+  const apiKey = document.getElementById('ai-api-key').value.trim() || aiLoadKey();
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  const ticker = (document.getElementById('ai-ticker').value || '').trim().toUpperCase() || 'the stock';
+  const date = document.getElementById('ai-date').value || new Date().toISOString().slice(0, 10);
+
+  const reportsText = [
+    aiReports.market && `MARKET/TECHNICAL REPORT:\n${aiReports.market}`,
+    aiReports.news   && `NEWS/EVENT REPORT:\n${aiReports.news}`,
+    aiReports.social && `SENTIMENT REPORT:\n${aiReports.social}`,
+    aiReports.fund   && `FUNDAMENTALS REPORT:\n${aiReports.fund}`,
+  ].filter(Boolean).join('\n\n---\n\n');
+
+  if (!reportsText) {
+    alert('Run at least one analyst first so the researchers have material to debate.');
+    return;
+  }
+
+  const statusEl = document.getElementById('ai-debate-status');
+
+  // Bull researcher
+  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bull Researcher…';
+  const bullOut = document.getElementById('ai-out-bull');
+  const bullResult = await streamClaude({
+    apiKey,
+    system: `You are a bullish equity researcher at a professional trading firm.
+Given the analyst reports below, construct the strongest possible BULLISH case for ${ticker} as of ${date}.
+Be specific — cite evidence from the reports. Identify the top 3-5 bull catalysts. ~200 words.`,
+    userMsg: reportsText,
+    outEl: bullOut,
+    statusEl: null
+  });
+
+  // Bear researcher
+  statusEl.innerHTML = '<span class="ai-spin"></span> Running Bear Researcher…';
+  const bearOut = document.getElementById('ai-out-bear');
+  const bearResult = await streamClaude({
+    apiKey,
+    system: `You are a bearish equity researcher at a professional trading firm.
+Given the analyst reports below, construct the strongest possible BEARISH case for ${ticker} as of ${date}.
+Be specific — cite evidence from the reports. Identify the top 3-5 bear risks. ~200 words.`,
+    userMsg: reportsText,
+    outEl: bearOut,
+    statusEl: null
+  });
+
+  // Research Manager synthesis
+  statusEl.innerHTML = '<span class="ai-spin"></span> Research Manager synthesising…';
+  const verdictOut = document.getElementById('ai-out-verdict');
+  const debateContext = `BULL CASE:\n${bullResult || '(not available)'}\n\nBEAR CASE:\n${bearResult || '(not available)'}\n\n---\nOriginal analyst reports:\n\n${reportsText}`;
+
+  await streamClaude({
+    apiKey,
+    system: `You are a senior research manager at a professional trading firm.
+You have just received a bull and bear debate about ${ticker} (as of ${date}), along with the underlying analyst reports.
+Write a balanced but decisive research synthesis:
+1. Weigh the bull vs bear arguments.
+2. State your overall investment lean (bullish / bearish / neutral) with conviction level.
+3. Identify the 2-3 key factors that will determine the outcome.
+4. Give a suggested trade action (BUY / SELL / HOLD / WAIT) with a brief rationale.
+~250 words. Be decisive.`,
+    userMsg: debateContext,
+    outEl: verdictOut,
+    statusEl: null
+  });
+
+  statusEl.innerHTML = '✓ Debate complete';
+}
+window.aiRunDebate = aiRunDebate;
+
+// ── Run All ───────────────────────────────────────────────────────────────
+async function aiRunAll() {
+  const btn = document.getElementById('ai-run-all-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="ai-spin"></span> Running…';
+
+  // Analysts in sequence (to avoid rate limiting)
+  for (const type of ['market', 'news', 'social', 'fund']) {
+    await aiRunAnalyst(type);
+  }
+  await aiRunDebate();
+
+  btn.disabled = false;
+  btn.textContent = '▶ Run All';
+}
+window.aiRunAll = aiRunAll;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  aiLoadKey();
+  const dateInp = document.getElementById('ai-date');
+  if (dateInp && !dateInp.value) {
+    dateInp.value = new Date().toISOString().slice(0, 10);
+  }
+});
+
+// Extend switchTab to handle ai tab init
+const _origSwitchTab = window.switchTab;
+if (typeof _origSwitchTab === 'function') {
+  window.switchTab = function(name) {
+    _origSwitchTab(name);
+    if (name === 'ai') aiLoadKey();
+  };
+}
+
+})();
+
+
 loadAccountSize();
 
 // Load saved keys and watchlists on page ready
@@ -9880,6 +10200,127 @@ refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
 
-</script>
+  <!-- ═══ AI ANALYSIS TAB ═══ -->
+  <div class="tab-panel" id="tab-ai">
+
+    <!-- API Key -->
+    <div class="ai-key-row">
+      <label>🔑 Anthropic API Key</label>
+      <input class="ai-key-input" id="ai-api-key" type="password" placeholder="sk-ant-…  (stored locally, never sent anywhere except Anthropic)">
+      <button class="btn btn-purple" onclick="aiSaveKey()">Save</button>
+      <span id="ai-key-saved" style="font-size:9px;color:var(--green);letter-spacing:1px;display:none">✓ Saved</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="ai-ctrl-row">
+      <label>Ticker</label>
+      <input class="ai-ticker-inp" id="ai-ticker" placeholder="NVDA" maxlength="8">
+      <label>Date</label>
+      <input class="ai-date-inp" id="ai-date" type="date">
+      <label>Context</label>
+      <input class="ai-context-inp" id="ai-context" placeholder="Optional: paste in any relevant news, data, or notes for Claude to use…">
+      <button class="btn btn-cyan" id="ai-run-all-btn" onclick="aiRunAll()">▶ Run All</button>
+    </div>
+
+    <!-- Phase 1: Analyst Team -->
+    <div class="ai-phase">
+      <div class="ai-phase-hdr">
+        <span class="ai-phase-num">01</span>
+        <span class="ai-phase-title">Analyst Team</span>
+        <span class="ai-phase-sub">Four specialised analysts gather intelligence in parallel</span>
+      </div>
+      <div class="ai-grid">
+
+        <div class="ai-card market">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">📈 Market Analyst</div>
+              <div class="ai-card-sub">Price action · technicals · momentum</div>
+            </div>
+            <button class="btn btn-accent" style="background:rgba(232,255,71,.08);border:1px solid var(--accent);color:var(--accent);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--accent)';this.style.color='#000'" onmouseout="this.style.background='rgba(232,255,71,.08)';this.style.color='var(--accent)'" onclick="aiRunAnalyst('market')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="ai-out-market">Waiting to run…</div>
+          <div class="ai-card-foot" id="ai-status-market" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+        <div class="ai-card news">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">📰 News Analyst</div>
+              <div class="ai-card-sub">Global news · macro · catalysts</div>
+            </div>
+            <button class="btn btn-accent" style="background:rgba(255,155,78,.08);border:1px solid var(--orange);color:var(--orange);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--orange)';this.style.color='#000'" onmouseout="this.style.background='rgba(255,155,78,.08)';this.style.color='var(--orange)'" onclick="aiRunAnalyst('news')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="ai-out-news">Waiting to run…</div>
+          <div class="ai-card-foot" id="ai-status-news" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+        <div class="ai-card social">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">💬 Sentiment Analyst</div>
+              <div class="ai-card-sub">Options flow · short interest · retail mood</div>
+            </div>
+            <button class="btn btn-accent" style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--purple)';this.style.color='#000'" onmouseout="this.style.background='var(--purple-dim)';this.style.color='var(--purple)'" onclick="aiRunAnalyst('social')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="ai-out-social">Waiting to run…</div>
+          <div class="ai-card-foot" id="ai-status-social" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+        <div class="ai-card fund">
+          <div class="ai-card-hdr">
+            <div>
+              <div class="ai-card-label">🏦 Fundamentals Analyst</div>
+              <div class="ai-card-sub">Financials · valuation · moat</div>
+            </div>
+            <button class="btn btn-accent" style="background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--cyan)';this.style.color='#000'" onmouseout="this.style.background='var(--cyan-dim)';this.style.color='var(--cyan)'" onclick="aiRunAnalyst('fund')">▶ Run</button>
+          </div>
+          <div class="ai-out" id="ai-out-fund">Waiting to run…</div>
+          <div class="ai-card-foot" id="ai-status-fund" style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Phase 2: Research Debate -->
+    <div class="ai-phase">
+      <div class="ai-phase-hdr">
+        <span class="ai-phase-num">02</span>
+        <span class="ai-phase-title">Bull / Bear Debate</span>
+        <span class="ai-phase-sub">Researchers stress-test the thesis from both sides</span>
+      </div>
+
+      <div class="ai-debate-grid">
+        <div class="ai-debater bull">
+          <div class="ai-debater-hdr">
+            <div class="ai-debater-label">🐂 Bull Researcher</div>
+            <div class="ai-debater-sub">Strongest upside case from analyst reports</div>
+          </div>
+          <div class="ai-debater-out" id="ai-out-bull">Runs after analysts complete…</div>
+        </div>
+        <div class="ai-debater bear">
+          <div class="ai-debater-hdr">
+            <div class="ai-debater-label">🐻 Bear Researcher</div>
+            <div class="ai-debater-sub">Strongest downside case from analyst reports</div>
+          </div>
+          <div class="ai-debater-out" id="ai-out-bear">Runs after analysts complete…</div>
+        </div>
+      </div>
+
+      <div id="ai-debate-status" style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;min-height:18px"></div>
+
+      <div class="ai-verdict">
+        <div class="ai-verdict-hdr">
+          <div>
+            <div class="ai-verdict-label">🧠 Research Manager — Synthesis</div>
+          </div>
+          <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onclick="aiRunDebate()">▶ Run Debate</button>
+        </div>
+        <div class="ai-verdict-out" id="ai-out-verdict">Runs after analysts complete…</div>
+      </div>
+    </div>
+
+  </div><!-- /tab-ai -->
+
 </body>
 </html>
