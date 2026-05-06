@@ -9960,12 +9960,23 @@ function aiLoadKey() {
 }
 
 // ── Streaming Claude call ─────────────────────────────────────────────────
-async function streamClaude({ apiKey, system, userMsg, outEl, statusEl }) {
+async function streamClaude({ apiKey, system, userMsg, outEl, statusEl, useSearch = false }) {
   outEl.textContent = '';
   outEl.classList.remove('filled');
   if (statusEl) statusEl.innerHTML = '<span class="ai-spin"></span> Analysing…';
 
   let fullText = '';
+  const reqBody = {
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1500,
+    stream: true,
+    system,
+    messages: [{ role: 'user', content: userMsg }]
+  };
+  if (useSearch) {
+    reqBody.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  }
+
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -9975,13 +9986,7 @@ async function streamClaude({ apiKey, system, userMsg, outEl, statusEl }) {
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 900,
-        stream: true,
-        system,
-        messages: [{ role: 'user', content: userMsg }]
-      })
+      body: JSON.stringify(reqBody)
     });
 
     if (!resp.ok) {
@@ -10007,6 +10012,12 @@ async function streamClaude({ apiKey, system, userMsg, outEl, statusEl }) {
         if (raw === '[DONE]') break;
         try {
           const ev = JSON.parse(raw);
+          if (ev.type === 'content_block_start') {
+            if (ev.content_block?.type === 'tool_use' && statusEl)
+              statusEl.innerHTML = '<span class="ai-spin"></span> 🔍 Searching web…';
+            if (ev.content_block?.type === 'text' && fullText === '' && statusEl)
+              statusEl.innerHTML = '<span class="ai-spin"></span> Writing report…';
+          }
           if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
             fullText += ev.delta.text;
             outEl.textContent = fullText;
@@ -10030,35 +10041,35 @@ async function streamClaude({ apiKey, system, userMsg, outEl, statusEl }) {
 // ── Individual analyst runner ─────────────────────────────────────────────
 const ANALYST_CFG = {
   market: {
-    label: 'Market / Technical Analyst',
     system: `You are a quantitative market and technical analyst for a professional trading firm.
-Analyse the given stock's price action, trend structure, and momentum as of the specified date.
-Cover: trend direction (short/intermediate/long-term), key moving averages, RSI/MACD signals, volume patterns, support/resistance levels, and notable chart patterns (e.g. base, breakout, NR4/NR7).
-Be precise and data-driven. Output a structured report in ~250 words. Use short labelled sections.`,
+You have a web search tool — USE IT NOW to get current data before writing your report.
+Search for: "[TICKER] stock price today", "[TICKER] technical analysis [MONTH YEAR]", "[TICKER] 50 day 200 day moving average [YEAR]".
+Then write a structured report covering: current price, trend direction (short/medium/long term), key MAs (50/200-day status), RSI and MACD readings, volume patterns, key support/resistance levels, and any notable chart patterns.
+~250 words. Short labelled sections. Lead with the actual current price you found via search.`,
     key: 'market'
   },
   news: {
-    label: 'News / Event Analyst',
     system: `You are a financial news and event analyst for a professional trading firm.
-Analyse the news environment and macro context for the given stock as of the specified date.
-Cover: recent company-specific news, industry / sector tailwinds or headwinds, macro catalysts (rates, Fed, sector rotation), regulatory or legal risks, and any upcoming events (earnings, product launches, FDA dates, etc.).
-Be precise. Output a structured report in ~250 words. Use short labelled sections.`,
+You have a web search tool — USE IT NOW to find current news before writing your report.
+Search for: "[TICKER] stock news [MONTH YEAR]", "[TICKER] earnings", "[TICKER] latest announcement", and any relevant macro/sector news.
+Then write a structured report covering: recent company news and announcements, upcoming catalysts (earnings date, product launches, FDA dates), industry/sector trends, macro factors (Fed, rates, sector rotation), and regulatory or legal risks.
+~250 words. Short labelled sections. Only report news you actually found via search.`,
     key: 'news'
   },
   social: {
-    label: 'Sentiment / Social Analyst',
-    system: `You are a market sentiment and social media analyst for a professional trading firm.
-Analyse the sentiment landscape for the given stock as of the specified date.
-Cover: general retail and institutional sentiment, analyst rating trends and price-target changes, notable options activity or unusual flow signals, short interest / days-to-cover, and any contrarian signals.
-Be precise. Output a structured report in ~250 words. Use short labelled sections.`,
+    system: `You are a market sentiment analyst for a professional trading firm.
+You have a web search tool — USE IT NOW to find current analyst ratings and sentiment before writing your report.
+Search for: "[TICKER] analyst ratings [YEAR]", "[TICKER] price target upgrade downgrade", "[TICKER] short interest [YEAR]", "[TICKER] options flow unusual activity".
+Then write a structured report covering: current analyst consensus and recent upgrades/downgrades, price target range, short interest and days-to-cover, notable options activity, and retail/institutional sentiment indicators.
+~250 words. Short labelled sections. Only report figures found via search.`,
     key: 'social'
   },
   fund: {
-    label: 'Fundamentals Analyst',
     system: `You are a fundamental equity analyst for a professional trading firm.
-Analyse the financial fundamentals and valuation of the given stock as of the specified date.
-Cover: revenue and earnings growth trajectory, profit margins and free cash flow, balance sheet health (debt, cash), valuation multiples vs. sector peers (P/E, EV/EBITDA, P/S), and competitive moat / business quality.
-Be precise. Output a structured report in ~250 words. Use short labelled sections.`,
+You have a web search tool — USE IT NOW to find current financial data before writing your report.
+Search for: "[TICKER] revenue earnings [YEAR]", "[TICKER] P/E ratio EV/EBITDA valuation", "[TICKER] quarterly results", "[TICKER] financial metrics margins FCF".
+Then write a structured report covering: recent and projected revenue/EPS growth, profit margins and free cash flow, balance sheet health (cash vs debt), valuation multiples vs sector peers, and competitive moat assessment.
+~250 words. Short labelled sections. Use actual figures found via search.`,
     key: 'fund'
   }
 };
@@ -10078,7 +10089,7 @@ async function aiRunAnalyst(type) {
   let userMsg = `Stock: ${ticker}\nAnalysis date: ${date}`;
   if (ctx) userMsg += `\n\nAdditional context provided by user:\n${ctx}`;
 
-  const result = await streamClaude({ apiKey, system: cfg.system, userMsg, outEl, statusEl });
+  const result = await streamClaude({ apiKey, system: cfg.system, userMsg, outEl, statusEl, useSearch: true });
   if (result) aiReports[type] = result;
 }
 window.aiRunAnalyst = aiRunAnalyst;
