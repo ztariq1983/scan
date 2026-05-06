@@ -10208,7 +10208,7 @@ refreshRSWatchlistDropdown();
     <!-- API Key -->
     <div class="ai-key-row">
       <label>🔑 Anthropic API Key</label>
-      <input class="ai-key-input" id="ai-api-key" type="password" placeholder="sk-ant-…  (stored locally, never sent anywhere except Anthropic)">
+      <input class="ai-key-input" id="ai-api-key" type="text" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc;font-family:var(--font-mono)" onfocus="this.style.webkitTextSecurity='none'" onblur="this.style.webkitTextSecurity='disc'">
       <button class="btn btn-purple" onclick="aiSaveKey()">Save</button>
       <span id="ai-key-saved" style="font-size:9px;color:var(--green);letter-spacing:1px;display:none">✓ Saved</span>
     </div>
