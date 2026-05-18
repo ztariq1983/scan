@@ -270,6 +270,42 @@ table.orb-tbl tbody tr.flash{animation:flashRow 1.2s ease}
 .orb-quote.up{color:var(--green)}
 .orb-quote.down{color:var(--red)}
 
+/* ─── Pre-Market Gapper Scanner ───────────────────────────────────────── */
+.gap-panel{background:var(--surface);border:1px solid var(--orange);margin-bottom:20px;position:relative;overflow:hidden}
+.gap-panel::before{content:'';position:absolute;top:0;left:0;width:60px;height:3px;background:linear-gradient(90deg,var(--orange),var(--accent))}
+.gap-panel-hdr{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.gap-panel-title{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange)}
+.gap-panel-body{padding:16px 20px}
+.gap-controls{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+.gap-ctrl-field{display:flex;flex-direction:column;gap:4px}
+.gap-ctrl-lbl{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.gap-ctrl-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;cursor:pointer;letter-spacing:1px}
+.gap-stat-bar{display:flex;gap:14px;align-items:center;padding:10px 14px;background:var(--bg);border:1px solid var(--border2);margin-bottom:14px;flex-wrap:wrap}
+.gap-stat-item{display:flex;flex-direction:column;gap:2px}
+.gap-stat-lbl{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.gap-stat-val{font-family:var(--font-display);font-size:14px;font-weight:700;color:#fff}
+.gap-stat-val.green{color:var(--green)}
+.gap-stat-val.red{color:var(--red)}
+.gap-stat-val.orange{color:var(--orange)}
+table.gap-tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.gap-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.gap-tbl th{padding:10px 14px;text-align:left;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap;font-weight:400}
+table.gap-tbl th.num{text-align:right}
+table.gap-tbl th.ctr{text-align:center}
+table.gap-tbl td{padding:11px 14px;white-space:nowrap;vertical-align:middle;font-variant-numeric:tabular-nums}
+table.gap-tbl td.num{text-align:right}
+table.gap-tbl td.ctr{text-align:center}
+table.gap-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+table.gap-tbl tbody tr:hover{background:rgba(255,255,255,.02)}
+table.gap-tbl tbody tr.gap-up-row{background:rgba(61,255,160,.04)}
+table.gap-tbl tbody tr.gap-dn-row{background:rgba(255,82,119,.04)}
+.gap-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap}
+.gap-badge.up{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.4)}
+.gap-badge.dn{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.gap-badge.neutral{background:rgba(74,85,104,.2);color:var(--muted);border:1px solid var(--border2)}
+.gap-pct.up{color:var(--green);font-weight:700;font-size:13px}
+.gap-pct.dn{color:var(--red);font-weight:700;font-size:13px}
+
 /* ─── Pre-Market Pipeline ─────────────────────────────────────────── */
 .pipeline-panel{position:relative;background:linear-gradient(135deg,var(--surface) 0%,rgba(180,125,255,0.05) 100%);border:1px solid var(--purple);padding:18px 20px;margin-bottom:20px;overflow:hidden}
 .pipeline-panel::before{content:'';position:absolute;top:0;left:0;width:60px;height:3px;background:linear-gradient(90deg,var(--purple),var(--accent))}
@@ -741,6 +777,9 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .stag.mean_rev{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.35)}
 .stag.qm5{background:rgba(255,215,0,.12);color:gold;border:1px solid rgba(255,215,0,.4);font-weight:700}
 .stag.qm7{background:rgba(255,215,0,.22);color:gold;border:2px solid rgba(255,215,0,.7);font-weight:800;letter-spacing:.5px}
+.stag.hammer_sup{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.4);font-weight:600}
+.stag.rsi_rev{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.4);font-weight:600}
+.stag.bull_engulf{background:rgba(61,255,160,.14);color:var(--green);border:1px solid rgba(61,255,160,.45);font-weight:700}
 
 /* ─── Sector Heatmap ──────────────────────────────────────────────── */
 .heatmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:3px;margin-top:14px}
@@ -1017,6 +1056,9 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="strat-btn active" data-strat="mean_rev" data-color="red">Mean Reversion</button>
     <button class="strat-btn active" data-strat="qm5" data-color="gold">⭐ QM 5-Star</button>
     <button class="strat-btn active" data-strat="qm7" data-color="gold">🌟 QM 7-Star EP</button>
+    <button class="strat-btn active" data-strat="hammer_sup" data-color="red">🔨 Hammer Support</button>
+    <button class="strat-btn active" data-strat="rsi_rev"    data-color="orange">📈 RSI Reversal</button>
+    <button class="strat-btn active" data-strat="bull_engulf" data-color="green">⚡ Bull Engulfing</button>
   </div>
 
   <!-- Action bar -->
@@ -1162,6 +1204,88 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 
   <!-- ═══ ORB TAB ═══ -->
   <div class="tab-panel" id="tab-orb">
+
+    <!-- ── Pre-Market Gapper Scanner ─────────────────────────────────────── -->
+    <div class="gap-panel">
+      <div class="gap-panel-hdr">
+        <span class="gap-panel-title">🌅 Pre-Market Gapper Scanner</span>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:.5px">Requires Finnhub key (below) · uses latest quote vs prev close</div>
+      </div>
+      <div class="gap-panel-body">
+        <!-- Controls -->
+        <div class="gap-controls">
+          <div class="gap-ctrl-field" style="min-width:200px">
+            <span class="gap-ctrl-lbl">Watchlist</span>
+            <select id="gap-wl-select" class="gap-ctrl-sel">
+              <option value="">— Select a saved watchlist —</option>
+            </select>
+          </div>
+          <div class="gap-ctrl-field">
+            <span class="gap-ctrl-lbl">Min Gap %</span>
+            <select id="gap-min-pct" class="gap-ctrl-sel">
+              <option value="1">≥ 1%</option>
+              <option value="2">≥ 2%</option>
+              <option value="3" selected>≥ 3%</option>
+              <option value="5">≥ 5%</option>
+              <option value="10">≥ 10%</option>
+              <option value="15">≥ 15%</option>
+            </select>
+          </div>
+          <div class="gap-ctrl-field">
+            <span class="gap-ctrl-lbl">Direction</span>
+            <select id="gap-direction" class="gap-ctrl-sel">
+              <option value="both">Both Up &amp; Down</option>
+              <option value="up" selected>Gap Up Only</option>
+              <option value="down">Gap Down Only</option>
+            </select>
+          </div>
+          <div class="gap-ctrl-field">
+            <span class="gap-ctrl-lbl">Sort By</span>
+            <select id="gap-sort" class="gap-ctrl-sel">
+              <option value="gap-desc" selected>Gap % (Biggest First)</option>
+              <option value="gap-asc">Gap % (Smallest First)</option>
+              <option value="ticker">Ticker A–Z</option>
+            </select>
+          </div>
+          <button class="btn-scan" id="btn-gap-scan" style="padding:10px 24px;align-self:flex-end">🔍 Scan Gappers</button>
+          <button class="btn btn-ghost" id="btn-gap-reset" style="align-self:flex-end">✕ Reset</button>
+        </div>
+
+        <!-- Stat bar (hidden until scan runs) -->
+        <div class="gap-stat-bar" id="gap-stat-bar" style="display:none">
+          <div class="gap-stat-item"><span class="gap-stat-lbl">Scanned</span><span class="gap-stat-val" id="gap-scanned-val">0</span></div>
+          <div class="gap-stat-item"><span class="gap-stat-lbl">Gappers Found</span><span class="gap-stat-val green" id="gap-found-val">0</span></div>
+          <div class="gap-stat-item"><span class="gap-stat-lbl">Gap Up</span><span class="gap-stat-val green" id="gap-up-val">0</span></div>
+          <div class="gap-stat-item"><span class="gap-stat-lbl">Gap Down</span><span class="gap-stat-val red" id="gap-dn-val">0</span></div>
+          <div class="gap-stat-item"><span class="gap-stat-lbl">Avg Gap</span><span class="gap-stat-val orange" id="gap-avg-val">—</span></div>
+          <div style="margin-left:auto">
+            <button class="btn btn-cyan" id="btn-gap-to-orb" style="display:none;font-size:10px;padding:7px 14px">→ Gap Up to ORB</button>
+          </div>
+        </div>
+
+        <!-- Gapper results table -->
+        <div class="tbl-wrap">
+          <table class="gap-tbl">
+            <thead><tr>
+              <th>Ticker</th>
+              <th class="num">Prev Close</th>
+              <th class="num">Pre-Mkt Price</th>
+              <th class="num">Gap %</th>
+              <th class="num">Day High</th>
+              <th class="num">Day Low</th>
+              <th class="ctr">Direction</th>
+            </tr></thead>
+            <tbody id="gap-tbody">
+              <tr><td colspan="7"><div class="empty-cell">
+                <div class="ei">🌅</div>
+                <div class="et">Pre-Market Scanner Ready</div>
+                <div class="es">Select a watchlist → click Scan Gappers (works any time, best before 9:30 AM ET)</div>
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Finnhub credentials -->
     <div class="panel cyan">
@@ -2811,7 +2935,7 @@ function renderTable() {
     return;
   }
 
-  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev',qm5:'⭐ QM 5-Star',qm7:'🌟 QM 7-Star EP'};
+  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev',qm5:'⭐ QM 5-Star',qm7:'🌟 QM 7-Star EP',hammer_sup:'🔨 Hammer',rsi_rev:'📈 RSI Rev',bull_engulf:'⚡ Engulf'};
 
   tbody.innerHTML=rows.map((r,i)=>{
     if (r.error) return `
@@ -4682,6 +4806,178 @@ g('orb-vol-mult').addEventListener('change', renderORBTable);
 g('orb-range-min').addEventListener('change', () => {
   g('orb-min-text').textContent = g('orb-range-min').value;
 });
+
+// ─── PRE-MARKET GAPPER SCANNER ───────────────────────────────────────────────
+// Uses Finnhub quote: c = current/latest price, pc = previous close
+// Gap % = (c - pc) / pc * 100  — works pre-market and intraday
+
+let gapResults = [];  // [{ticker, price, prevClose, gapPct, dayHigh, dayLow}]
+
+// Populate gapper watchlist dropdown (mirrors ORB dropdown)
+function refreshGapWatchlistDropdown() {
+  const wls = getAllWatchlists();
+  const names = Object.keys(wls).sort();
+  const sel = g('gap-wl-select');
+  const current = sel.value;
+  if (!names.length) {
+    sel.innerHTML = '<option value="">— No saved watchlists — create one on Scanner tab —</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">— Select a watchlist —</option>' +
+    names.map(n => `<option value="${n}"${n===current?' selected':''}>${n} (${wls[n].length})</option>`).join('');
+}
+
+async function scanGappers() {
+  const fKey = getFinnhubKey();
+  if (!fKey) { alert('Finnhub key required — save it in the Finnhub section below first.'); return; }
+
+  const wlName = g('gap-wl-select').value;
+  if (!wlName) { alert('Select a watchlist first.'); return; }
+  const wls = getAllWatchlists();
+  const tickers = wls[wlName];
+  if (!tickers || !tickers.length) { alert('Watchlist is empty.'); return; }
+
+  const minPct  = parseFloat(g('gap-min-pct').value);
+  const dir     = g('gap-direction').value;
+
+  const btn = g('btn-gap-scan');
+  btn.disabled = true; btn.textContent = '⟳ Scanning…';
+  g('gap-stat-bar').style.display = 'flex';
+  g('gap-tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted);font-size:11px;padding:20px 16px;text-align:center">
+    Fetching quotes for ${tickers.length} tickers… <span class="ai-spin"></span></td></tr>`;
+
+  gapResults = [];
+
+  for (const ticker of tickers) {
+    try {
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(fKey)}`);
+      const j = await r.json();
+      if (r.ok && j && typeof j.c === 'number' && j.c > 0 && typeof j.pc === 'number' && j.pc > 0) {
+        const gapPct = ((j.c - j.pc) / j.pc) * 100;
+        gapResults.push({ ticker, price: j.c, prevClose: j.pc, gapPct, dayHigh: j.h, dayLow: j.l });
+      }
+    } catch(e) { /* skip */ }
+    await new Promise(r => setTimeout(r, 120)); // rate-limit: ~8 req/sec
+  }
+
+  btn.disabled = false; btn.textContent = '🔍 Scan Gappers';
+  renderGapTable(minPct, dir);
+}
+
+function renderGapTable(minPct, dir) {
+  minPct = minPct !== undefined ? minPct : parseFloat(g('gap-min-pct').value);
+  dir    = dir    !== undefined ? dir    : g('gap-direction').value;
+  const sortBy = g('gap-sort').value;
+
+  // Filter
+  let rows = gapResults.filter(r => {
+    const abs = Math.abs(r.gapPct);
+    if (abs < minPct) return false;
+    if (dir === 'up'   && r.gapPct <= 0) return false;
+    if (dir === 'down' && r.gapPct >= 0) return false;
+    return true;
+  });
+
+  // Sort
+  rows.sort((a, b) => {
+    if (sortBy === 'ticker')   return a.ticker.localeCompare(b.ticker);
+    if (sortBy === 'gap-asc')  return Math.abs(a.gapPct) - Math.abs(b.gapPct);
+    return Math.abs(b.gapPct) - Math.abs(a.gapPct); // gap-desc default
+  });
+
+  // Stat bar
+  const gapUp = gapResults.filter(r => r.gapPct >= minPct).length;
+  const gapDn = gapResults.filter(r => r.gapPct <= -minPct).length;
+  const allAbs = gapResults.filter(r => Math.abs(r.gapPct) >= minPct).map(r => Math.abs(r.gapPct));
+  const avgGap = allAbs.length ? (allAbs.reduce((a,b)=>a+b,0)/allAbs.length).toFixed(1)+'%' : '—';
+
+  g('gap-scanned-val').textContent = gapResults.length;
+  g('gap-found-val').textContent   = rows.length;
+  g('gap-up-val').textContent      = gapUp;
+  g('gap-dn-val').textContent      = gapDn;
+  g('gap-avg-val').textContent     = avgGap;
+
+  // Show/hide → ORB button
+  const hasUp = rows.some(r => r.gapPct > 0);
+  g('btn-gap-to-orb').style.display = hasUp ? 'inline-block' : 'none';
+
+  if (!rows.length) {
+    g('gap-tbody').innerHTML = `<tr><td colspan="7"><div class="empty-cell">
+      <div class="ei">◌</div>
+      <div class="et">No Gappers Found</div>
+      <div class="es">Try lowering the Min Gap % or changing direction filter</div>
+    </div></td></tr>`;
+    return;
+  }
+
+  g('gap-tbody').innerHTML = rows.map(r => {
+    const isUp  = r.gapPct > 0;
+    const pctTxt = (isUp ? '+' : '') + r.gapPct.toFixed(2) + '%';
+    const rowCls = isUp ? 'gap-up-row' : 'gap-dn-row';
+    const pctCls = isUp ? 'up' : 'dn';
+    const badge  = isUp
+      ? `<span class="gap-badge up">🚀 Gap Up</span>`
+      : `<span class="gap-badge dn">🔻 Gap Down</span>`;
+    const highTxt = r.dayHigh > 0 ? `$${r.dayHigh.toFixed(2)}` : '—';
+    const lowTxt  = r.dayLow  > 0 ? `$${r.dayLow.toFixed(2)}`  : '—';
+
+    return `<tr class="${rowCls}">
+      <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+      <td class="num" style="color:var(--muted)">$${r.prevClose.toFixed(2)}</td>
+      <td class="num" style="color:var(--text);font-weight:500">$${r.price.toFixed(2)}</td>
+      <td class="num"><span class="gap-pct ${pctCls}">${pctTxt}</span></td>
+      <td class="num" style="color:var(--muted);font-size:11px">${highTxt}</td>
+      <td class="num" style="color:var(--muted);font-size:11px">${lowTxt}</td>
+      <td class="ctr">${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function resetGapScanner() {
+  gapResults = [];
+  g('gap-stat-bar').style.display = 'none';
+  g('btn-gap-to-orb').style.display = 'none';
+  g('gap-tbody').innerHTML = `<tr><td colspan="7"><div class="empty-cell">
+    <div class="ei">🌅</div>
+    <div class="et">Pre-Market Scanner Ready</div>
+    <div class="es">Select a watchlist → click Scan Gappers</div>
+  </div></td></tr>`;
+}
+
+// "Send gap-ups to ORB" — populates the ORB watchlist selection
+function sendGapUpsToORB() {
+  const minPct = parseFloat(g('gap-min-pct').value);
+  const gapUpTickers = gapResults.filter(r => r.gapPct >= minPct).map(r => r.ticker);
+  if (!gapUpTickers.length) { alert('No gap-up tickers to send.'); return; }
+
+  // Save as a temporary watchlist named "GAP-UPS" and select it in ORB dropdown
+  const wls = getAllWatchlists();
+  wls['GAP-UPS (Auto)'] = gapUpTickers;
+  localStorage.setItem('apex_watchlists', JSON.stringify(wls));
+
+  refreshORBWatchlistDropdown();
+  g('orb-wl-select').value = 'GAP-UPS (Auto)';
+  g('orb-wl-label').textContent = `GAP-UPS (Auto) · ${gapUpTickers.length} tickers`;
+
+  // Scroll down to the ORB section
+  g('btn-orb-load-range').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  alert(`✓ ${gapUpTickers.length} gap-up ticker(s) loaded into the ORB scanner. Now click "1. Load Opening Range" after 9:35 AM ET.`);
+}
+
+// Wire gapper events
+g('btn-gap-scan').addEventListener('click', scanGappers);
+g('btn-gap-reset').addEventListener('click', resetGapScanner);
+g('btn-gap-to-orb').addEventListener('click', sendGapUpsToORB);
+g('gap-min-pct').addEventListener('change', () => renderGapTable());
+g('gap-direction').addEventListener('change', () => renderGapTable());
+g('gap-sort').addEventListener('change', () => renderGapTable());
+
+// Refresh gapper dropdown when entering ORB tab (mirrors ORB refresh)
+const _origRefreshORBWL = refreshORBWatchlistDropdown;
+refreshORBWatchlistDropdown = function() {
+  _origRefreshORBWL();
+  refreshGapWatchlistDropdown();
+};
 g('orb-refresh-sec').addEventListener('change', () => {
   g('orb-refresh-text').textContent = g('orb-refresh-sec').value;
 });
@@ -9414,6 +9710,145 @@ function detectMeanReversion(data) {
   return {signal:true, lowerBand:lowerBB.toFixed(2), sma20:sma20val.toFixed(2), distPct, stdDev:stdDev.toFixed(2)};
 }
 
+// ─── Reversal Strategy Detectors ────────────────────────────────────────────
+
+// 🔨 Hammer at Support
+// Looks for a hammer (or pin-bar) candle at a key support zone after a pullback.
+// Rules: lower wick ≥ 2× the body, upper wick < body, closes in upper 40% of range,
+//        today's low within 2% of the 20-day range low, price above 200 SMA.
+function detectHammerSupport(data) {
+  if (data.length < 55) return {signal: false};
+  const closes = data.map(d => d.c);
+  const sma200val = sma(closes, 200);
+  const today     = data[data.length - 1];
+  const o = today.o || today.c; // some feeds omit open
+  const body      = Math.abs(today.c - o);
+  const totalRange = today.h - today.l;
+  if (totalRange < 0.001) return {signal: false};       // avoid dojis / thin bars
+  const lowerWick  = Math.min(today.c, o) - today.l;
+  const upperWick  = today.h - Math.max(today.c, o);
+  const closePct   = (today.c - today.l) / totalRange;  // close position in range
+
+  // Hammer shape: long lower wick ≥ 2× body, minimal upper wick, close in upper 40%
+  if (body === 0) return {signal: false};               // perfectly flat candle
+  if (lowerWick < 2 * body) return {signal: false};
+  if (upperWick > body)     return {signal: false};
+  if (closePct < 0.40)      return {signal: false};
+
+  // Support zone: today's low within 2.5% of lowest close in past 20 bars
+  const recentLow = Math.min(...data.slice(-21, -1).map(d => d.l));
+  const nearSupport = today.l <= recentLow * 1.025;
+  if (!nearSupport) return {signal: false};
+
+  // Not in a deep downtrend: price above 200 SMA (or at most 5% below it)
+  if (sma200val && today.c < sma200val * 0.95) return {signal: false};
+
+  // Prefer low-volume hammer (quiet test of support)
+  const avVol = avgVol(data, 20);
+  const lowVol = avVol > 0 && today.v < avVol * 0.85;
+
+  return {
+    signal: true,
+    wickRatio: (lowerWick / body).toFixed(1),
+    closePct: (closePct * 100).toFixed(0),
+    nearSupport,
+    lowVol,
+    supportLevel: recentLow.toFixed(2),
+  };
+}
+
+// 📈 RSI Reversal
+// Oversold bounce: RSI was below 35 in the past 3 bars, current close is in the
+// upper 50% of the day's range, and RSI is now turning up. Stock must be above 200 SMA.
+function detectRSIReversal(data) {
+  if (data.length < 55) return {signal: false};
+  const closes = data.map(d => d.c);
+  const sma200val = sma(closes, 200);
+  const today = data[data.length - 1];
+
+  // Needs enough data for RSI
+  if (closes.length < 18) return {signal: false};
+
+  // Calculate RSI for the past 4 bars (today + 3 prior)
+  function rsiAt(offset) {
+    return calcRSI14(closes.slice(0, closes.length - offset));
+  }
+  const rsiNow  = rsiAt(0);
+  const rsi1    = rsiAt(1);
+  const rsi2    = rsiAt(2);
+  const rsi3    = rsiAt(3);
+
+  if (!rsiNow || !rsi1 || !rsi2 || !rsi3) return {signal: false};
+
+  // One of the last 3 bars must have been oversold (RSI < 35)
+  const wasOversold = rsi1 < 35 || rsi2 < 35 || rsi3 < 35;
+  if (!wasOversold) return {signal: false};
+
+  // RSI is now turning up (current > 1 bar ago)
+  if (rsiNow <= rsi1) return {signal: false};
+
+  // Close in upper 50% of today's range (buyers winning intraday)
+  const totalRange = today.h - today.l;
+  const closePct   = totalRange > 0 ? (today.c - today.l) / totalRange : 0.5;
+  if (closePct < 0.45) return {signal: false};
+
+  // Not in a deep downtrend: price above 200 SMA or within 8%
+  if (sma200val && today.c < sma200val * 0.92) return {signal: false};
+
+  const rsiLow = Math.min(rsi1, rsi2, rsi3).toFixed(1);
+
+  return {
+    signal: true,
+    rsiNow: rsiNow.toFixed(1),
+    rsiLow,
+    closePct: (closePct * 100).toFixed(0),
+  };
+}
+
+// ⚡ Bullish Engulfing at Support
+// Today's green body fully engulfs yesterday's red body, with rising volume,
+// at or near a key support level (recent 20-day low or 50 SMA touch).
+function detectBullishEngulfing(data) {
+  if (data.length < 55) return {signal: false};
+  const closes = data.map(d => d.c);
+  const today    = data[data.length - 1];
+  const prev     = data[data.length - 2];
+
+  const todayOpen  = today.o || today.c;
+  const prevOpen   = prev.o  || prev.c;
+
+  // Yesterday = red candle (close < open)
+  if (prev.c >= prevOpen) return {signal: false};
+  // Today = green candle (close > open)
+  if (today.c <= todayOpen) return {signal: false};
+  // Today's body engulfs yesterday's body
+  if (todayOpen > prev.c)   return {signal: false};  // today's open must be ≤ prev close
+  if (today.c < prevOpen)   return {signal: false};  // today's close must be ≥ prev open
+
+  // Volume confirmation: today's volume > yesterday's
+  if (today.v <= prev.v * 1.1) return {signal: false};
+
+  // Near key support: today's low within 3% of 20-day low OR within 2% of 50 SMA
+  const recentLow  = Math.min(...data.slice(-21, -1).map(d => d.l));
+  const sma50val   = sma(closes, 50);
+  const nearLow    = today.l <= recentLow * 1.03;
+  const nearSMA50  = sma50val && today.l <= sma50val * 1.02 && today.c >= sma50val * 0.97;
+  if (!nearLow && !nearSMA50) return {signal: false};
+
+  // Overall trend should not be a deep downtrend (price above 50 SMA)
+  if (sma50val && today.c < sma50val * 0.95) return {signal: false};
+
+  const volRatioVal = prev.v > 0 ? (today.v / prev.v).toFixed(1) : '—';
+
+  return {
+    signal: true,
+    volRatio: volRatioVal,
+    nearLow,
+    nearSMA50,
+    engulfPct: (((today.c - todayOpen) / (prevOpen - prev.c) - 1) * 100).toFixed(0),
+  };
+}
+
 // Patch analyzeStock to include ema21
 const _origAnalyze = analyzeStock;
 analyzeStock = function(ticker, data) {
@@ -9468,6 +9903,29 @@ analyzeStock = function(ticker, data) {
     r.details.push(`🌟 QM 7-Star EP: +${qm7.epGapPct}% gap ${qm7.epVolRatio}×vol · ${qm7.flagDays}d flag ${qm7.flagRange}% · re-break ${qm7.breakoutVol}×vol`);
   }
 
+  // ── Reversal Strategies ────────────────────────────────────────────────────
+
+  // 🔨 Hammer at Support
+  const ham = detectHammerSupport(data);
+  if (ham.signal) {
+    r.signals.push('hammer_sup');
+    r.details.push(`🔨 Hammer Support: ${ham.wickRatio}× wick · close ${ham.closePct}% of range · support $${ham.supportLevel}${ham.lowVol ? ' · low vol ✓' : ''}`);
+  }
+
+  // 📈 RSI Reversal
+  const rsiR = detectRSIReversal(data);
+  if (rsiR.signal) {
+    r.signals.push('rsi_rev');
+    r.details.push(`📈 RSI Reversal: RSI was ${rsiR.rsiLow} (oversold) · now ${rsiR.rsiNow} · close in upper ${rsiR.closePct}% of range`);
+  }
+
+  // ⚡ Bullish Engulfing
+  const beng = detectBullishEngulfing(data);
+  if (beng.signal) {
+    r.signals.push('bull_engulf');
+    r.details.push(`⚡ Bull Engulfing: ${beng.volRatio}× vol · ${beng.nearLow ? 'at 20d low ✓' : beng.nearSMA50 ? 'at 50 SMA ✓' : ''}`);
+  }
+
   return r;
 };
 
@@ -9481,8 +9939,11 @@ updateStats = function() {
   if (g('st-cons_bo'))  g('st-cons_bo').textContent  = v.filter(r=>r.signals.includes('cons_bo')).length;
   if (g('st-gap_hold')) g('st-gap_hold').textContent = v.filter(r=>r.signals.includes('gap_hold')).length;
   if (g('st-mean_rev')) g('st-mean_rev').textContent = v.filter(r=>r.signals.includes('mean_rev')).length;
-  if (g('st-qm5'))     g('st-qm5').textContent     = v.filter(r=>r.signals.includes('qm5')).length;
-  if (g('st-qm7'))     g('st-qm7').textContent     = v.filter(r=>r.signals.includes('qm7')).length;
+  if (g('st-qm5'))         g('st-qm5').textContent         = v.filter(r=>r.signals.includes('qm5')).length;
+  if (g('st-qm7'))         g('st-qm7').textContent         = v.filter(r=>r.signals.includes('qm7')).length;
+  if (g('st-hammer_sup'))  g('st-hammer_sup').textContent  = v.filter(r=>r.signals.includes('hammer_sup')).length;
+  if (g('st-rsi_rev'))     g('st-rsi_rev').textContent     = v.filter(r=>r.signals.includes('rsi_rev')).length;
+  if (g('st-bull_engulf')) g('st-bull_engulf').textContent = v.filter(r=>r.signals.includes('bull_engulf')).length;
 };
 
 // Add ema21 to all label maps
@@ -9888,18 +10349,28 @@ if (typeof STRAT_NAMES !== 'undefined') {
   STRAT_NAMES.qm7      = 'QM 7-Star Episodic Pivot';
 }
 // Add to activeStrats
-['ema21','ema_rev','cons_bo','gap_hold','mean_rev','qm5','qm7'].forEach(s => activeStrats.add(s));
+['ema21','ema_rev','cons_bo','gap_hold','mean_rev','qm5','qm7','hammer_sup','rsi_rev','bull_engulf'].forEach(s => activeStrats.add(s));
+
+// Patch STRAT_NAMES for reversal strategies
+if (typeof STRAT_NAMES !== 'undefined') {
+  STRAT_NAMES.hammer_sup  = 'Hammer at Support';
+  STRAT_NAMES.rsi_rev     = 'RSI Reversal (Oversold Bounce)';
+  STRAT_NAMES.bull_engulf = 'Bullish Engulfing at Support';
+}
 
 // Add to journal filter dropdown
 const tradeFilterStrat = g('trade-filter-strat');
 const newStratOpts = [
-  {v:'ema21',    t:'21 EMA Pull'},
-  {v:'ema_rev',  t:'EMA Reversion'},
-  {v:'cons_bo',  t:'Consolidation BO'},
-  {v:'gap_hold', t:'Earnings Gap Hold'},
-  {v:'mean_rev', t:'Mean Reversion'},
-  {v:'qm5',      t:'⭐ QM 5-Star'},
-  {v:'qm7',      t:'🌟 QM 7-Star EP'},
+  {v:'ema21',      t:'21 EMA Pull'},
+  {v:'ema_rev',    t:'EMA Reversion'},
+  {v:'cons_bo',    t:'Consolidation BO'},
+  {v:'gap_hold',   t:'Earnings Gap Hold'},
+  {v:'mean_rev',   t:'Mean Reversion'},
+  {v:'qm5',        t:'⭐ QM 5-Star'},
+  {v:'qm7',        t:'🌟 QM 7-Star EP'},
+  {v:'hammer_sup', t:'🔨 Hammer Support'},
+  {v:'rsi_rev',    t:'📈 RSI Reversal'},
+  {v:'bull_engulf',t:'⚡ Bull Engulfing'},
 ];
 newStratOpts.forEach(({v,t}) => {
   if (tradeFilterStrat && !tradeFilterStrat.querySelector(`[value="${v}"]`)) {
@@ -9912,13 +10383,16 @@ newStratOpts.forEach(({v,t}) => {
 // Add to journal entry modal chips
 const entryStratRow = document.querySelector('#entry-strat-row');
 const newChips = [
-  {k:'ema21',   l:'21 EMA Pull'},
-  {k:'ema_rev', l:'EMA Reversion'},
-  {k:'cons_bo', l:'Consol. Breakout'},
-  {k:'gap_hold',l:'Earnings Gap Hold'},
-  {k:'mean_rev',l:'Mean Reversion'},
-  {k:'qm5',     l:'⭐ QM 5-Star'},
-  {k:'qm7',     l:'🌟 QM 7-Star EP'},
+  {k:'ema21',      l:'21 EMA Pull'},
+  {k:'ema_rev',    l:'EMA Reversion'},
+  {k:'cons_bo',    l:'Consol. Breakout'},
+  {k:'gap_hold',   l:'Earnings Gap Hold'},
+  {k:'mean_rev',   l:'Mean Reversion'},
+  {k:'qm5',        l:'⭐ QM 5-Star'},
+  {k:'qm7',        l:'🌟 QM 7-Star EP'},
+  {k:'hammer_sup', l:'🔨 Hammer Support'},
+  {k:'rsi_rev',    l:'📈 RSI Reversal'},
+  {k:'bull_engulf',l:'⚡ Bull Engulfing'},
 ];
 newChips.forEach(({k,l}) => {
   if (entryStratRow && !entryStratRow.querySelector(`[data-strat="${k}"]`)) {
