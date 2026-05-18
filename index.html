@@ -1205,21 +1205,41 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
   <!-- ═══ ORB TAB ═══ -->
   <div class="tab-panel" id="tab-orb">
 
-    <!-- ── Pre-Market Gapper Scanner ─────────────────────────────────────── -->
+    <!-- ── Pre-Market / After-Hours Gapper Scanner ──────────────────────── -->
     <div class="gap-panel">
       <div class="gap-panel-hdr">
-        <span class="gap-panel-title">🌅 Pre-Market Gapper Scanner</span>
-        <div style="font-size:10px;color:var(--muted);letter-spacing:.5px">Requires Finnhub key (below) · uses latest quote vs prev close</div>
+        <span class="gap-panel-title">🌅 Gapper Scanner — Pre-Market &amp; After-Hours</span>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:.5px">Uses Alpaca data (your existing keys) · Auto mode scans ~200 liquid US stocks instantly</div>
       </div>
       <div class="gap-panel-body">
-        <!-- Controls -->
-        <div class="gap-controls">
-          <div class="gap-ctrl-field" style="min-width:200px">
+
+        <!-- Mode + Source row -->
+        <div class="gap-controls" style="margin-bottom:8px">
+          <div class="gap-ctrl-field">
+            <span class="gap-ctrl-lbl">Scan Mode</span>
+            <select id="gap-mode" class="gap-ctrl-sel" style="min-width:230px">
+              <option value="premarket" selected>🌅 Pre-Market Today (vs Prev Close)</option>
+              <option value="afterhours">🌙 After-Hours Last Session (vs Today's Close)</option>
+            </select>
+          </div>
+          <div class="gap-ctrl-field">
+            <span class="gap-ctrl-lbl">Source</span>
+            <select id="gap-source" class="gap-ctrl-sel">
+              <option value="universe" selected>Auto: Top ~200 US Stocks</option>
+              <option value="watchlist">My Watchlist</option>
+            </select>
+          </div>
+          <!-- Watchlist picker — shown only when Source = watchlist -->
+          <div class="gap-ctrl-field" id="gap-wl-wrapper" style="display:none;min-width:200px">
             <span class="gap-ctrl-lbl">Watchlist</span>
             <select id="gap-wl-select" class="gap-ctrl-sel">
               <option value="">— Select a saved watchlist —</option>
             </select>
           </div>
+        </div>
+
+        <!-- Filter row -->
+        <div class="gap-controls">
           <div class="gap-ctrl-field">
             <span class="gap-ctrl-lbl">Min Gap %</span>
             <select id="gap-min-pct" class="gap-ctrl-sel">
@@ -1258,6 +1278,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <div class="gap-stat-item"><span class="gap-stat-lbl">Gap Up</span><span class="gap-stat-val green" id="gap-up-val">0</span></div>
           <div class="gap-stat-item"><span class="gap-stat-lbl">Gap Down</span><span class="gap-stat-val red" id="gap-dn-val">0</span></div>
           <div class="gap-stat-item"><span class="gap-stat-lbl">Avg Gap</span><span class="gap-stat-val orange" id="gap-avg-val">—</span></div>
+          <div class="gap-stat-item"><span class="gap-stat-lbl">Mode</span><span class="gap-stat-val" id="gap-mode-val" style="font-size:11px;color:var(--cyan)">—</span></div>
           <div style="margin-left:auto">
             <button class="btn btn-cyan" id="btn-gap-to-orb" style="display:none;font-size:10px;padding:7px 14px">→ Gap Up to ORB</button>
           </div>
@@ -1268,21 +1289,29 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
           <table class="gap-tbl">
             <thead><tr>
               <th>Ticker</th>
-              <th class="num">Prev Close</th>
-              <th class="num">Pre-Mkt Price</th>
+              <th class="num" id="gap-base-hdr">Base Price</th>
+              <th class="num" id="gap-price-hdr">Ext. Price</th>
               <th class="num">Gap %</th>
               <th class="num">Day High</th>
               <th class="num">Day Low</th>
-              <th class="ctr">Direction</th>
+              <th class="ctr">Data Age</th>
+              <th class="ctr">Signal</th>
             </tr></thead>
             <tbody id="gap-tbody">
-              <tr><td colspan="7"><div class="empty-cell">
+              <tr><td colspan="8"><div class="empty-cell">
                 <div class="ei">🌅</div>
-                <div class="et">Pre-Market Scanner Ready</div>
-                <div class="es">Select a watchlist → click Scan Gappers (works any time, best before 9:30 AM ET)</div>
+                <div class="et">Gapper Scanner Ready</div>
+                <div class="es">Choose Auto (Top ~200 US) or Watchlist → click Scan Gappers</div>
               </div></td></tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- How-it-works note -->
+        <div style="margin-top:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border2);font-size:10px;line-height:1.9;color:var(--muted)">
+          <b style="color:var(--orange)">Pre-Market mode</b> — run before 9:30 AM ET. Shows latest trade vs yesterday's close. Best for finding names moving overnight on news/earnings.<br>
+          <b style="color:var(--cyan)">After-Hours mode</b> — run after 4:00 PM ET. Shows latest trade vs today's regular-session close. Catches earnings reactions and late-day catalyst moves.<br>
+          <b style="color:var(--accent)">Auto Universe</b> — scans ~200 high-liquidity US stocks in 2 batch requests (no watchlist needed). Uses Alpaca data (your existing keys).
         </div>
       </div>
     </div>
@@ -4807,17 +4836,74 @@ g('orb-range-min').addEventListener('change', () => {
   g('orb-min-text').textContent = g('orb-range-min').value;
 });
 
-// ─── PRE-MARKET GAPPER SCANNER ───────────────────────────────────────────────
-// Uses Finnhub quote: c = current/latest price, pc = previous close
-// Gap % = (c - pc) / pc * 100  — works pre-market and intraday
+// ─── GAPPER SCANNER  (Pre-Market Today  ·  After-Hours Last Session) ─────────
+// Data source: Alpaca snapshot API (batch — 2 requests for 200 symbols)
+// Pre-market  : latestTrade.p  vs  prevDailyBar.c  (yesterday's close)
+// After-hours : latestTrade.p  vs  dailyBar.c      (today's reg-session close)
 
-let gapResults = [];  // [{ticker, price, prevClose, gapPct, dayHigh, dayLow}]
+// ── Universe: ~200 liquid US stocks scanned automatically ─────────────────────
+const GAP_UNIVERSE = [
+  // Mega-cap tech / US giants
+  'AAPL','MSFT','GOOGL','GOOG','AMZN','META','NVDA','TSLA','AVGO','LLY',
+  'JPM','V','XOM','UNH','COST','MA','HD','PG','ABBV','MRK','JNJ','CVX','PEP','KO','WMT',
+  // Semis / hardware
+  'AMD','INTC','QCOM','MU','AMAT','LRCX','KLAC','ADI','MRVL','SMCI',
+  'ARM','TSM','ASML','TXN','NXPI','ON','STX','WDC','SWKS',
+  // Software / cloud
+  'PLTR','SNOW','CRWD','PANW','NET','DDOG','MDB','NOW','CRM','ADBE',
+  'INTU','ORCL','ANET','ZS','OKTA','FTNT','TEAM','WDAY','HUBS','VEEV',
+  // Fintech / payments
+  'PYPL','COIN','HOOD','SOFI','BILL','TOST','APP','SQ','GPN','FIS',
+  // Traditional finance
+  'GS','MS','BAC','WFC','C','AXP','BLK','SCHW','CME','ICE','COF','SPGI','MCO','FI','CB',
+  // Healthcare / biotech
+  'GILD','AMGN','REGN','VRTX','BMY','PFE','ISRG','DHR','TMO','MRNA',
+  'BIIB','ILMN','EW','SYK','BSX','ALGN','IDXX','ZBH',
+  // Consumer / retail
+  'NFLX','DIS','SBUX','MCD','NKE','LULU','TJX','TGT','LOW','BURL',
+  'ROST','DECK','ULTA','YUM','CMG','DASH','ABNB','UBER','LYFT',
+  // Energy
+  'COP','SLB','OXY','VLO','PSX','MPC','DVN','HAL','BKR','EOG',
+  // Industrials / defence
+  'CAT','DE','RTX','BA','LMT','HON','GE','UPS','FDX','CSX','NSC',
+  // China / EM ADRs
+  'BABA','JD','PDD','BIDU','NIO','XPEV','LI','KWEB',
+  // High-beta / momentum / meme
+  'MSTR','RIVN','LCID','GME','AMC','RBLX','SNAP','PINS','RDDT',
+  // More tech / SaaS
+  'SHOP','TWLO','DUOL','ZM','DOCU','U','PAYC','TTD',
+  // ETFs (liquid, high-vol)
+  'SPY','QQQ','IWM','DIA','XLF','XLK','XLE','XLV','XLI','XLU',
+  'GLD','SLV','TLT','HYG','ARKK','SOXL','SOXS','TQQQ','SQQQ','UVXY',
+];
+
+let gapResults  = [];   // [{ticker, price, basePrice, gapPct, dayHigh, dayLow, tradeTs, stale}]
+let gapScanMode = 'premarket'; // or 'afterhours'
+
+// ── Batch Alpaca snapshot fetch ───────────────────────────────────────────────
+async function fetchAlpacaSnapshotsBatch(tickers, keys) {
+  const out = {};
+  const batchSize = 100;
+  for (let i = 0; i < tickers.length; i += batchSize) {
+    const batch = tickers.slice(i, i + batchSize).join(',');
+    const url = `https://data.alpaca.markets/v2/stocks/snapshots?symbols=${encodeURIComponent(batch)}&feed=iex`;
+    try {
+      const resp = await fetch(url, {
+        headers: { 'APCA-API-KEY-ID': keys.key, 'APCA-API-SECRET-KEY': keys.secret }
+      });
+      if (resp.ok) Object.assign(out, await resp.json());
+    } catch(e) { /* network error — skip batch */ }
+    if (i + batchSize < tickers.length) await new Promise(r => setTimeout(r, 400)); // brief pause between batches
+  }
+  return out;
+}
 
 // Populate gapper watchlist dropdown (mirrors ORB dropdown)
 function refreshGapWatchlistDropdown() {
   const wls = getAllWatchlists();
   const names = Object.keys(wls).sort();
   const sel = g('gap-wl-select');
+  if (!sel) return;
   const current = sel.value;
   if (!names.length) {
     sel.innerHTML = '<option value="">— No saved watchlists — create one on Scanner tab —</option>';
@@ -4827,43 +4913,96 @@ function refreshGapWatchlistDropdown() {
     names.map(n => `<option value="${n}"${n===current?' selected':''}>${n} (${wls[n].length})</option>`).join('');
 }
 
+// ── Main scan function ────────────────────────────────────────────────────────
 async function scanGappers() {
-  const fKey = getFinnhubKey();
-  if (!fKey) { alert('Finnhub key required — save it in the Finnhub section below first.'); return; }
+  const keys    = getKeys();
+  const mode    = g('gap-mode').value;
+  const source  = g('gap-source').value;
+  gapScanMode   = mode;
 
-  const wlName = g('gap-wl-select').value;
-  if (!wlName) { alert('Select a watchlist first.'); return; }
-  const wls = getAllWatchlists();
-  const tickers = wls[wlName];
-  if (!tickers || !tickers.length) { alert('Watchlist is empty.'); return; }
+  if (!keys.key || !keys.secret) {
+    alert('Alpaca API keys required — enter them on the Scanner tab first.');
+    return;
+  }
 
-  const minPct  = parseFloat(g('gap-min-pct').value);
-  const dir     = g('gap-direction').value;
+  // Determine ticker list
+  let tickers;
+  if (source === 'universe') {
+    tickers = GAP_UNIVERSE.slice();
+  } else {
+    const wlName = g('gap-wl-select').value;
+    if (!wlName) { alert('Select a watchlist first, or switch Source to "Auto".'); return; }
+    const wls = getAllWatchlists();
+    tickers = wls[wlName] || [];
+    if (!tickers.length) { alert('Watchlist is empty.'); return; }
+  }
 
   const btn = g('btn-gap-scan');
   btn.disabled = true; btn.textContent = '⟳ Scanning…';
   g('gap-stat-bar').style.display = 'flex';
-  g('gap-tbody').innerHTML = `<tr><td colspan="7" style="color:var(--muted);font-size:11px;padding:20px 16px;text-align:center">
-    Fetching quotes for ${tickers.length} tickers… <span class="ai-spin"></span></td></tr>`;
+  const modeLabel = mode === 'premarket' ? '🌅 Pre-Market' : '🌙 After-Hours';
+  g('gap-mode-val').textContent = modeLabel;
+
+  // Update table headers to reflect mode
+  const baseHdr  = mode === 'premarket' ? 'Prev Close' : 'Reg. Close Today';
+  const priceHdr = mode === 'premarket' ? 'Pre-Mkt Price' : 'After-Hrs Price';
+  g('gap-base-hdr').textContent  = baseHdr;
+  g('gap-price-hdr').textContent = priceHdr;
+
+  const colspan = 8;
+  g('gap-tbody').innerHTML = `<tr><td colspan="${colspan}" style="color:var(--muted);font-size:11px;padding:20px 16px;text-align:center">
+    Fetching snapshots for <b style="color:var(--accent)">${tickers.length}</b> tickers via Alpaca… <span class="ai-spin"></span></td></tr>`;
 
   gapResults = [];
 
+  // Fetch all snapshots in batches
+  const snapshots = await fetchAlpacaSnapshotsBatch(tickers, keys);
+
+  const nowUtc = Date.now();
+
   for (const ticker of tickers) {
-    try {
-      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(fKey)}`);
-      const j = await r.json();
-      if (r.ok && j && typeof j.c === 'number' && j.c > 0 && typeof j.pc === 'number' && j.pc > 0) {
-        const gapPct = ((j.c - j.pc) / j.pc) * 100;
-        gapResults.push({ ticker, price: j.c, prevClose: j.pc, gapPct, dayHigh: j.h, dayLow: j.l });
-      }
-    } catch(e) { /* skip */ }
-    await new Promise(r => setTimeout(r, 120)); // rate-limit: ~8 req/sec
+    const snap = snapshots[ticker];
+    if (!snap) continue;
+
+    const latestPrice = snap.latestTrade?.p;
+    const tradeTs     = snap.latestTrade?.t ? new Date(snap.latestTrade.t).getTime() : null;
+    const dayHigh     = snap.dailyBar?.h || 0;
+    const dayLow      = snap.dailyBar?.l || 0;
+
+    let basePrice;
+    if (mode === 'premarket') {
+      // Compare latest trade vs yesterday's close
+      basePrice = snap.prevDailyBar?.c;
+    } else {
+      // Compare latest trade vs today's regular-session close
+      basePrice = snap.dailyBar?.c;
+    }
+
+    if (!latestPrice || !basePrice || latestPrice <= 0 || basePrice <= 0) continue;
+
+    const gapPct = ((latestPrice - basePrice) / basePrice) * 100;
+
+    // Staleness: flag if latest trade is more than 24 hours old
+    const stale = tradeTs ? (nowUtc - tradeTs) > 24 * 60 * 60 * 1000 : false;
+
+    // Format data age
+    let dataAge = '—';
+    if (tradeTs) {
+      const diffMs  = nowUtc - tradeTs;
+      const diffMin = Math.round(diffMs / 60000);
+      if (diffMin < 60)       dataAge = diffMin + 'm ago';
+      else if (diffMin < 1440) dataAge = Math.round(diffMin/60) + 'h ago';
+      else                     dataAge = Math.round(diffMin/1440) + 'd ago';
+    }
+
+    gapResults.push({ ticker, price: latestPrice, basePrice, gapPct, dayHigh, dayLow, dataAge, stale });
   }
 
   btn.disabled = false; btn.textContent = '🔍 Scan Gappers';
-  renderGapTable(minPct, dir);
+  renderGapTable();
 }
 
+// ── Render results ────────────────────────────────────────────────────────────
 function renderGapTable(minPct, dir) {
   minPct = minPct !== undefined ? minPct : parseFloat(g('gap-min-pct').value);
   dir    = dir    !== undefined ? dir    : g('gap-direction').value;
@@ -4882,12 +5021,12 @@ function renderGapTable(minPct, dir) {
   rows.sort((a, b) => {
     if (sortBy === 'ticker')   return a.ticker.localeCompare(b.ticker);
     if (sortBy === 'gap-asc')  return Math.abs(a.gapPct) - Math.abs(b.gapPct);
-    return Math.abs(b.gapPct) - Math.abs(a.gapPct); // gap-desc default
+    return Math.abs(b.gapPct) - Math.abs(a.gapPct);
   });
 
   // Stat bar
-  const gapUp = gapResults.filter(r => r.gapPct >= minPct).length;
-  const gapDn = gapResults.filter(r => r.gapPct <= -minPct).length;
+  const gapUp  = gapResults.filter(r => r.gapPct >=  minPct).length;
+  const gapDn  = gapResults.filter(r => r.gapPct <= -minPct).length;
   const allAbs = gapResults.filter(r => Math.abs(r.gapPct) >= minPct).map(r => Math.abs(r.gapPct));
   const avgGap = allAbs.length ? (allAbs.reduce((a,b)=>a+b,0)/allAbs.length).toFixed(1)+'%' : '—';
 
@@ -4897,37 +5036,42 @@ function renderGapTable(minPct, dir) {
   g('gap-dn-val').textContent      = gapDn;
   g('gap-avg-val').textContent     = avgGap;
 
-  // Show/hide → ORB button
   const hasUp = rows.some(r => r.gapPct > 0);
   g('btn-gap-to-orb').style.display = hasUp ? 'inline-block' : 'none';
 
+  const colspan = 8;
+
   if (!rows.length) {
-    g('gap-tbody').innerHTML = `<tr><td colspan="7"><div class="empty-cell">
+    g('gap-tbody').innerHTML = `<tr><td colspan="${colspan}"><div class="empty-cell">
       <div class="ei">◌</div>
       <div class="et">No Gappers Found</div>
-      <div class="es">Try lowering the Min Gap % or changing direction filter</div>
+      <div class="es">Try lowering the Min Gap % or changing direction filter · ${gapResults.length} symbols scanned</div>
     </div></td></tr>`;
     return;
   }
 
   g('gap-tbody').innerHTML = rows.map(r => {
-    const isUp  = r.gapPct > 0;
+    const isUp   = r.gapPct > 0;
     const pctTxt = (isUp ? '+' : '') + r.gapPct.toFixed(2) + '%';
     const rowCls = isUp ? 'gap-up-row' : 'gap-dn-row';
     const pctCls = isUp ? 'up' : 'dn';
     const badge  = isUp
       ? `<span class="gap-badge up">🚀 Gap Up</span>`
       : `<span class="gap-badge dn">🔻 Gap Down</span>`;
-    const highTxt = r.dayHigh > 0 ? `$${r.dayHigh.toFixed(2)}` : '—';
-    const lowTxt  = r.dayLow  > 0 ? `$${r.dayLow.toFixed(2)}`  : '—';
+    const highTxt  = r.dayHigh > 0 ? `$${r.dayHigh.toFixed(2)}` : '—';
+    const lowTxt   = r.dayLow  > 0 ? `$${r.dayLow.toFixed(2)}`  : '—';
+    const ageTxt   = r.stale
+      ? `<span style="color:var(--red);font-size:9px">⚠ ${r.dataAge}</span>`
+      : `<span style="color:var(--muted);font-size:10px">${r.dataAge}</span>`;
 
     return `<tr class="${rowCls}">
       <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
-      <td class="num" style="color:var(--muted)">$${r.prevClose.toFixed(2)}</td>
+      <td class="num" style="color:var(--muted)">$${r.basePrice.toFixed(2)}</td>
       <td class="num" style="color:var(--text);font-weight:500">$${r.price.toFixed(2)}</td>
       <td class="num"><span class="gap-pct ${pctCls}">${pctTxt}</span></td>
       <td class="num" style="color:var(--muted);font-size:11px">${highTxt}</td>
       <td class="num" style="color:var(--muted);font-size:11px">${lowTxt}</td>
+      <td class="ctr">${ageTxt}</td>
       <td class="ctr">${badge}</td>
     </tr>`;
   }).join('');
@@ -4937,20 +5081,19 @@ function resetGapScanner() {
   gapResults = [];
   g('gap-stat-bar').style.display = 'none';
   g('btn-gap-to-orb').style.display = 'none';
-  g('gap-tbody').innerHTML = `<tr><td colspan="7"><div class="empty-cell">
+  g('gap-tbody').innerHTML = `<tr><td colspan="8"><div class="empty-cell">
     <div class="ei">🌅</div>
-    <div class="et">Pre-Market Scanner Ready</div>
-    <div class="es">Select a watchlist → click Scan Gappers</div>
+    <div class="et">Gapper Scanner Ready</div>
+    <div class="es">Choose Auto or Watchlist → click Scan Gappers</div>
   </div></td></tr>`;
 }
 
-// "Send gap-ups to ORB" — populates the ORB watchlist selection
+// "Send gap-ups to ORB" — saves as watchlist and selects in ORB tab
 function sendGapUpsToORB() {
   const minPct = parseFloat(g('gap-min-pct').value);
   const gapUpTickers = gapResults.filter(r => r.gapPct >= minPct).map(r => r.ticker);
   if (!gapUpTickers.length) { alert('No gap-up tickers to send.'); return; }
 
-  // Save as a temporary watchlist named "GAP-UPS" and select it in ORB dropdown
   const wls = getAllWatchlists();
   wls['GAP-UPS (Auto)'] = gapUpTickers;
   localStorage.setItem('apex_watchlists', JSON.stringify(wls));
@@ -4958,11 +5101,14 @@ function sendGapUpsToORB() {
   refreshORBWatchlistDropdown();
   g('orb-wl-select').value = 'GAP-UPS (Auto)';
   g('orb-wl-label').textContent = `GAP-UPS (Auto) · ${gapUpTickers.length} tickers`;
-
-  // Scroll down to the ORB section
   g('btn-orb-load-range').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  alert(`✓ ${gapUpTickers.length} gap-up ticker(s) loaded into the ORB scanner. Now click "1. Load Opening Range" after 9:35 AM ET.`);
+  alert(`✓ ${gapUpTickers.length} gap-up ticker(s) loaded into the ORB scanner.\nClick "1. Load Opening Range" after 9:35 AM ET.`);
 }
+
+// Show / hide watchlist picker based on source selection
+g('gap-source').addEventListener('change', () => {
+  g('gap-wl-wrapper').style.display = g('gap-source').value === 'watchlist' ? '' : 'none';
+});
 
 // Wire gapper events
 g('btn-gap-scan').addEventListener('click', scanGappers);
@@ -4972,7 +5118,7 @@ g('gap-min-pct').addEventListener('change', () => renderGapTable());
 g('gap-direction').addEventListener('change', () => renderGapTable());
 g('gap-sort').addEventListener('change', () => renderGapTable());
 
-// Refresh gapper dropdown when entering ORB tab (mirrors ORB refresh)
+// Refresh gapper dropdown when entering ORB tab
 const _origRefreshORBWL = refreshORBWatchlistDropdown;
 refreshORBWatchlistDropdown = function() {
   _origRefreshORBWL();
