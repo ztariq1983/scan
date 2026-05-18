@@ -1226,6 +1226,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
             <span class="gap-ctrl-lbl">Source</span>
             <select id="gap-source" class="gap-ctrl-sel">
               <option value="universe" selected>Auto: Top ~200 US Stocks</option>
+              <option value="fullmarket">🌎 Full Market (NYSE + NASDAQ ~5k)</option>
               <option value="watchlist">My Watchlist</option>
             </select>
           </div>
@@ -4880,11 +4881,40 @@ const GAP_UNIVERSE = [
 let gapResults  = [];   // [{ticker, price, basePrice, gapPct, dayHigh, dayLow, tradeTs, stale}]
 let gapScanMode = 'premarket'; // or 'afterhours'
 
-// ── Batch Alpaca snapshot fetch ───────────────────────────────────────────────
-async function fetchAlpacaSnapshotsBatch(tickers, keys) {
+// ── Fetch ALL active NYSE + NASDAQ assets from Alpaca broker API ──────────────
+async function fetchAllMarketAssets(keys) {
+  const VALID_EXCHANGES = new Set(['NYSE','NASDAQ','NYSE ARCA','NYSE MKT','BATS','IEX']);
+  // Try paper API first, then live API
+  for (const base of ['https://paper-api.alpaca.markets', 'https://api.alpaca.markets']) {
+    try {
+      const resp = await fetch(`${base}/v2/assets?status=active&asset_class=us_equity`, {
+        headers: { 'APCA-API-KEY-ID': keys.key, 'APCA-API-SECRET-KEY': keys.secret }
+      });
+      if (!resp.ok) continue;
+      const assets = await resp.json();
+      return assets
+        .filter(a =>
+          a.tradable &&
+          a.symbol &&
+          !a.symbol.includes('/') &&   // skip warrants / rights
+          !a.symbol.includes('.') &&   // skip share classes like BRK.A
+          a.symbol.length <= 5 &&      // skip unusual long tickers
+          VALID_EXCHANGES.has(a.exchange)
+        )
+        .map(a => a.symbol);
+    } catch(e) { /* try next base */ }
+  }
+  throw new Error('Could not fetch asset list. Check your Alpaca keys on the Scanner tab.');
+}
+
+// ── Batch Alpaca snapshot fetch (with live progress callback) ─────────────────
+async function fetchAlpacaSnapshotsBatch(tickers, keys, onProgress) {
   const out = {};
-  const batchSize = 100;
+  const batchSize = 500;
+  const totalBatches = Math.ceil(tickers.length / batchSize);
   for (let i = 0; i < tickers.length; i += batchSize) {
+    const batchNum = Math.floor(i / batchSize) + 1;
+    if (onProgress) onProgress(batchNum, totalBatches, Math.min(i + batchSize, tickers.length), tickers.length);
     const batch = tickers.slice(i, i + batchSize).join(',');
     const url = `https://data.alpaca.markets/v2/stocks/snapshots?symbols=${encodeURIComponent(batch)}&feed=iex`;
     try {
@@ -4893,7 +4923,7 @@ async function fetchAlpacaSnapshotsBatch(tickers, keys) {
       });
       if (resp.ok) Object.assign(out, await resp.json());
     } catch(e) { /* network error — skip batch */ }
-    if (i + batchSize < tickers.length) await new Promise(r => setTimeout(r, 400)); // brief pause between batches
+    if (i + batchSize < tickers.length) await new Promise(r => setTimeout(r, 300));
   }
   return out;
 }
@@ -4913,52 +4943,73 @@ function refreshGapWatchlistDropdown() {
     names.map(n => `<option value="${n}"${n===current?' selected':''}>${n} (${wls[n].length})</option>`).join('');
 }
 
+// ── Today's UTC date string (YYYY-MM-DD) for freshness check ─────────────────
+function todayUTCDateStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 // ── Main scan function ────────────────────────────────────────────────────────
 async function scanGappers() {
-  const keys    = getKeys();
-  const mode    = g('gap-mode').value;
-  const source  = g('gap-source').value;
-  gapScanMode   = mode;
+  const keys   = getKeys();
+  const mode   = g('gap-mode').value;
+  const source = g('gap-source').value;
+  gapScanMode  = mode;
 
   if (!keys.key || !keys.secret) {
     alert('Alpaca API keys required — enter them on the Scanner tab first.');
     return;
   }
 
-  // Determine ticker list
-  let tickers;
-  if (source === 'universe') {
-    tickers = GAP_UNIVERSE.slice();
-  } else {
-    const wlName = g('gap-wl-select').value;
-    if (!wlName) { alert('Select a watchlist first, or switch Source to "Auto".'); return; }
-    const wls = getAllWatchlists();
-    tickers = wls[wlName] || [];
-    if (!tickers.length) { alert('Watchlist is empty.'); return; }
-  }
-
   const btn = g('btn-gap-scan');
   btn.disabled = true; btn.textContent = '⟳ Scanning…';
   g('gap-stat-bar').style.display = 'flex';
+
   const modeLabel = mode === 'premarket' ? '🌅 Pre-Market' : '🌙 After-Hours';
   g('gap-mode-val').textContent = modeLabel;
-
-  // Update table headers to reflect mode
-  const baseHdr  = mode === 'premarket' ? 'Prev Close' : 'Reg. Close Today';
-  const priceHdr = mode === 'premarket' ? 'Pre-Mkt Price' : 'After-Hrs Price';
-  g('gap-base-hdr').textContent  = baseHdr;
-  g('gap-price-hdr').textContent = priceHdr;
-
-  const colspan = 8;
-  g('gap-tbody').innerHTML = `<tr><td colspan="${colspan}" style="color:var(--muted);font-size:11px;padding:20px 16px;text-align:center">
-    Fetching snapshots for <b style="color:var(--accent)">${tickers.length}</b> tickers via Alpaca… <span class="ai-spin"></span></td></tr>`;
+  g('gap-base-hdr').textContent  = mode === 'premarket' ? 'Prev Close'       : 'Reg. Close Today';
+  g('gap-price-hdr').textContent = mode === 'premarket' ? 'Pre-Mkt Price'    : 'After-Hrs Price';
 
   gapResults = [];
 
-  // Fetch all snapshots in batches
-  const snapshots = await fetchAlpacaSnapshotsBatch(tickers, keys);
+  // ── Step 1: build ticker list ───────────────────────────────────────────────
+  let tickers;
+  const isFullMarket = source === 'fullmarket';
 
-  const nowUtc = Date.now();
+  if (source === 'universe') {
+    tickers = GAP_UNIVERSE.slice();
+    g('gap-tbody').innerHTML = gapProgressRow(`Fetching snapshots for <b style="color:var(--accent)">${tickers.length}</b> curated stocks…`);
+  } else if (isFullMarket) {
+    g('gap-tbody').innerHTML = gapProgressRow('Step 1/2 — Fetching full NYSE + NASDAQ asset list…');
+    try {
+      tickers = await fetchAllMarketAssets(keys);
+    } catch(e) {
+      btn.disabled = false; btn.textContent = '🔍 Scan Gappers';
+      g('gap-tbody').innerHTML = gapErrorRow(e.message);
+      return;
+    }
+    g('gap-mode-val').textContent = `${modeLabel} · ${tickers.length.toLocaleString()} stocks`;
+    g('gap-tbody').innerHTML = gapProgressRow(`Step 2/2 — Scanning <b style="color:var(--accent)">${tickers.length.toLocaleString()}</b> stocks in batches… <span id="gap-batch-prog" style="color:var(--cyan)"></span>`);
+  } else {
+    const wlName = g('gap-wl-select').value;
+    if (!wlName) { btn.disabled=false; btn.textContent='🔍 Scan Gappers'; alert('Select a watchlist first, or switch Source to "Auto".'); return; }
+    const wls = getAllWatchlists();
+    tickers = wls[wlName] || [];
+    if (!tickers.length) { btn.disabled=false; btn.textContent='🔍 Scan Gappers'; alert('Watchlist is empty.'); return; }
+    g('gap-tbody').innerHTML = gapProgressRow(`Fetching snapshots for <b style="color:var(--accent)">${tickers.length}</b> tickers…`);
+  }
+
+  // ── Step 2: batch-snapshot ──────────────────────────────────────────────────
+  const snapshots = await fetchAlpacaSnapshotsBatch(tickers, keys,
+    isFullMarket ? (batchNum, totalBatches, done, total) => {
+      const progEl = document.getElementById('gap-batch-prog');
+      if (progEl) progEl.textContent = `Batch ${batchNum}/${totalBatches} · ${done.toLocaleString()}/${total.toLocaleString()} done`;
+    } : null
+  );
+
+  // ── Step 3: process results ─────────────────────────────────────────────────
+  const nowUtc    = Date.now();
+  const todayDate = todayUTCDateStr();
+  const MIN_PRICE = isFullMarket ? 2 : 0;  // filter sub-$2 for full-market to cut noise
 
   for (const ticker of tickers) {
     const snap = snapshots[ticker];
@@ -4966,33 +5017,30 @@ async function scanGappers() {
 
     const latestPrice = snap.latestTrade?.p;
     const tradeTs     = snap.latestTrade?.t ? new Date(snap.latestTrade.t).getTime() : null;
+    const tradeDateStr = snap.latestTrade?.t ? snap.latestTrade.t.slice(0, 10) : null;
     const dayHigh     = snap.dailyBar?.h || 0;
     const dayLow      = snap.dailyBar?.l || 0;
 
-    let basePrice;
-    if (mode === 'premarket') {
-      // Compare latest trade vs yesterday's close
-      basePrice = snap.prevDailyBar?.c;
-    } else {
-      // Compare latest trade vs today's regular-session close
-      basePrice = snap.dailyBar?.c;
-    }
+    let basePrice = mode === 'premarket' ? snap.prevDailyBar?.c : snap.dailyBar?.c;
 
-    if (!latestPrice || !basePrice || latestPrice <= 0 || basePrice <= 0) continue;
+    if (!latestPrice || !basePrice || latestPrice <= MIN_PRICE || basePrice <= 0) continue;
+
+    // For full-market scan: ONLY include stocks where the latest trade is from TODAY.
+    // Without this filter, every stock on the exchange would show a "gap" because
+    // its latestTrade is yesterday's last print vs today's (or yesterday's) close.
+    if (isFullMarket && tradeDateStr !== todayDate) continue;
 
     const gapPct = ((latestPrice - basePrice) / basePrice) * 100;
 
-    // Staleness: flag if latest trade is more than 24 hours old
-    const stale = tradeTs ? (nowUtc - tradeTs) > 24 * 60 * 60 * 1000 : false;
+    // Staleness: flag if latest trade is more than 20 hours old
+    const stale = tradeTs ? (nowUtc - tradeTs) > 20 * 60 * 60 * 1000 : false;
 
-    // Format data age
     let dataAge = '—';
     if (tradeTs) {
-      const diffMs  = nowUtc - tradeTs;
-      const diffMin = Math.round(diffMs / 60000);
-      if (diffMin < 60)       dataAge = diffMin + 'm ago';
-      else if (diffMin < 1440) dataAge = Math.round(diffMin/60) + 'h ago';
-      else                     dataAge = Math.round(diffMin/1440) + 'd ago';
+      const diffMin = Math.round((nowUtc - tradeTs) / 60000);
+      if (diffMin < 60)        dataAge = diffMin + 'm ago';
+      else if (diffMin < 1440) dataAge = Math.round(diffMin / 60) + 'h ago';
+      else                     dataAge = Math.round(diffMin / 1440) + 'd ago';
     }
 
     gapResults.push({ ticker, price: latestPrice, basePrice, gapPct, dayHigh, dayLow, dataAge, stale });
@@ -5000,6 +5048,13 @@ async function scanGappers() {
 
   btn.disabled = false; btn.textContent = '🔍 Scan Gappers';
   renderGapTable();
+}
+
+function gapProgressRow(msg) {
+  return `<tr><td colspan="8" style="color:var(--muted);font-size:11px;padding:20px 16px;text-align:center">${msg} <span class="ai-spin"></span></td></tr>`;
+}
+function gapErrorRow(msg) {
+  return `<tr><td colspan="8" style="color:var(--red);font-size:11px;padding:20px 16px;text-align:center">⚠ ${msg}</td></tr>`;
 }
 
 // ── Render results ────────────────────────────────────────────────────────────
