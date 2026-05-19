@@ -834,6 +834,103 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2)}
 @media(max-width:768px){header{flex-direction:column;gap:12px}.strat-bar{gap:6px}}
+
+/* ═══ PATTERN LAB ══════════════════════════════════════════════════════════ */
+.pl-section{margin-bottom:32px}
+.pl-section-hdr{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.pl-section-tag{font-size:9px;letter-spacing:3px;font-weight:700;padding:3px 9px;text-transform:uppercase;font-family:var(--font-display)}
+.pl-section-tag.cyan{background:var(--cyan);color:#000}
+.pl-section-tag.purple{background:var(--purple);color:#000}
+.pl-section-tag.green{background:var(--green);color:#000}
+.pl-section-title{font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text)}
+.pl-section-sub{font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto}
+
+.pl-ctrl-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.pl-ticker{width:100px;background:var(--bg);border:1px solid var(--border2);color:var(--accent);font-family:var(--font-display);font-size:16px;font-weight:800;padding:9px 12px;outline:none;letter-spacing:3px;text-transform:uppercase;transition:border-color .2s}
+.pl-ticker:focus{border-color:var(--accent)}
+.pl-date{width:145px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;transition:border-color .2s}
+.pl-date:focus{border-color:var(--cyan)}
+.pl-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.pl-select{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;cursor:pointer}
+.pl-select:focus{border-color:var(--cyan)}
+.pl-score-sel{width:80px}
+
+.pl-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.pl-chart-box{background:var(--surface);border:1px solid var(--border);overflow:hidden}
+.pl-chart-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:8px 12px 0;font-family:var(--font-mono)}
+.pl-tv-wrap{height:380px;width:100%}
+#pl-tv-widget{height:100%;width:100%}
+.pl-canvas-wrap{height:380px;display:flex;align-items:center;justify-content:center;padding:8px}
+#pl-chart-canvas{max-width:100%;max-height:100%;display:block}
+.pl-canvas-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--muted)}
+.pl-canvas-placeholder .pi{font-size:36px;opacity:.2}
+.pl-canvas-placeholder .pt{font-size:10px;letter-spacing:2px;text-transform:uppercase}
+
+.pl-meta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.pl-meta-full{grid-column:1/-1}
+.pl-meta-box{display:flex;flex-direction:column;gap:6px}
+.pl-meta-box label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.pl-text-inp{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;width:100%;transition:border-color .2s}
+.pl-text-inp:focus{border-color:var(--cyan)}
+.pl-textarea{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:10px 12px;outline:none;width:100%;resize:vertical;min-height:80px;line-height:1.7;transition:border-color .2s}
+.pl-textarea:focus{border-color:var(--cyan)}
+.pl-save-row{display:flex;gap:10px;align-items:center;margin-top:4px}
+.pl-status{font-size:10px;color:var(--muted);letter-spacing:.5px}
+.pl-status.ok{color:var(--green)}
+.pl-status.err{color:var(--red)}
+
+/* Pattern library grid */
+.pl-lib-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.pl-search{flex:1;min-width:160px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;transition:border-color .2s}
+.pl-search:focus{border-color:var(--purple)}
+.pl-lib-count{font-size:10px;color:var(--muted);letter-spacing:1px;white-space:nowrap;margin-left:auto}
+.pl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.pl-card{background:var(--surface);border:1px solid var(--border);transition:border-color .15s;cursor:pointer;position:relative;overflow:hidden}
+.pl-card:hover{border-color:var(--border2)}
+.pl-card-img{width:100%;height:120px;object-fit:cover;display:block;background:var(--bg)}
+.pl-card-body{padding:10px 12px}
+.pl-card-name{font-family:var(--font-display);font-size:12px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-card-meta{display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.pl-badge{font-size:8px;letter-spacing:1px;font-weight:700;padding:2px 7px;text-transform:uppercase;border-radius:0}
+.pl-badge.score-A{background:rgba(61,255,160,.18);color:var(--green);border:1px solid rgba(61,255,160,.4)}
+.pl-badge.score-B{background:rgba(78,232,255,.15);color:var(--cyan);border:1px solid rgba(78,232,255,.35)}
+.pl-badge.score-C{background:rgba(232,255,71,.12);color:var(--accent);border:1px solid rgba(232,255,71,.3)}
+.pl-badge.score-D{background:rgba(255,155,78,.12);color:var(--orange);border:1px solid rgba(255,155,78,.3)}
+.pl-badge.score-F{background:rgba(255,82,119,.12);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.pl-badge.type{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.25)}
+.pl-badge.ticker{background:var(--surface2);color:var(--text);border:1px solid var(--border2);font-family:var(--font-display)}
+.pl-card-desc{font-size:9px;color:var(--muted);letter-spacing:.3px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px}
+.pl-card-dates{font-size:8px;color:var(--muted);letter-spacing:.5px;opacity:.6}
+.pl-card-del{position:absolute;top:6px;right:6px;background:rgba(255,82,119,.15);border:1px solid rgba(255,82,119,.3);color:var(--red);font-size:9px;padding:3px 7px;cursor:pointer;opacity:0;transition:opacity .15s}
+.pl-card:hover .pl-card-del{opacity:1}
+.pl-card-del:hover{background:var(--red);color:#000}
+.pl-empty-lib{text-align:center;padding:48px 20px;color:var(--muted);font-size:10px;letter-spacing:1px;border:1px dashed var(--border2)}
+
+/* Analysis panel */
+.pl-an-chart-wrap{background:var(--surface);border:1px solid var(--border);padding:12px;margin-bottom:18px}
+.pl-an-canvas-wrap{display:flex;align-items:center;justify-content:center;height:340px}
+#pl-an-canvas{max-width:100%;max-height:100%;display:block}
+.pl-results-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.pl-result-card{background:var(--surface);border:1px solid var(--border);padding:18px 20px;position:relative;overflow:hidden}
+.pl-result-card::before{content:'';position:absolute;top:0;left:0;width:60px;height:3px}
+.pl-result-card.claude::before{background:var(--orange)}
+.pl-result-card.gemini::before{background:var(--purple)}
+.pl-result-model{font-size:8px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.pl-result-model.claude{color:var(--orange)}
+.pl-result-model.gemini{color:var(--purple)}
+.pl-result-match{font-family:var(--font-display);font-size:18px;font-weight:800;color:#fff;letter-spacing:-0.5px;margin-bottom:4px}
+.pl-result-conf{display:inline-block;font-family:var(--font-display);font-size:28px;font-weight:800;margin-bottom:12px;line-height:1}
+.pl-result-conf.A{color:var(--green)}
+.pl-result-conf.B{color:var(--cyan)}
+.pl-result-conf.C{color:var(--accent)}
+.pl-result-conf.D{color:var(--orange)}
+.pl-result-conf.F{color:var(--red)}
+.pl-result-row{margin-bottom:10px}
+.pl-result-label{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+.pl-result-val{font-size:11px;color:var(--text);line-height:1.6;letter-spacing:.3px}
+.pl-result-second{font-size:9px;color:var(--muted);letter-spacing:.3px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.pl-result-loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:10px;letter-spacing:1px;padding:20px 0}
+.pl-result-err{color:var(--red);font-size:10px;letter-spacing:.5px;padding:10px 0}
 </style>
 </head>
 <body>
@@ -867,6 +964,7 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab" data-tab="learn">📚 Learn</button>
     <button class="tab" data-tab="ai">⚡ AI</button>
     <button class="tab" data-tab="gemini">♊ Gemini</button>
+    <button class="tab" data-tab="patlab">🔬 Pattern Lab</button>
   </div>
 
   <!-- Account size (global — used by position sizer across tabs) -->
@@ -11060,6 +11158,751 @@ refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
 
+// ═════════════════════════════════════════════════════════════════════════════
+// PATTERN LAB
+// ═════════════════════════════════════════════════════════════════════════════
+(function() {
+
+'use strict';
+
+// ── IndexedDB ────────────────────────────────────────────────────────────────
+const PATDB = {
+  _db: null,
+  async open() {
+    if (this._db) return this._db;
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('ApexPatterns', 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('patterns')) {
+          db.createObjectStore('patterns', { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      req.onsuccess = e => { this._db = e.target.result; res(this._db); };
+      req.onerror = e => rej(e.target.error);
+    });
+  },
+  async getAll() {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const req = db.transaction('patterns','readonly').objectStore('patterns').getAll();
+      req.onsuccess = e => res(e.target.result);
+      req.onerror  = e => rej(e.target.error);
+    });
+  },
+  async add(pattern) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const req = db.transaction('patterns','readwrite').objectStore('patterns').add({ ...pattern, createdAt: new Date().toISOString() });
+      req.onsuccess = e => res(e.target.result);
+      req.onerror  = e => rej(e.target.error);
+    });
+  },
+  async delete(id) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const req = db.transaction('patterns','readwrite').objectStore('patterns').delete(id);
+      req.onsuccess = () => res();
+      req.onerror  = e => rej(e.target.error);
+    });
+  }
+};
+
+// ── Fetch daily bars for a date range (Alpaca) ────────────────────────────────
+async function plFetchRange(ticker, startDate, endDate) {
+  const keys = getKeys();
+  if (!keys.key || !keys.secret) throw new Error('No Alpaca keys — configure on Scanner tab');
+  const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars`
+    + `?timeframe=1Day&start=${startDate}&end=${endDate}&limit=500&feed=iex&sort=asc`;
+  const resp = await fetch(url, {
+    headers: { 'APCA-API-KEY-ID': keys.key, 'APCA-API-SECRET-KEY': keys.secret }
+  });
+  if (!resp.ok) {
+    const b = await resp.json().catch(() => ({}));
+    throw new Error(b.message || `HTTP ${resp.status}`);
+  }
+  const j = await resp.json();
+  if (!j.bars?.length) throw new Error('No data returned for this ticker/period');
+  return j.bars.map(b => ({ date: new Date(b.t), o: +b.o, h: +b.h, l: +b.l, c: +b.c, v: +b.v }));
+}
+
+// Fetch SPY for same period (for RS line)
+async function plFetchSPY(startDate, endDate) {
+  try { return await plFetchRange('SPY', startDate, endDate); } catch { return null; }
+}
+
+// ── Canvas chart renderer ─────────────────────────────────────────────────────
+function calcSMAArr(arr, n) {
+  return arr.map((_, i) => i < n - 1 ? null : arr.slice(i - n + 1, i + 1).reduce((a, b) => a + b, 0) / n);
+}
+
+function calcRSIArr(closes, period) {
+  period = period || 14;
+  const out = new Array(closes.length).fill(null);
+  if (closes.length <= period) return out;
+  let g = 0, l = 0;
+  for (let i = 1; i <= period; i++) { const d = closes[i] - closes[i-1]; d > 0 ? g += d : l -= d; }
+  let ag = g / period, al = l / period;
+  out[period] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  for (let i = period + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i-1];
+    ag = (ag * (period - 1) + Math.max(d, 0)) / period;
+    al = (al * (period - 1) + Math.max(-d, 0)) / period;
+    out[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+  }
+  return out;
+}
+
+function plRenderChart(canvas, data, spyData) {
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#08080c';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!data || data.length < 2) {
+    ctx.fillStyle = '#52526e';
+    ctx.font = '12px Fira Code';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data', W / 2, H / 2);
+    return;
+  }
+
+  const PAD = { l: 68, r: 18, t: 22, b: 28 };
+  const GAP = 7;
+  const plotW = W - PAD.l - PAD.r;
+
+  // Panel heights
+  const hasRS  = spyData && spyData.length > 1;
+  const rsiH   = 72;
+  const volH   = 68;
+  const rsH    = hasRS ? 60 : 0;
+  const extraH = rsiH + GAP + volH + GAP + (hasRS ? rsH + GAP : 0);
+  const priceH = H - PAD.t - PAD.b - extraH;
+
+  const priceTop = PAD.t;
+  const volTop   = priceTop + priceH + GAP;
+  const rsiTop   = volTop + volH + GAP;
+  const rsTop    = rsiTop + rsiH + GAP;
+
+  const closes = data.map(d => d.c);
+  const highs  = data.map(d => d.h);
+  const lows   = data.map(d => d.l);
+  const vols   = data.map(d => d.v);
+
+  const priceMin = Math.min(...lows)  * 0.99;
+  const priceMax = Math.max(...highs) * 1.01;
+  const maxVol   = Math.max(...vols);
+
+  const toPriceY = p => priceTop + priceH - ((p - priceMin) / (priceMax - priceMin)) * priceH;
+  const toVolY   = v => volTop + volH - (v / maxVol) * volH;
+
+  const n = data.length;
+  const barW = Math.max(1, Math.floor(plotW / n));
+  const barX = i => PAD.l + i * barW + barW * 0.5;
+
+  // Grid lines (price)
+  ctx.strokeStyle = 'rgba(30,30,46,0.8)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = priceTop + (priceH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + plotW, y); ctx.stroke();
+  }
+
+  // Price labels
+  ctx.fillStyle = '#52526e';
+  ctx.font = '8px Fira Code';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const price = priceMin + (priceMax - priceMin) * (1 - i / 4);
+    const y     = priceTop + (priceH / 4) * i;
+    ctx.fillText('$' + price.toFixed(2), PAD.l - 4, y + 3);
+  }
+
+  // Candles
+  const cW = Math.max(1, barW - 2);
+  data.forEach((d, i) => {
+    const x     = barX(i);
+    const isUp  = d.c >= d.o;
+    const col   = isUp ? '#3dffa0' : '#ff5277';
+    const oY    = toPriceY(d.o), cY = toPriceY(d.c);
+    const hY    = toPriceY(d.h), lY = toPriceY(d.l);
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, hY); ctx.lineTo(x, lY); ctx.stroke();
+    ctx.fillStyle = isUp ? col : col;
+    const bodyTop = Math.min(oY, cY);
+    const bodyH   = Math.max(1, Math.abs(cY - oY));
+    ctx.fillRect(x - cW / 2, bodyTop, cW, bodyH);
+  });
+
+  // MAs
+  const drawMA = (arr, color) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+    ctx.beginPath(); let started = false;
+    arr.forEach((v, i) => {
+      if (v === null) return;
+      const x = barX(i), y = toPriceY(v);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  };
+  drawMA(calcSMAArr(closes, 20),  '#4ee8ff');
+  drawMA(calcSMAArr(closes, 50),  '#ff9b4e');
+  drawMA(calcSMAArr(closes, 200), '#ff5277');
+
+  // MA legend
+  ctx.font = '8px Fira Code'; ctx.textAlign = 'left';
+  [['MA20','#4ee8ff'], ['MA50','#ff9b4e'], ['MA200','#ff5277']].forEach(([l, c], i) => {
+    ctx.fillStyle = c;
+    ctx.fillText(l, PAD.l + 6 + i * 52, priceTop + 13);
+  });
+
+  // Volume panel
+  ctx.fillStyle = '#1e1e2e'; ctx.fillRect(PAD.l, volTop, plotW, volH);
+  const avgV = vols.slice(0, -1).reduce((a, b) => a + b, 0) / Math.max(1, vols.length - 1);
+  data.forEach((d, i) => {
+    const x  = barX(i);
+    const bH = Math.max(1, (d.v / maxVol) * volH);
+    ctx.fillStyle = d.c >= d.o ? 'rgba(61,255,160,0.55)' : 'rgba(255,82,119,0.55)';
+    ctx.fillRect(x - cW / 2, volTop + volH - bH, cW, bH);
+  });
+  // Average volume line
+  const avgVY = volTop + volH - (avgV / maxVol) * volH;
+  ctx.strokeStyle = 'rgba(232,255,71,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(PAD.l, avgVY); ctx.lineTo(PAD.l + plotW, avgVY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#52526e'; ctx.font = '8px Fira Code'; ctx.textAlign = 'left';
+  ctx.fillText('VOL', PAD.l + 4, volTop + 11);
+
+  // RSI panel
+  ctx.fillStyle = '#1e1e2e'; ctx.fillRect(PAD.l, rsiTop, plotW, rsiH);
+  const rsiArr = calcRSIArr(closes, 14);
+  // 70 / 30 lines
+  [[70, 'rgba(255,82,119,0.3)'], [30, 'rgba(61,255,160,0.3)'], [50, 'rgba(42,42,62,0.8)']].forEach(([v, col]) => {
+    const y = rsiTop + rsiH - (v / 100) * rsiH;
+    ctx.strokeStyle = col; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(PAD.l + plotW, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(82,82,110,0.7)'; ctx.font = '7px Fira Code'; ctx.textAlign = 'right';
+    ctx.fillText(v, PAD.l - 2, y + 3);
+  });
+  // RSI line with color zones
+  ctx.lineWidth = 1.5; ctx.textAlign = 'left';
+  ctx.beginPath(); let rsiStarted = false;
+  rsiArr.forEach((v, i) => {
+    if (v === null) return;
+    const x = barX(i), y = rsiTop + rsiH - (v / 100) * rsiH;
+    if (!rsiStarted) { ctx.moveTo(x, y); rsiStarted = true; } else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#b47dff'; ctx.stroke();
+  ctx.fillStyle = '#52526e'; ctx.font = '8px Fira Code';
+  ctx.fillText('RSI 14', PAD.l + 4, rsiTop + 11);
+
+  // RS vs SPY panel
+  if (hasRS) {
+    ctx.fillStyle = '#1e1e2e'; ctx.fillRect(PAD.l, rsTop, plotW, rsH);
+    // Build aligned RS values
+    const spyMap = {};
+    spyData.forEach(d => { spyMap[d.date.toISOString().slice(0, 10)] = d.c; });
+    const rsVals = data.map(d => {
+      const k = d.date.toISOString().slice(0, 10);
+      return spyMap[k] ? d.c / spyMap[k] : null;
+    });
+    const validRS = rsVals.filter(v => v !== null);
+    if (validRS.length > 1) {
+      const rsMin = Math.min(...validRS) * 0.998;
+      const rsMax = Math.max(...validRS) * 1.002;
+      const toRSY = v => rsTop + rsH - ((v - rsMin) / (rsMax - rsMin)) * rsH;
+      // Zero line (RS = 1 relative start)
+      const rsBase = rsVals.find(v => v !== null);
+      if (rsBase) {
+        const baseY = toRSY(rsBase);
+        ctx.strokeStyle = 'rgba(42,42,62,0.9)'; ctx.lineWidth = 0.5; ctx.setLineDash([3,3]);
+        ctx.beginPath(); ctx.moveTo(PAD.l, baseY); ctx.lineTo(PAD.l + plotW, baseY); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.strokeStyle = '#e8ff47'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); let rsStarted = false;
+      rsVals.forEach((v, i) => {
+        if (v === null) return;
+        const x = barX(i), y = toRSY(v);
+        if (!rsStarted) { ctx.moveTo(x, y); rsStarted = true; } else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#52526e'; ctx.font = '8px Fira Code'; ctx.textAlign = 'left';
+    ctx.fillText('RS vs SPY', PAD.l + 4, rsTop + 11);
+  }
+
+  // Date labels (bottom)
+  ctx.fillStyle = '#52526e'; ctx.font = '8px Fira Code'; ctx.textAlign = 'center';
+  const labelEvery = Math.max(1, Math.floor(n / 8));
+  data.forEach((d, i) => {
+    if (i % labelEvery !== 0) return;
+    const x = barX(i);
+    const lbl = d.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    ctx.fillText(lbl, x, H - 6);
+  });
+
+  // Panel borders
+  ctx.strokeStyle = '#1e1e2e'; ctx.lineWidth = 0.5;
+  [[priceTop, priceH], [volTop, volH], [rsiTop, rsiH], ...(hasRS ? [[rsTop, rsH]] : [])].forEach(([top, h]) => {
+    ctx.strokeRect(PAD.l, top, plotW, h);
+  });
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let plChartData = null;   // OHLCV bars for current builder chart
+let plSpyData   = null;   // SPY bars for builder
+let plPatterns  = [];     // in-memory cache
+
+// ── Fetch & render chart in builder ──────────────────────────────────────────
+window.plFetchChart = async function() {
+  const ticker = (document.getElementById('pl-ticker').value || '').trim().toUpperCase();
+  const from   = document.getElementById('pl-date-from').value;
+  const to     = document.getElementById('pl-date-to').value;
+  const status = document.getElementById('pl-fetch-status');
+
+  if (!ticker) { status.className = 'pl-status err'; status.textContent = '⚠ Enter a ticker'; return; }
+  if (!from || !to) { status.className = 'pl-status err'; status.textContent = '⚠ Set date range'; return; }
+  if (from >= to) { status.className = 'pl-status err'; status.textContent = '⚠ From must be before To'; return; }
+
+  status.className = 'pl-status'; status.innerHTML = '<span class="ai-spin"></span> Fetching…';
+
+  try {
+    [plChartData, plSpyData] = await Promise.all([
+      plFetchRange(ticker, from, to),
+      plFetchSPY(from, to)
+    ]);
+
+    // TradingView reference
+    const tvContainer = document.getElementById('pl-tv-widget');
+    tvContainer.innerHTML = '';
+    const wDiv = document.createElement('div');
+    wDiv.className = 'tradingview-widget-container';
+    wDiv.style.height = '100%'; wDiv.style.width = '100%';
+    const inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    inner.style.height = '100%'; inner.style.width = '100%';
+    wDiv.appendChild(inner);
+    const scr = document.createElement('script');
+    scr.type = 'text/javascript';
+    scr.src  = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    scr.async = true;
+    scr.innerHTML = JSON.stringify({
+      autosize: true, symbol: ticker, interval: 'D', timezone: 'America/New_York',
+      theme: 'dark', style: '1', locale: 'en', toolbar_bg: '#0f0f17',
+      enable_publishing: false, allow_symbol_change: false,
+      studies: ['MASimple@tv-basicstudies', 'MAExp@tv-basicstudies', 'Volume@tv-basicstudies'],
+      container_id: 'pl-tv-widget'
+    });
+    wDiv.appendChild(scr);
+    tvContainer.appendChild(wDiv);
+
+    // Canvas chart
+    const wrap = document.getElementById('pl-canvas-wrap');
+    wrap.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    canvas.width  = 860;
+    canvas.height = 480;
+    canvas.style.maxWidth  = '100%';
+    canvas.style.maxHeight = '100%';
+    canvas.id = 'pl-chart-canvas';
+    wrap.appendChild(canvas);
+    plRenderChart(canvas, plChartData, plSpyData);
+
+    status.className = 'pl-status ok';
+    status.textContent = `✓ ${plChartData.length} bars loaded (${ticker})`;
+
+    // Pre-fill ticker in metadata
+    const nameInp = document.getElementById('pl-name');
+    if (!nameInp.value) nameInp.value = ticker + ' — ';
+  } catch (e) {
+    status.className = 'pl-status err';
+    status.textContent = '⚠ ' + e.message;
+  }
+};
+
+// ── Save pattern to IndexedDB ─────────────────────────────────────────────────
+window.plSavePattern = async function() {
+  const status = document.getElementById('pl-save-status');
+  const name   = (document.getElementById('pl-name').value || '').trim();
+  const ticker = (document.getElementById('pl-ticker').value || '').trim().toUpperCase();
+
+  if (!name)         { status.className = 'pl-status err'; status.textContent = '⚠ Pattern name required'; return; }
+  if (!plChartData)  { status.className = 'pl-status err'; status.textContent = '⚠ Fetch a chart first'; return; }
+
+  const canvas = document.getElementById('pl-chart-canvas');
+  if (!canvas) { status.className = 'pl-status err'; status.textContent = '⚠ Canvas not rendered'; return; }
+
+  status.className = 'pl-status'; status.innerHTML = '<span class="ai-spin"></span> Saving…';
+
+  try {
+    const chartImage = canvas.toDataURL('image/png');
+    const pattern = {
+      name,
+      ticker,
+      type:          document.getElementById('pl-type').value,
+      score:         document.getElementById('pl-score').value,
+      breakoutDate:  document.getElementById('pl-breakout-date').value,
+      moveEndDate:   document.getElementById('pl-move-end-date').value,
+      movePct:       document.getElementById('pl-move-pct').value,
+      description:   document.getElementById('pl-description').value.trim(),
+      chartDateFrom: document.getElementById('pl-date-from').value,
+      chartDateTo:   document.getElementById('pl-date-to').value,
+      chartImage,
+      chartDataJSON: JSON.stringify(plChartData.map(d => ({ ...d, date: d.date.toISOString() })))
+    };
+
+    await PATDB.add(pattern);
+    plPatterns = await PATDB.getAll();
+    plRenderLibrary();
+
+    status.className = 'pl-status ok';
+    status.textContent = `✓ "${name}" saved to library`;
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  } catch (e) {
+    status.className = 'pl-status err';
+    status.textContent = '⚠ ' + e.message;
+  }
+};
+
+// ── Clear builder form ────────────────────────────────────────────────────────
+window.plClearForm = function() {
+  ['pl-name','pl-breakout-date','pl-move-end-date','pl-move-pct','pl-description'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('pl-type').value  = 'Breakout';
+  document.getElementById('pl-score').value = 'A';
+  document.getElementById('pl-save-status').textContent = '';
+};
+
+// ── Render library grid ───────────────────────────────────────────────────────
+async function plLoadPatterns() {
+  plPatterns = await PATDB.getAll();
+}
+
+window.plRenderLibrary = function() {
+  const grid     = document.getElementById('pl-library-grid');
+  const search   = (document.getElementById('pl-search').value || '').toLowerCase();
+  const typeF    = document.getElementById('pl-filter-type').value;
+  const scoreF   = document.getElementById('pl-filter-score').value;
+  const countHdr = document.getElementById('pl-lib-count-hdr');
+
+  let filtered = plPatterns.filter(p => {
+    if (typeF  && p.type  !== typeF)  return false;
+    if (scoreF && p.score !== scoreF) return false;
+    if (search && !p.name.toLowerCase().includes(search) &&
+        !(p.ticker||'').toLowerCase().includes(search) &&
+        !(p.description||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  countHdr.textContent = `${plPatterns.length} pattern${plPatterns.length !== 1 ? 's' : ''} saved`;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="pl-empty-lib">${plPatterns.length ? 'No patterns match filter' : 'No patterns saved yet — fetch a chart above and save your first pattern'}</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const dateRange = p.chartDateFrom && p.chartDateTo
+      ? `${p.chartDateFrom} → ${p.chartDateTo}`
+      : (p.createdAt ? p.createdAt.slice(0,10) : '');
+    return `
+      <div class="pl-card">
+        <img class="pl-card-img" src="${p.chartImage || ''}" alt="${p.name}">
+        <div class="pl-card-body">
+          <div class="pl-card-name" title="${p.name}">${p.name}</div>
+          <div class="pl-card-meta">
+            <span class="pl-badge ticker">${p.ticker || '—'}</span>
+            <span class="pl-badge score-${p.score}">${p.score}</span>
+            <span class="pl-badge type">${p.type}</span>
+          </div>
+          ${p.movePct ? `<div style="font-size:9px;color:var(--green);letter-spacing:.5px;margin-bottom:4px">Result: ${p.movePct}</div>` : ''}
+          <div class="pl-card-desc">${p.description || '<em style="opacity:.4">No notes</em>'}</div>
+          <div class="pl-card-dates">${dateRange}</div>
+        </div>
+        <button class="pl-card-del" onclick="event.stopPropagation();plDeletePattern(${p.id})">✕</button>
+      </div>`;
+  }).join('');
+};
+
+// ── Delete pattern ────────────────────────────────────────────────────────────
+window.plDeletePattern = async function(id) {
+  if (!confirm('Delete this pattern?')) return;
+  await PATDB.delete(id);
+  plPatterns = await PATDB.getAll();
+  plRenderLibrary();
+};
+
+// ── Export JSON ───────────────────────────────────────────────────────────────
+window.plExportJSON = async function() {
+  const all = await PATDB.getAll();
+  if (!all.length) { alert('No patterns to export'); return; }
+  const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `apex-patterns-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ── Import JSON ───────────────────────────────────────────────────────────────
+window.plImportJSON = async function(input) {
+  const file = input.files[0]; if (!file) return;
+  try {
+    const text = await file.text();
+    const arr  = JSON.parse(text);
+    if (!Array.isArray(arr)) throw new Error('Expected JSON array');
+    let imported = 0;
+    for (const p of arr) {
+      if (!p.name) continue;
+      const { id, createdAt, ...rest } = p; // strip old id
+      await PATDB.add(rest);
+      imported++;
+    }
+    plPatterns = await PATDB.getAll();
+    plRenderLibrary();
+    alert(`✓ ${imported} pattern${imported !== 1 ? 's' : ''} imported`);
+  } catch (e) {
+    alert('Import failed: ' + e.message);
+  }
+  input.value = '';
+};
+
+// ── AI Vision — Claude ────────────────────────────────────────────────────────
+async function callClaudeVision(currentImageB64, patterns) {
+  const apiKey = localStorage.getItem('apexAnthropicKey') || '';
+  if (!apiKey) throw new Error('No Claude API key — add it on the AI tab');
+
+  const MAX_IMG_PATTERNS = 8;
+  const content = [];
+
+  // Current chart
+  content.push({
+    type: 'image',
+    source: { type: 'base64', media_type: 'image/png', data: currentImageB64.replace(/^data:image\/png;base64,/, '') }
+  });
+  content.push({ type: 'text', text: '⬆ CURRENT STOCK CHART (analyze this against the patterns below)' });
+
+  // Pattern examples
+  const imgPatterns = patterns.slice(0, MAX_IMG_PATTERNS);
+  imgPatterns.forEach((p, i) => {
+    content.push({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/png', data: p.chartImage.replace(/^data:image\/png;base64,/, '') }
+    });
+    content.push({ type: 'text', text: `Pattern ${i+1}: "${p.name}" | Type: ${p.type} | User Score: ${p.score} | Result: ${p.movePct||'N/A'} | Notes: ${p.description||'none'}` });
+  });
+
+  // Remaining patterns as text
+  if (patterns.length > MAX_IMG_PATTERNS) {
+    const txt = patterns.slice(MAX_IMG_PATTERNS).map((p,i) =>
+      `Pattern ${MAX_IMG_PATTERNS+i+1}: "${p.name}" | Type: ${p.type} | Score: ${p.score} | Result: ${p.movePct||'N/A'} | Notes: ${p.description||'none'}`
+    ).join('\n');
+    content.push({ type: 'text', text: `Additional patterns (text reference):\n${txt}` });
+  }
+
+  content.push({ type: 'text', text:
+    `Chart legend: MA20=cyan line, MA50=orange line, MA200=red line, RSI14=purple panel (overbought 70 / oversold 30), Volume panel with yellow average-volume line, RS vs SPY panel (yellow line).\n\nAnalyze the CURRENT chart against ALL patterns. Consider: (1) price structure & tightness, (2) volume profile relative to average, (3) MA alignment & price position vs MAs, (4) RSI momentum & level, (5) RS vs SPY trend.\n\nReply ONLY with this JSON (no markdown, no explanation):\n{"bestMatch":"exact pattern name","confidence":"A","similarities":"one concise sentence","differences":"one concise sentence","implication":"one concise trading sentence","secondBest":"exact pattern name","secondConfidence":"B"}`
+  });
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 400,
+      system: 'You are an expert technical analyst specializing in chart pattern recognition. Respond ONLY with the requested JSON. No preamble, no markdown, no explanation.',
+      messages: [{ role: 'user', content }]
+    })
+  });
+
+  if (!resp.ok) { const e = await resp.text(); throw new Error(`Claude ${resp.status}: ${e.slice(0,120)}`); }
+  const j = await resp.json();
+  const text = j.content?.[0]?.text || '';
+  const m = text.match(/\{[\s\S]*?\}/);
+  if (!m) throw new Error('No JSON in Claude response:\n' + text.slice(0, 200));
+  return JSON.parse(m[0]);
+}
+
+// ── AI Vision — Gemini ────────────────────────────────────────────────────────
+async function callGeminiVision(currentImageB64, patterns) {
+  const apiKey = localStorage.getItem('apexGeminiKey') || '';
+  if (!apiKey) throw new Error('No Gemini API key — add it on the Gemini tab');
+
+  const MAX_IMG_PATTERNS = 8;
+  const parts = [];
+
+  parts.push({ inlineData: { mimeType: 'image/png', data: currentImageB64.replace(/^data:image\/png;base64,/, '') } });
+  parts.push({ text: '⬆ CURRENT STOCK CHART (analyze this against the patterns below)' });
+
+  const imgPatterns = patterns.slice(0, MAX_IMG_PATTERNS);
+  imgPatterns.forEach((p, i) => {
+    parts.push({ inlineData: { mimeType: 'image/png', data: p.chartImage.replace(/^data:image\/png;base64,/, '') } });
+    parts.push({ text: `Pattern ${i+1}: "${p.name}" | Type: ${p.type} | User Score: ${p.score} | Result: ${p.movePct||'N/A'} | Notes: ${p.description||'none'}` });
+  });
+
+  if (patterns.length > MAX_IMG_PATTERNS) {
+    const txt = patterns.slice(MAX_IMG_PATTERNS).map((p,i) =>
+      `Pattern ${MAX_IMG_PATTERNS+i+1}: "${p.name}" | Type: ${p.type} | Score: ${p.score} | Result: ${p.movePct||'N/A'} | Notes: ${p.description||'none'}`
+    ).join('\n');
+    parts.push({ text: `Additional patterns (text reference):\n${txt}` });
+  }
+
+  parts.push({ text:
+    `Chart legend: MA20=cyan line, MA50=orange line, MA200=red line, RSI14=purple panel (overbought 70 / oversold 30), Volume panel with yellow average-volume line, RS vs SPY panel (yellow line).\n\nAnalyze the CURRENT chart against ALL patterns. Consider: (1) price structure & tightness, (2) volume profile relative to average, (3) MA alignment & price position vs MAs, (4) RSI momentum & level, (5) RS vs SPY trend.\n\nReply ONLY with this JSON (no markdown, no explanation):\n{"bestMatch":"exact pattern name","confidence":"A","similarities":"one concise sentence","differences":"one concise sentence","implication":"one concise trading sentence","secondBest":"exact pattern name","secondConfidence":"B"}`
+  });
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: 'You are an expert technical analyst specializing in chart pattern recognition. Respond ONLY with the requested JSON. No preamble, no markdown, no explanation.' }] },
+      contents: [{ role: 'user', parts }],
+      generationConfig: { maxOutputTokens: 400 }
+    })
+  });
+
+  if (!resp.ok) { const e = await resp.text(); throw new Error(`Gemini ${resp.status}: ${e.slice(0,120)}`); }
+  const j = await resp.json();
+  const text = j.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const m = text.match(/\{[\s\S]*?\}/);
+  if (!m) throw new Error('No JSON in Gemini response:\n' + text.slice(0, 200));
+  return JSON.parse(m[0]);
+}
+
+// ── Render AI result card ─────────────────────────────────────────────────────
+function plRenderResultCard(cardEl, modelClass, modelLabel, result) {
+  const confClass = result.confidence || 'C';
+  cardEl.innerHTML = `
+    <div class="pl-result-model ${modelClass}">${modelLabel}</div>
+    <div class="pl-result-match">${result.bestMatch || 'Unknown'}</div>
+    <div class="pl-result-conf ${confClass}">${confClass}</div>
+    <div class="pl-result-row">
+      <div class="pl-result-label">Similarities</div>
+      <div class="pl-result-val">${result.similarities || '—'}</div>
+    </div>
+    <div class="pl-result-row">
+      <div class="pl-result-label">Differences</div>
+      <div class="pl-result-val">${result.differences || '—'}</div>
+    </div>
+    <div class="pl-result-row">
+      <div class="pl-result-label">Implication</div>
+      <div class="pl-result-val">${result.implication || '—'}</div>
+    </div>
+    ${result.secondBest ? `<div class="pl-result-second">2nd best: <strong>${result.secondBest}</strong> · ${result.secondConfidence || '?'}</div>` : ''}`;
+}
+
+function plRenderResultError(cardEl, modelClass, modelLabel, err) {
+  cardEl.innerHTML = `
+    <div class="pl-result-model ${modelClass}">${modelLabel}</div>
+    <div class="pl-result-err">⚠ ${err}</div>`;
+}
+
+// ── Fetch & analyze current chart ─────────────────────────────────────────────
+window.plFetchAndAnalyze = async function() {
+  const ticker = (document.getElementById('pl-an-ticker').value || '').trim().toUpperCase();
+  const days   = parseInt(document.getElementById('pl-an-days').value || '60', 10);
+  const status = document.getElementById('pl-an-status');
+
+  if (!ticker) { status.className = 'pl-status err'; status.textContent = '⚠ Enter a ticker'; return; }
+
+  if (!plPatterns.length) {
+    status.className = 'pl-status err';
+    status.textContent = '⚠ Pattern library is empty — save some patterns first';
+    return;
+  }
+
+  status.className = 'pl-status'; status.innerHTML = '<span class="ai-spin"></span> Fetching chart…';
+
+  const end   = new Date();
+  const start = new Date(); start.setDate(start.getDate() - days);
+  const fmt   = d => d.toISOString().slice(0, 10);
+
+  let anData, anSpy;
+  try {
+    [anData, anSpy] = await Promise.all([
+      plFetchRange(ticker, fmt(start), fmt(end)),
+      plFetchSPY(fmt(start), fmt(end))
+    ]);
+  } catch (e) {
+    status.className = 'pl-status err';
+    status.textContent = '⚠ ' + e.message;
+    return;
+  }
+
+  // Render analysis canvas
+  const anWrap = document.getElementById('pl-an-canvas-wrap');
+  anWrap.innerHTML = '';
+  const anCanvas = document.createElement('canvas');
+  anCanvas.width  = 860;
+  anCanvas.height = 480;
+  anCanvas.style.maxWidth  = '100%';
+  anCanvas.style.maxHeight = '100%';
+  anCanvas.id = 'pl-an-canvas';
+  anWrap.appendChild(anCanvas);
+  plRenderChart(anCanvas, anData, anSpy);
+
+  // Show results grid with loading state
+  const resultsGrid = document.getElementById('pl-results-grid');
+  resultsGrid.style.display = 'grid';
+  const claudeCard = document.getElementById('pl-claude-card');
+  const geminiCard = document.getElementById('pl-gemini-card');
+  claudeCard.innerHTML = `<div class="pl-result-model claude">⚡ Claude · Sonnet</div><div class="pl-result-loading"><span class="ai-spin"></span> Analysing patterns…</div>`;
+  geminiCard.innerHTML = `<div class="pl-result-model gemini">♊ Gemini · Flash</div><div class="pl-result-loading"><span class="ai-spin"></span> Analysing patterns…</div>`;
+
+  status.innerHTML = '<span class="ai-spin"></span> Running AI analysis…';
+
+  const currentImageB64 = anCanvas.toDataURL('image/png');
+
+  // Run both in parallel
+  const [claudeRes, geminiRes] = await Promise.allSettled([
+    callClaudeVision(currentImageB64, plPatterns),
+    callGeminiVision(currentImageB64, plPatterns)
+  ]);
+
+  if (claudeRes.status === 'fulfilled') {
+    plRenderResultCard(claudeCard, 'claude', '⚡ Claude · Sonnet', claudeRes.value);
+  } else {
+    plRenderResultError(claudeCard, 'claude', '⚡ Claude · Sonnet', claudeRes.reason?.message || 'Unknown error');
+  }
+
+  if (geminiRes.status === 'fulfilled') {
+    plRenderResultCard(geminiCard, 'gemini', '♊ Gemini · Flash', geminiRes.value);
+  } else {
+    plRenderResultError(geminiCard, 'gemini', '♊ Gemini · Flash', geminiRes.reason?.message || 'Unknown error');
+  }
+
+  status.className = 'pl-status ok';
+  status.textContent = '✓ Analysis complete';
+};
+
+// ── Initialise ────────────────────────────────────────────────────────────────
+async function plInit() {
+  // Default date range: 3 months ago → today
+  const today = new Date();
+  const threeMonthsAgo = new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const fmt = d => d.toISOString().slice(0, 10);
+  document.getElementById('pl-date-from').value = fmt(threeMonthsAgo);
+  document.getElementById('pl-date-to').value   = fmt(today);
+
+  await plLoadPatterns();
+  plRenderLibrary();
+}
+
+document.addEventListener('DOMContentLoaded', () => plInit());
+
+})(); // end Pattern Lab IIFE
+
 </script>
 
   <!-- ═══ AI ANALYSIS TAB ═══ -->
@@ -11330,6 +12173,182 @@ refreshRSWatchlistDropdown();
     </div>
 
   </div><!-- /tab-gemini -->
+
+  <!-- ═══ PATTERN LAB TAB ═══ -->
+  <div class="tab-panel" id="tab-patlab">
+
+    <!-- ── 1. Build Pattern ──────────────────────────────────────────── -->
+    <div class="pl-section">
+      <div class="pl-section-hdr">
+        <span class="pl-section-tag cyan">01</span>
+        <span class="pl-section-title">Build Pattern</span>
+        <span class="pl-section-sub">Fetch a ticker, review chart, label and save to library</span>
+      </div>
+
+      <div class="pl-ctrl-row">
+        <span class="pl-label">Ticker</span>
+        <input id="pl-ticker" class="pl-ticker" type="text" placeholder="NVDA" maxlength="6">
+        <span class="pl-label">From</span>
+        <input id="pl-date-from" class="pl-date" type="date">
+        <span class="pl-label">To</span>
+        <input id="pl-date-to" class="pl-date" type="date">
+        <button class="btn" style="background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);font-size:10px;letter-spacing:2px;padding:9px 18px;cursor:pointer;text-transform:uppercase;font-family:var(--font-mono)" onclick="plFetchChart()">▶ Fetch Chart</button>
+        <span id="pl-fetch-status" class="pl-status"></span>
+      </div>
+
+      <div class="pl-chart-row">
+        <div class="pl-chart-box">
+          <div class="pl-chart-label">TradingView Reference ↗ (interactive — use for visual inspection)</div>
+          <div class="pl-tv-wrap"><div id="pl-tv-widget"></div></div>
+        </div>
+        <div class="pl-chart-box">
+          <div class="pl-chart-label">AI View — Apex Canvas (what Claude &amp; Gemini see) · MA20 <span style="color:var(--cyan)">━</span> MA50 <span style="color:var(--orange)">━</span> MA200 <span style="color:var(--red)">━</span></div>
+          <div class="pl-canvas-wrap" id="pl-canvas-wrap">
+            <div class="pl-canvas-placeholder">
+              <div class="pi">📈</div>
+              <div class="pt">Fetch a ticker to preview chart</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);padding:20px">
+        <div class="pl-meta-grid">
+          <div class="pl-meta-box">
+            <label>Pattern Name</label>
+            <input id="pl-name" class="pl-text-inp" type="text" placeholder="e.g. Tight Consolidation Breakout">
+          </div>
+          <div class="pl-meta-box">
+            <label>Pattern Type</label>
+            <select id="pl-type" class="pl-text-inp" style="cursor:pointer">
+              <option value="Breakout">Breakout</option>
+              <option value="Reversal">Reversal</option>
+              <option value="Continuation">Continuation</option>
+              <option value="Consolidation">Consolidation</option>
+              <option value="Pullback">Pullback</option>
+              <option value="Base">Base</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="pl-meta-box">
+            <label>Your Score (A = best)</label>
+            <select id="pl-score" class="pl-text-inp pl-score-sel" style="cursor:pointer">
+              <option value="A">A — Ideal Setup</option>
+              <option value="B">B — Strong</option>
+              <option value="C">C — Average</option>
+              <option value="D">D — Marginal</option>
+              <option value="F">F — Failed</option>
+            </select>
+          </div>
+          <div class="pl-meta-box">
+            <label>Breakout Date</label>
+            <input id="pl-breakout-date" class="pl-text-inp" type="date" placeholder="When it broke out">
+          </div>
+          <div class="pl-meta-box">
+            <label>Move End Date</label>
+            <input id="pl-move-end-date" class="pl-text-inp" type="date" placeholder="When the move ended">
+          </div>
+          <div class="pl-meta-box">
+            <label>Result / Move %</label>
+            <input id="pl-move-pct" class="pl-text-inp" type="text" placeholder="e.g. +34% in 3 weeks">
+          </div>
+          <div class="pl-meta-box pl-meta-full">
+            <label>Your Notes — describe what makes this pattern valid (2–3 sentences)</label>
+            <textarea id="pl-description" class="pl-textarea" placeholder="e.g. Volume dried up for 5 days into a tight range near 52-week highs. Price held the 20MA on light volume. Broke out on 3× average volume with a strong close at the highs..."></textarea>
+          </div>
+        </div>
+        <div class="pl-save-row">
+          <button class="btn" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-size:10px;letter-spacing:2px;padding:9px 20px;cursor:pointer;text-transform:uppercase;font-family:var(--font-mono)" onclick="plSavePattern()">💾 Save to Library</button>
+          <button class="btn" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:10px;letter-spacing:2px;padding:9px 16px;cursor:pointer;text-transform:uppercase;font-family:var(--font-mono)" onclick="plClearForm()">✕ Clear</button>
+          <span id="pl-save-status" class="pl-status"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. Pattern Library ─────────────────────────────────────────── -->
+    <div class="pl-section">
+      <div class="pl-section-hdr">
+        <span class="pl-section-tag purple">02</span>
+        <span class="pl-section-title">Pattern Library</span>
+        <span id="pl-lib-count-hdr" class="pl-section-sub">0 patterns saved</span>
+      </div>
+
+      <div class="pl-lib-controls">
+        <input id="pl-search" class="pl-search" type="text" placeholder="Search patterns…" oninput="plRenderLibrary()">
+        <select id="pl-filter-type" class="pl-select" onchange="plRenderLibrary()">
+          <option value="">All Types</option>
+          <option value="Breakout">Breakout</option>
+          <option value="Reversal">Reversal</option>
+          <option value="Continuation">Continuation</option>
+          <option value="Consolidation">Consolidation</option>
+          <option value="Pullback">Pullback</option>
+          <option value="Base">Base</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="pl-filter-score" class="pl-select" onchange="plRenderLibrary()">
+          <option value="">All Scores</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="F">F</option>
+        </select>
+        <button class="btn" style="background:var(--purple-dim);border:1px solid var(--purple);color:var(--purple);font-size:9px;letter-spacing:2px;padding:7px 14px;cursor:pointer;text-transform:uppercase;font-family:var(--font-mono)" onclick="plExportJSON()">⬇ Export JSON</button>
+        <label class="btn" style="background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-size:9px;letter-spacing:2px;padding:7px 14px;cursor:pointer;text-transform:uppercase;font-family:var(--font-mono)">
+          ⬆ Import JSON<input type="file" id="pl-import-file" accept=".json" style="display:none" onchange="plImportJSON(this)">
+        </label>
+      </div>
+
+      <div id="pl-library-grid" class="pl-grid">
+        <div class="pl-empty-lib">No patterns saved yet — fetch a chart above and save your first pattern</div>
+      </div>
+    </div>
+
+    <!-- ── 3. Analyze Current Chart ───────────────────────────────────── -->
+    <div class="pl-section">
+      <div class="pl-section-hdr">
+        <span class="pl-section-tag green">03</span>
+        <span class="pl-section-title">Analyze Current Chart</span>
+        <span class="pl-section-sub">Fetch a stock, compare against your library with Claude + Gemini</span>
+      </div>
+
+      <div class="pl-ctrl-row">
+        <span class="pl-label">Ticker</span>
+        <input id="pl-an-ticker" class="pl-ticker" type="text" placeholder="AAPL" maxlength="6">
+        <span class="pl-label">Days back</span>
+        <select id="pl-an-days" class="pl-select">
+          <option value="45">45 days</option>
+          <option value="60" selected>60 days</option>
+          <option value="90">90 days</option>
+          <option value="120">120 days</option>
+        </select>
+        <button class="btn" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-size:10px;letter-spacing:2px;padding:9px 18px;cursor:pointer;text-transform:uppercase;font-family:var(--font-mono)" onclick="plFetchAndAnalyze()">🔬 Fetch &amp; Analyze</button>
+        <span id="pl-an-status" class="pl-status"></span>
+      </div>
+
+      <div class="pl-an-chart-wrap">
+        <div class="pl-chart-label" style="margin-bottom:8px">Current Chart · AI View · MA20 <span style="color:var(--cyan)">━</span> MA50 <span style="color:var(--orange)">━</span> MA200 <span style="color:var(--red)">━</span></div>
+        <div class="pl-an-canvas-wrap" id="pl-an-canvas-wrap">
+          <div class="pl-canvas-placeholder">
+            <div class="pi">🔬</div>
+            <div class="pt">Enter ticker above and click Fetch &amp; Analyze</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-results-grid" id="pl-results-grid" style="display:none">
+        <div class="pl-result-card claude" id="pl-claude-card">
+          <div class="pl-result-model claude">⚡ Claude · Sonnet</div>
+          <div class="pl-result-loading"><span class="ai-spin"></span> Analysing patterns…</div>
+        </div>
+        <div class="pl-result-card gemini" id="pl-gemini-card">
+          <div class="pl-result-model gemini">♊ Gemini · Flash</div>
+          <div class="pl-result-loading"><span class="ai-spin"></span> Analysing patterns…</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-patlab -->
 
 </body>
 </html>
