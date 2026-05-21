@@ -931,6 +931,84 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .pl-result-second{font-size:9px;color:var(--muted);letter-spacing:.3px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 .pl-result-loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:10px;letter-spacing:1px;padding:20px 0}
 .pl-result-err{color:var(--red);font-size:10px;letter-spacing:.5px;padding:10px 0}
+
+/* ═══ CHARTS TAB ══════════════════════════════════════════════════════════ */
+.ch-topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);flex-wrap:wrap}
+.ch-topbar-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.ch-layout-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:7px 12px;outline:none;cursor:pointer}
+.ch-sync-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:7px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.ch-sync-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.ch-grid{display:grid;gap:10px}
+.ch-grid[data-layout="1"]{grid-template-columns:1fr}
+.ch-grid[data-layout="2"]{grid-template-columns:1fr 1fr}
+.ch-grid[data-layout="4"]{grid-template-columns:1fr 1fr}
+.ch-grid[data-layout="6"]{grid-template-columns:1fr 1fr 1fr}
+.ch-grid[data-layout="8"]{grid-template-columns:1fr 1fr 1fr 1fr}
+.ch-grid[data-layout="10"]{grid-template-columns:1fr 1fr 1fr 1fr 1fr}
+.ch-cell{background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;min-height:320px}
+.ch-grid[data-layout="1"] .ch-cell{min-height:540px}
+.ch-grid[data-layout="2"] .ch-cell{min-height:480px}
+.ch-cell-hdr{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0}
+.ch-ticker-inp{width:80px;background:var(--bg);border:1px solid var(--border2);color:var(--accent);font-family:var(--font-display);font-size:13px;font-weight:800;padding:4px 8px;outline:none;letter-spacing:2px;text-transform:uppercase;transition:border-color .2s}
+.ch-ticker-inp:focus{border-color:var(--accent)}
+.ch-tf-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1px;padding:3px 8px;cursor:pointer;transition:all .15s;text-transform:uppercase}
+.ch-tf-btn.active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.ch-adr{font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto;white-space:nowrap}
+.ch-adr span{color:var(--orange)}
+.ch-widget{flex:1;position:relative;min-height:0}
+.ch-placeholder{display:flex;align-items:center;justify-content:center;height:100%;color:var(--border2);font-size:10px;letter-spacing:2px;text-transform:uppercase;flex-direction:column;gap:8px}
+.ch-placeholder .cpi{font-size:28px;opacity:.2}
+
+/* ═══ SCREENER TAB ════════════════════════════════════════════════════════ */
+.sc-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+.sc-filters{background:var(--surface);border:1px solid var(--border);padding:18px}
+.sc-filter-title{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sc-filter-section{margin-bottom:18px}
+.sc-filter-section-hdr{font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sc-filter-section-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.sc-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sc-label{font-size:9px;color:var(--muted);letter-spacing:.5px;white-space:nowrap;min-width:70px}
+.sc-inp{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none;width:80px;transition:border-color .2s}
+.sc-inp:focus{border-color:var(--cyan)}
+.sc-inp.wide{width:100%}
+.sc-chk-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;cursor:pointer}
+.sc-chk-row input[type=checkbox]{accent-color:var(--cyan);cursor:pointer}
+.sc-chk-row label{font-size:10px;color:var(--text);letter-spacing:.3px;cursor:pointer;line-height:1.4}
+.sc-chk-sub{display:flex;align-items:center;gap:6px;margin-left:20px;margin-bottom:4px}
+.sc-chk-sub label{font-size:9px;color:var(--muted);cursor:pointer}
+.sc-run-btn{width:100%;background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:10px;letter-spacing:2px;padding:10px;cursor:pointer;text-transform:uppercase;transition:all .15s;margin-top:4px}
+.sc-run-btn:hover{background:var(--cyan);color:#000}
+.sc-run-btn:disabled{opacity:.4;cursor:not-allowed}
+.sc-progress{font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:8px;min-height:28px;line-height:1.8}
+.sc-results-area{min-width:0}
+.sc-results-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sc-results-count{font-size:11px;color:var(--text);letter-spacing:.5px}
+.sc-results-count strong{color:var(--accent);font-family:var(--font-display)}
+.sc-send-charts-btn{background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.sc-send-charts-btn:hover{background:var(--green);color:#000}
+.sc-send-charts-btn:disabled{opacity:.3;cursor:not-allowed}
+.sc-tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border)}
+table.sc-tbl{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+table.sc-tbl thead tr{border-bottom:1px solid var(--border2)}
+table.sc-tbl th{padding:8px 12px;text-align:left;font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;cursor:pointer;user-select:none;transition:color .15s}
+table.sc-tbl th:hover{color:var(--accent)}
+table.sc-tbl th.sort-asc::after{content:' ↑';color:var(--accent)}
+table.sc-tbl th.sort-desc::after{content:' ↓';color:var(--accent)}
+table.sc-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .1s;animation:fi .3s ease forwards;opacity:0}
+table.sc-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+table.sc-tbl td{padding:9px 12px;vertical-align:middle}
+table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.sc-chk-cell{text-align:center;width:32px}
+.sc-chk-cell input{accent-color:var(--cyan);cursor:pointer}
+.sc-ticker-cell{font-family:var(--font-display);font-weight:700;font-size:13px;color:#fff}
+.up{color:var(--green)}.down{color:var(--red)}
+.sc-tag{display:inline-block;font-size:8px;letter-spacing:1px;padding:2px 6px;text-transform:uppercase;margin:1px}
+.sc-tag.beat{background:rgba(61,255,160,.12);color:var(--green);border:1px solid rgba(61,255,160,.3)}
+.sc-tag.miss{background:rgba(255,82,119,.12);color:var(--red);border:1px solid rgba(255,82,119,.3)}
+.sc-tag.upgrade{background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.3)}
+.sc-news-link{font-size:9px;color:var(--muted);text-decoration:none;letter-spacing:.3px;max-width:180px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+.sc-news-link:hover{color:var(--accent)}
+.sc-empty{text-align:center;padding:48px;color:var(--muted);font-size:10px;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -965,6 +1043,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
     <button class="tab" data-tab="ai">⚡ AI</button>
     <button class="tab" data-tab="gemini">♊ Gemini</button>
     <button class="tab" data-tab="patlab">🔬 Pattern Lab</button>
+    <button class="tab" data-tab="charts">📊 Charts</button>
+    <button class="tab" data-tab="screener">🔍 Screener</button>
   </div>
 
   <!-- Account size (global — used by position sizer across tabs) -->
@@ -3086,7 +3166,7 @@ function renderTable() {
 
     return `
       <tr style="animation-delay:${i*40}ms">
-        <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+        <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a><button onclick="event.stopPropagation();openInCharts(['${r.ticker}'])" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--green);margin-left:6px;letter-spacing:1px;padding:0" title="Open in Charts">📊</button></td>
         <td>$${r.price.toFixed(2)}</td>
         <td class="${chC}">${chS}</td>
         <td><div class="vbar-wrap"><div class="vbar"><div class="vfill" style="width:${vp}%;background:${vc}"></div></div><span class="vtxt">${r.volRatio.toFixed(1)}×</span></div></td>
@@ -11903,6 +11983,694 @@ document.addEventListener('DOMContentLoaded', () => plInit());
 
 })(); // end Pattern Lab IIFE
 
+// ═════════════════════════════════════════════════════════════════════════════
+// CHARTS TAB
+// ═════════════════════════════════════════════════════════════════════════════
+(function() {
+'use strict';
+
+let chLayout = 4;
+let chSyncMode = false;
+let chCells = []; // [{ticker,tf,chart,candleSeries,volSeries,ma9,ma21,ma50,ma200,pollTimer}]
+let lwcReady = false;
+
+// Load TradingView Lightweight Charts from CDN
+function loadLWC() {
+  if (lwcReady || window.LightweightCharts) { lwcReady = true; return Promise.resolve(); }
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js';
+    s.onload = () => { lwcReady = true; res(); };
+    s.onerror = () => rej(new Error('Could not load Lightweight Charts library'));
+    document.head.appendChild(s);
+  });
+}
+
+// Fetch OHLCV bars from Alpaca
+async function chFetchBars(ticker, tf) {
+  const { key, secret } = getKeys();
+  if (!key || !secret) throw new Error('No Alpaca keys — configure on Scanner tab');
+  const is5m = tf === '5m';
+  const alpacaTF = is5m ? '5Min' : '1Day';
+  const end = new Date();
+  const start = new Date();
+  is5m ? start.setDate(start.getDate() - 6) : start.setFullYear(start.getFullYear() - 2);
+  const fmt = d => d.toISOString().slice(0, 10);
+  const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=${alpacaTF}&start=${fmt(start)}&end=${fmt(end)}&limit=500&feed=iex&sort=asc`;
+  const resp = await fetch(url, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } });
+  if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.message || `HTTP ${resp.status}`); }
+  const j = await resp.json();
+  return (j.bars || []).map(b => ({
+    time: is5m ? Math.floor(new Date(b.t).getTime() / 1000) : b.t.slice(0, 10),
+    open: +b.o, high: +b.h, low: +b.l, close: +b.c, volume: +b.v
+  }));
+}
+
+// Calculate EMA array
+function chEMA(vals, n) {
+  const k = 2 / (n + 1), r = new Array(vals.length).fill(null);
+  if (vals.length < n) return r;
+  r[n-1] = vals.slice(0, n).reduce((a,b)=>a+b,0) / n;
+  for (let i = n; i < vals.length; i++) r[i] = vals[i]*k + r[i-1]*(1-k);
+  return r;
+}
+
+// Calculate SMA array
+function chSMA(vals, n) {
+  return vals.map((_,i) => i < n-1 ? null : vals.slice(i-n+1,i+1).reduce((a,b)=>a+b,0)/n);
+}
+
+// Calculate ADR% (20-day)
+async function chFetchADR(ticker) {
+  try {
+    const { key, secret } = getKeys();
+    const end = new Date(), start = new Date();
+    start.setDate(start.getDate() - 30);
+    const fmt = d => d.toISOString().slice(0,10);
+    const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=30&feed=iex&sort=asc`;
+    const resp = await fetch(url, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } });
+    if (!resp.ok) return null;
+    const j = await resp.json();
+    const bars = (j.bars||[]).slice(-20);
+    if (bars.length < 5) return null;
+    const adr = bars.reduce((s,b) => s + (b.h-b.l)/b.c, 0) / bars.length * 100;
+    return adr.toFixed(2);
+  } catch { return null; }
+}
+
+// Create one chart in a cell container
+async function chCreateChart(cellIdx, ticker, tf) {
+  await loadLWC();
+  const cell = chCells[cellIdx];
+  if (!cell) return;
+
+  // Destroy existing chart
+  if (cell.chart) { try { cell.chart.remove(); } catch {} }
+  if (cell.pollTimer) clearInterval(cell.pollTimer);
+
+  const widgetEl = document.getElementById(`ch-widget-${cellIdx}`);
+  const adrEl    = document.getElementById(`ch-adr-${cellIdx}`);
+  if (!widgetEl) return;
+  widgetEl.innerHTML = '';
+
+  // Show loading
+  widgetEl.innerHTML = `<div class="ch-placeholder"><div class="cpi">📊</div><div class="ai-spin"></div></div>`;
+
+  let bars;
+  try {
+    bars = await chFetchBars(ticker, tf);
+  } catch (e) {
+    widgetEl.innerHTML = `<div class="ch-placeholder"><div style="color:var(--red);font-size:10px">⚠ ${e.message}</div></div>`;
+    return;
+  }
+
+  if (!bars.length) {
+    widgetEl.innerHTML = `<div class="ch-placeholder"><div style="color:var(--muted);font-size:10px">No data returned</div></div>`;
+    return;
+  }
+
+  widgetEl.innerHTML = '';
+
+  const LWC = window.LightweightCharts;
+  const is5m = tf === '5m';
+
+  // Main chart
+  const chart = LWC.createChart(widgetEl, {
+    layout: { background: { color: '#08080c' }, textColor: '#52526e' },
+    grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
+    crosshair: { mode: LWC.CrosshairMode.Normal },
+    rightPriceScale: { borderColor: '#1e1e2e' },
+    timeScale: { borderColor: '#1e1e2e', timeVisible: true, secondsVisible: false },
+    handleScroll: true, handleScale: true,
+    width: widgetEl.clientWidth || 300,
+    height: widgetEl.clientHeight || 280,
+  });
+
+  // Candlestick series
+  const candleSeries = chart.addCandlestickSeries({
+    upColor: '#3dffa0', downColor: '#ff5277',
+    borderUpColor: '#3dffa0', borderDownColor: '#ff5277',
+    wickUpColor: '#3dffa0', wickDownColor: '#ff5277',
+  });
+  candleSeries.setData(bars);
+
+  // Volume pane
+  const volSeries = chart.addHistogramSeries({
+    color: 'rgba(61,255,160,0.3)', priceFormat: { type: 'volume' },
+    priceScaleId: 'vol', scaleMargins: { top: 0.8, bottom: 0 },
+  });
+  volSeries.setData(bars.map(b => ({
+    time: b.time, value: b.volume,
+    color: b.close >= b.open ? 'rgba(61,255,160,0.35)' : 'rgba(255,82,119,0.35)'
+  })));
+
+  // MA line series
+  const closes = bars.map(b => b.close);
+  const times  = bars.map(b => b.time);
+  const addMA = (vals, color, lw) => {
+    const s = chart.addLineSeries({ color, lineWidth: lw||1, priceLineVisible: false, lastValueVisible: false });
+    s.setData(vals.map((v,i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean));
+    return s;
+  };
+  const ma9   = addMA(chEMA(closes, 9),   '#4ee8ff', 1);
+  const ma21  = addMA(chEMA(closes, 21),  '#ff9b4e', 1);
+  const ma50  = addMA(chSMA(closes, 50),  '#e8ff47', 1.5);
+  const ma200 = addMA(chSMA(closes, 200), '#ff5277', 1.5);
+
+  chart.timeScale().fitContent();
+
+  // Responsive resize
+  const ro = new ResizeObserver(() => {
+    chart.applyOptions({ width: widgetEl.clientWidth, height: widgetEl.clientHeight });
+  });
+  ro.observe(widgetEl);
+
+  cell.chart = chart; cell.candleSeries = candleSeries; cell.volSeries = volSeries;
+  cell.ma9 = ma9; cell.ma21 = ma21; cell.ma50 = ma50; cell.ma200 = ma200;
+  cell.ticker = ticker; cell.tf = tf; cell.ro = ro;
+
+  // ADR
+  chFetchADR(ticker).then(adr => {
+    if (adrEl) adrEl.innerHTML = adr ? `ADR <span>${adr}%</span>` : '';
+  });
+
+  // Poll for live updates
+  const pollMs = is5m ? 30000 : 300000;
+  cell.pollTimer = setInterval(async () => {
+    try {
+      const fresh = await chFetchBars(ticker, tf);
+      if (!fresh.length) return;
+      candleSeries.setData(fresh);
+      volSeries.setData(fresh.map(b => ({
+        time: b.time, value: b.volume,
+        color: b.close >= b.open ? 'rgba(61,255,160,0.35)' : 'rgba(255,82,119,0.35)'
+      })));
+      const fc = fresh.map(b => b.close), ft = fresh.map(b => b.time);
+      [[ma9,chEMA(fc,9)],[ma21,chEMA(fc,21)],[ma50,chSMA(fc,50)],[ma200,chSMA(fc,200)]].forEach(([s,v])=>{
+        s.setData(v.map((vv,i)=>vv!==null?{time:ft[i],value:vv}:null).filter(Boolean));
+      });
+    } catch {}
+  }, pollMs);
+}
+
+// Render the grid with N cells
+function chRenderGrid(n) {
+  chLayout = n;
+  // Clean up existing charts
+  chCells.forEach(c => {
+    if (c.chart) try { c.chart.remove(); } catch {}
+    if (c.pollTimer) clearInterval(c.pollTimer);
+    if (c.ro) c.ro.disconnect();
+  });
+  chCells = Array.from({ length: n }, () => ({}));
+
+  const grid = document.getElementById('ch-grid');
+  if (!grid) return;
+  grid.setAttribute('data-layout', n);
+  grid.innerHTML = Array.from({ length: n }, (_, i) => `
+    <div class="ch-cell">
+      <div class="ch-cell-hdr">
+        <input class="ch-ticker-inp" id="ch-tick-${i}" type="text" placeholder="NVDA" maxlength="6"
+          onkeydown="if(event.key==='Enter'){chLoadCell(${i})}">
+        <button class="ch-tf-btn active" id="ch-5m-${i}" onclick="chSetTF(${i},'5m')">5m</button>
+        <button class="ch-tf-btn"        id="ch-1d-${i}" onclick="chSetTF(${i},'1d')">1D</button>
+        <span class="ch-adr" id="ch-adr-${i}"></span>
+      </div>
+      <div class="ch-widget" id="ch-widget-${i}">
+        <div class="ch-placeholder"><div class="cpi">📊</div><div style="font-size:9px;letter-spacing:2px">Enter ticker</div></div>
+      </div>
+    </div>`).join('');
+
+  // Re-populate tickers if already set
+  chCells.forEach((c, i) => {
+    if (c._ticker) {
+      const inp = document.getElementById(`ch-tick-${i}`);
+      if (inp) { inp.value = c._ticker; chLoadCell(i); }
+    }
+  });
+}
+
+// Load a ticker into a specific cell
+window.chLoadCell = async function(idx) {
+  const inp = document.getElementById(`ch-tick-${idx}`);
+  if (!inp) return;
+  const ticker = inp.value.trim().toUpperCase();
+  if (!ticker) return;
+  inp.value = ticker;
+  if (!chCells[idx]) chCells[idx] = {};
+  const tf = chCells[idx].tf || '5m';
+  await chCreateChart(idx, ticker, tf);
+};
+
+// Set timeframe for a cell (or all if sync on)
+window.chSetTF = async function(idx, tf) {
+  const slots = chSyncMode ? chCells.map((_,i)=>i) : [idx];
+  for (const i of slots) {
+    if (!chCells[i]) continue;
+    const btn5 = document.getElementById(`ch-5m-${i}`);
+    const btn1 = document.getElementById(`ch-1d-${i}`);
+    if (btn5) btn5.classList.toggle('active', tf==='5m');
+    if (btn1) btn1.classList.toggle('active', tf==='1d');
+    chCells[i].tf = tf;
+    const inp = document.getElementById(`ch-tick-${i}`);
+    if (inp && inp.value.trim()) await chCreateChart(i, inp.value.trim().toUpperCase(), tf);
+  }
+};
+
+// Toggle sync mode
+window.chToggleSync = function() {
+  chSyncMode = !chSyncMode;
+  const btn = document.getElementById('ch-sync-btn');
+  if (btn) btn.classList.toggle('active', chSyncMode);
+};
+
+// Change layout
+window.chChangeLayout = function(n) {
+  n = parseInt(n, 10);
+  // Preserve current tickers
+  const tickers = chCells.map((c, i) => {
+    const inp = document.getElementById(`ch-tick-${i}`);
+    return inp ? inp.value.trim().toUpperCase() : '';
+  });
+  chCells.forEach((c, i) => { if (chCells[i]) chCells[i]._ticker = tickers[i]; });
+  chRenderGrid(n);
+};
+
+// Global: open tickers in charts tab (called from scanner/screener)
+window.openInCharts = function(tickers) {
+  if (!Array.isArray(tickers)) tickers = [tickers];
+  // Switch to charts tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'charts'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-charts'));
+  // Ensure enough cells
+  const needed = Math.min(tickers.length, 10);
+  const layouts = [1,2,4,4,6,6,8,8,10,10];
+  const newLayout = layouts[needed-1] || 10;
+  if (newLayout !== chLayout || chCells.length < needed) {
+    chCells.forEach((c,i) => { chCells[i]._ticker = ''; }); // reset
+    chRenderGrid(newLayout);
+    const sel = document.getElementById('ch-layout-sel');
+    if (sel) sel.value = newLayout;
+  }
+  tickers.slice(0, chCells.length).forEach((tk, i) => {
+    if (!tk) return;
+    const inp = document.getElementById(`ch-tick-${i}`);
+    if (inp) { inp.value = tk; chLoadCell(i); }
+  });
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  chRenderGrid(chLayout);
+  const sel = document.getElementById('ch-layout-sel');
+  if (sel) sel.value = chLayout;
+});
+
+})(); // end Charts IIFE
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SCREENER TAB
+// ═════════════════════════════════════════════════════════════════════════════
+(function() {
+'use strict';
+
+let scResults = [];
+let scSortCol = null;
+let scSortDir = 1;
+let scRunning = false;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function scEMA(vals, n) {
+  const k = 2/(n+1), r = new Array(vals.length).fill(null);
+  if (vals.length < n) return r;
+  r[n-1] = vals.slice(0,n).reduce((a,b)=>a+b,0)/n;
+  for (let i=n;i<vals.length;i++) r[i]=vals[i]*k+r[i-1]*(1-k);
+  return r;
+}
+function scSMA(vals, n) {
+  return vals.map((_,i)=>i<n-1?null:vals.slice(i-n+1,i+1).reduce((a,b)=>a+b,0)/n);
+}
+function scPct(data, daysBack) {
+  if (data.length < 2) return null;
+  const end = data[data.length-1].c;
+  const startBar = data[Math.max(0, data.length-1-daysBack)];
+  return startBar ? (end - startBar.c) / startBar.c * 100 : null;
+}
+function scRVOL(data, n) {
+  if (data.length < n+1) return null;
+  const avg = data.slice(-n-1,-1).reduce((s,b)=>s+b.v,0)/n;
+  return avg > 0 ? data[data.length-1].v / avg : null;
+}
+function scSetProgress(html) {
+  const el = document.getElementById('sc-progress');
+  if (el) el.innerHTML = html;
+}
+function scVal(id) { const el=document.getElementById(id); return el?el.value.trim():''; }
+function scChecked(id) { const el=document.getElementById(id); return el?el.checked:false; }
+
+// ── Fetch all NYSE+NASDAQ assets ──────────────────────────────────────────────
+async function scFetchAssets() {
+  const {key,secret} = getKeys();
+  for (const base of ['https://paper-api.alpaca.markets','https://api.alpaca.markets']) {
+    try {
+      const resp = await fetch(`${base}/v2/assets?status=active&asset_class=us_equity`, {
+        headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}
+      });
+      if (!resp.ok) continue;
+      const assets = await resp.json();
+      const VALID = new Set(['NYSE','NASDAQ','NYSE ARCA','NYSE MKT','BATS']);
+      return assets.filter(a=>a.tradable&&a.symbol&&!a.symbol.includes('/')&&!a.symbol.includes('.')&&a.symbol.length<=5&&VALID.has(a.exchange)).map(a=>a.symbol);
+    } catch {}
+  }
+  throw new Error('Could not fetch asset list — check Alpaca keys');
+}
+
+// ── Batch snapshots ───────────────────────────────────────────────────────────
+async function scBatchSnapshots(tickers) {
+  const {key,secret} = getKeys();
+  const out = {};
+  for (let i=0;i<tickers.length;i+=500) {
+    const batch = tickers.slice(i,i+500).join(',');
+    try {
+      const resp = await fetch(`https://data.alpaca.markets/v2/stocks/snapshots?symbols=${encodeURIComponent(batch)}&feed=iex`,{
+        headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}
+      });
+      if (resp.ok) Object.assign(out, await resp.json());
+    } catch {}
+    if (i+500<tickers.length) await new Promise(r=>setTimeout(r,250));
+  }
+  return out;
+}
+
+// ── Batch multi-symbol bars ───────────────────────────────────────────────────
+async function scBatchBars(tickers) {
+  const {key,secret} = getKeys();
+  const out = {};
+  const end = new Date(), start = new Date();
+  start.setDate(start.getDate()-300);
+  const fmt=d=>d.toISOString().slice(0,10);
+  for (let i=0;i<tickers.length;i+=50) {
+    const batch = tickers.slice(i,i+50).join(',');
+    try {
+      const url=`https://data.alpaca.markets/v2/stocks/bars?symbols=${encodeURIComponent(batch)}&timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=300&feed=iex&sort=asc`;
+      const resp = await fetch(url,{headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}});
+      if (resp.ok) {
+        const j=await resp.json();
+        const bars=j.bars||{};
+        for (const [sym,bArr] of Object.entries(bars)) {
+          out[sym]=bArr.map(b=>({date:b.t.slice(0,10),o:+b.o,h:+b.h,l:+b.l,c:+b.c,v:+b.v}));
+        }
+      }
+    } catch {}
+    if (i+50<tickers.length) await new Promise(r=>setTimeout(r,200));
+  }
+  return out;
+}
+
+// ── Finnhub helpers ───────────────────────────────────────────────────────────
+async function scFinnhubEarnings(ticker, key) {
+  try {
+    const r=await fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${ticker}&limit=4&token=${key}`);
+    return r.ok ? await r.json() : [];
+  } catch { return []; }
+}
+async function scFinnhubUpgrades(ticker, key, days) {
+  try {
+    const from=new Date(); from.setDate(from.getDate()-days);
+    const fmt=d=>d.toISOString().slice(0,10);
+    const r=await fetch(`https://finnhub.io/api/v1/stock/upgrade-downgrade?symbol=${ticker}&from=${fmt(from)}&token=${key}`);
+    return r.ok ? await r.json() : [];
+  } catch { return []; }
+}
+async function scFinnhubNews(ticker, key, days) {
+  try {
+    const to=new Date(), from=new Date(); from.setDate(from.getDate()-days);
+    const fmt=d=>d.toISOString().slice(0,10);
+    const r=await fetch(`https://finnhub.io/api/v1/company-news?symbol=${ticker}&from=${fmt(from)}&to=${fmt(to)}&token=${key}`);
+    return r.ok ? (await r.json()).slice(0,3) : [];
+  } catch { return []; }
+}
+async function scFinnhubProfile(ticker, key) {
+  try {
+    const r=await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${key}`);
+    return r.ok ? await r.json() : {};
+  } catch { return {}; }
+}
+
+// ── Main screener run ─────────────────────────────────────────────────────────
+window.scRun = async function() {
+  if (scRunning) return;
+  scRunning = true;
+  const btn = document.getElementById('sc-run-btn');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Scanning…'; }
+  scResults = [];
+  document.getElementById('sc-tbody').innerHTML='';
+  document.getElementById('sc-results-count').innerHTML='';
+
+  try {
+    // ── Read filter params ───
+    const priceMin = parseFloat(scVal('sc-price-min'))||0;
+    const priceMax = parseFloat(scVal('sc-price-max'))||Infinity;
+    const dvMin    = (parseFloat(scVal('sc-dv-min'))||0)*1e6;
+    const rvol30   = scChecked('sc-rvol30-chk')  ? parseFloat(scVal('sc-rvol30-min'))||0 : 0;
+    const rvol10   = scChecked('sc-rvol10-chk')  ? parseFloat(scVal('sc-rvol10-min'))||0 : 0;
+    const perf1w   = scChecked('sc-perf1w-chk')  ? parseFloat(scVal('sc-perf1w-min'))||null : null;
+    const perf1m   = scChecked('sc-perf1m-chk')  ? parseFloat(scVal('sc-perf1m-min'))||null : null;
+    const perf3m   = scChecked('sc-perf3m-chk')  ? parseFloat(scVal('sc-perf3m-min'))||null : null;
+    const maConditions = ['sc-ma-p10e','sc-ma-p20e','sc-ma-p50s','sc-ma-10e20e','sc-ma-10e50s','sc-ma-20e50s','sc-ma-all'].filter(id=>scChecked(id));
+    const epsBeat  = scChecked('sc-eps-beat');
+    const epsSuprise = scChecked('sc-eps-surp') ? parseFloat(scVal('sc-eps-surp-min'))||0 : null;
+    const epsYoY   = scChecked('sc-eps-yoy')   ? parseFloat(scVal('sc-eps-yoy-min'))||null : null;
+    const epsQoQ   = scChecked('sc-eps-qoq')   ? parseFloat(scVal('sc-eps-qoq-min'))||null : null;
+    const needsEarnings = epsBeat||epsSuprise!==null||epsYoY!==null||epsQoQ!==null;
+    const upgDays  = scChecked('sc-upg-chk')   ? parseInt(scVal('sc-upg-days'))||30 : 0;
+    const newsDays = scChecked('sc-news-chk')  ? parseInt(scVal('sc-news-days'))||7 : 0;
+    const finnhubKey = localStorage.getItem('apexFinnhubKey')||'';
+    const needsFinnhub = needsEarnings||upgDays||newsDays;
+    if (needsFinnhub && !finnhubKey) {
+      scSetProgress('⚠ Earnings/upgrade/news filters need a Finnhub API key — enter it on the Scanner tab');
+      return;
+    }
+
+    // Stage 1: fetch all assets
+    scSetProgress('<span class="ai-spin"></span> Fetching NYSE + NASDAQ assets…');
+    const allTickers = await scFetchAssets();
+    scSetProgress(`<span class="ai-spin"></span> ${allTickers.length} assets → fetching snapshots…`);
+
+    // Stage 1b: batch snapshots for price/DV filter
+    const snapshots = await scBatchSnapshots(allTickers);
+    const stage1 = allTickers.filter(sym => {
+      const s = snapshots[sym];
+      if (!s) return false;
+      const price = s.latestTrade?.p || s.dailyBar?.c || 0;
+      const vol   = s.dailyBar?.v || 0;
+      const dv    = price * vol;
+      return price >= priceMin && price <= priceMax && dv >= dvMin;
+    });
+    scSetProgress(`<span class="ai-spin"></span> ${stage1.length} pass price/DV filter → fetching daily bars (${Math.ceil(stage1.length/50)} batches)…`);
+
+    // Stage 2: batch bars for MA/RVOL/performance
+    const barsMap = await scBatchBars(stage1);
+    const stage2 = [];
+    for (const [sym, bars] of Object.entries(barsMap)) {
+      if (bars.length < 10) continue;
+      const closes = bars.map(b=>b.c);
+      const ema9  = scEMA(closes,9);
+      const ema10 = scEMA(closes,10);
+      const ema20 = scEMA(closes,20);
+      const sma50 = scSMA(closes,50);
+      const last  = bars.length-1;
+      const price = closes[last];
+      const e10   = ema10[last], e20=ema20[last], s50=sma50[last];
+      if (!e10||!e20||!s50) continue;
+
+      // MA condition checks
+      const maCheck = {
+        'sc-ma-p10e': price > e10,
+        'sc-ma-p20e': price > e20,
+        'sc-ma-p50s': price > s50,
+        'sc-ma-10e20e': e10 > e20,
+        'sc-ma-10e50s': e10 > s50,
+        'sc-ma-20e50s': e20 > s50,
+        'sc-ma-all': price>e10 && price>e20 && price>s50 && e10>e20 && e20>s50
+      };
+      if (maConditions.some(id => !maCheck[id])) continue;
+
+      // RVOL
+      const rv30 = scRVOL(bars, 30);
+      const rv10 = scRVOL(bars, 10);
+      if (rvol30 && (!rv30 || rv30 < rvol30)) continue;
+      if (rvol10 && (!rv10 || rv10 < rvol10)) continue;
+
+      // Performance
+      const p1w = scPct(bars, 5);
+      const p1m = scPct(bars, 21);
+      const p3m = scPct(bars, 63);
+      if (perf1w!==null && (p1w===null||p1w<perf1w)) continue;
+      if (perf1m!==null && (p1m===null||p1m<perf1m)) continue;
+      if (perf3m!==null && (p3m===null||p3m<perf3m)) continue;
+
+      const snap = snapshots[sym]||{};
+      const dv   = price * (snap.dailyBar?.v||0);
+      const prev = snap.prevDailyBar?.c||bars[last-1]?.c||price;
+      const changePct = (price-prev)/prev*100;
+
+      stage2.push({ sym, price, changePct, dv, rv30, rv10, p1w, p1m, p3m, bars, ema10, ema20, sma50 });
+    }
+
+    scSetProgress(`<span class="ai-spin"></span> ${stage2.length} pass MA/RVOL/performance → ${needsFinnhub?'fetching Finnhub data…':'building results…'}`);
+
+    // Stage 3: Finnhub data (throttled ~50/min to stay within free tier)
+    const finalResults = [];
+    let finnhubCount = 0;
+    for (const row of stage2) {
+      let sector='—', epsBeatFlag=false, epsSurpPct=null, epsYoYPct=null, epsQoQPct=null;
+      let lastEarningsDate='—', upgrade='—', newsHeadline='—', newsUrl='';
+
+      if (needsFinnhub && finnhubKey) {
+        // Rate limit: max ~50/min (1200ms gap)
+        if (finnhubCount>0 && finnhubCount%50===0) {
+          scSetProgress(`<span class="ai-spin"></span> Finnhub rate-limit pause… (${finalResults.length} done)`);
+          await new Promise(r=>setTimeout(r,62000));
+        }
+        finnhubCount++;
+
+        // Profile (sector)
+        const profile = await scFinnhubProfile(row.sym, finnhubKey);
+        sector = profile.finnhubIndustry||'—';
+
+        // Earnings
+        if (needsEarnings) {
+          const earns = await scFinnhubEarnings(row.sym, finnhubKey);
+          if (earns && earns.length) {
+            const latest = earns[0];
+            lastEarningsDate = latest.period||'—';
+            const actual=latest.actual, est=latest.estimate;
+            if (actual!==null&&est!==null) {
+              epsBeatFlag = actual > est;
+              epsSurpPct  = est!==0 ? (actual-est)/Math.abs(est)*100 : null;
+            }
+            // YoY/QoQ
+            if (earns.length>=5) {
+              const prev4 = earns[4]?.actual; // same quarter last year
+              epsYoYPct = (actual!==null&&prev4!==null&&prev4!==0) ? (actual-prev4)/Math.abs(prev4)*100 : null;
+            }
+            if (earns.length>=2) {
+              const prevQ = earns[1]?.actual;
+              epsQoQPct = (actual!==null&&prevQ!==null&&prevQ!==0) ? (actual-prevQ)/Math.abs(prevQ)*100 : null;
+            }
+          }
+          // EPS filter checks
+          if (epsBeat && !epsBeatFlag) continue;
+          if (epsSuprise!==null && (epsSurpPct===null||epsSurpPct<epsSuprise)) continue;
+          if (epsYoY!==null && (epsYoYPct===null||epsYoYPct<epsYoY)) continue;
+          if (epsQoQ!==null && (epsQoQPct===null||epsQoQPct<epsQoQ)) continue;
+        }
+        // Upgrades
+        if (upgDays) {
+          const upgs = await scFinnhubUpgrades(row.sym, finnhubKey, upgDays);
+          const latest = (upgs||[]).find(u=>u.action==='upgrade'||u.toGrade?.toLowerCase().includes('buy'));
+          if (latest) upgrade = `${latest.firm||''} → ${latest.toGrade||''}`.trim();
+          else if (upgDays) continue; // must have upgrade
+        }
+        // News
+        if (newsDays) {
+          const news = await scFinnhubNews(row.sym, finnhubKey, newsDays);
+          if (news&&news.length) { newsHeadline=news[0].headline; newsUrl=news[0].url||''; }
+          else if (newsDays) continue;
+        }
+
+        await new Promise(r=>setTimeout(r,1200));
+      }
+
+      finalResults.push({
+        sym:row.sym, price:row.price, changePct:row.changePct, dv:row.dv,
+        rv30:row.rv30, rv10:row.rv10, p1w:row.p1w, p1m:row.p1m, p3m:row.p3m,
+        sector, epsBeatFlag, epsSurpPct, epsYoYPct, epsQoQPct, lastEarningsDate,
+        upgrade, newsHeadline, newsUrl
+      });
+    }
+
+    scResults = finalResults;
+    scSetProgress(`✓ Scan complete — ${scResults.length} result${scResults.length!==1?'s':''}`);
+    scRenderResults();
+  } catch(e) {
+    scSetProgress(`⚠ Error: ${e.message}`);
+  } finally {
+    scRunning = false;
+    if (btn) { btn.disabled=false; btn.textContent='▶ Run Screener'; }
+  }
+};
+
+// ── Render results table ──────────────────────────────────────────────────────
+function scRenderResults() {
+  const countEl = document.getElementById('sc-results-count');
+  const tbody = document.getElementById('sc-tbody');
+  if (!tbody) return;
+
+  let data = [...scResults];
+  if (scSortCol) {
+    data.sort((a,b) => {
+      let av=a[scSortCol]??-Infinity, bv=b[scSortCol]??-Infinity;
+      if (typeof av==='string') av=av.toLowerCase(), bv=bv?.toLowerCase()||'';
+      return (av<bv?-1:av>bv?1:0)*scSortDir;
+    });
+  }
+
+  if (countEl) countEl.innerHTML = `<strong>${data.length}</strong> result${data.length!==1?'s':''}`;
+
+  const fmtPct = v => v===null?'—':`<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
+  const fmtDV  = v => v>=1e9?`$${(v/1e9).toFixed(1)}B`:v>=1e6?`$${(v/1e6).toFixed(0)}M`:`$${v.toFixed(0)}`;
+  const fmtRV  = v => v===null?'—':`${v.toFixed(2)}×`;
+
+  tbody.innerHTML = data.map((r,i) => `
+    <tr style="animation-delay:${i*20}ms">
+      <td class="sc-chk-cell"><input type="checkbox" class="sc-row-chk" value="${r.sym}"></td>
+      <td class="sc-ticker-cell">${r.sym}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.sym}" target="_blank">TV ↗</a></td>
+      <td class="num">$${r.price.toFixed(2)}</td>
+      <td class="num">${fmtPct(r.changePct)}</td>
+      <td class="num">${fmtDV(r.dv)}</td>
+      <td class="num">${fmtRV(r.rv30)}</td>
+      <td class="num">${fmtRV(r.rv10)}</td>
+      <td class="num">${fmtPct(r.p1w)}</td>
+      <td class="num">${fmtPct(r.p1m)}</td>
+      <td class="num">${fmtPct(r.p3m)}</td>
+      <td>${r.sector}</td>
+      <td>${r.epsBeatFlag?'<span class="sc-tag beat">EPS Beat</span>':r.lastEarningsDate!=='—'?'<span class="sc-tag miss">Miss</span>':'—'}</td>
+      <td class="num">${r.epsSurpPct!==null?fmtPct(r.epsSurpPct):'—'}</td>
+      <td class="num">${r.epsYoYPct!==null?fmtPct(r.epsYoYPct):'—'}</td>
+      <td class="num">${r.epsQoQPct!==null?fmtPct(r.epsQoQPct):'—'}</td>
+      <td>${r.lastEarningsDate}</td>
+      <td>${r.upgrade!=='—'?`<span class="sc-tag upgrade">${r.upgrade}</span>`:'—'}</td>
+      <td>${r.newsHeadline?`<a class="sc-news-link" href="${r.newsUrl}" target="_blank" title="${r.newsHeadline}">${r.newsHeadline}</a>`:'—'}</td>
+      <td><button class="td-tv" style="background:none;border:none;cursor:pointer;font-size:9px;letter-spacing:1px;color:var(--green)" onclick="openInCharts(['${r.sym}'])">📊</button></td>
+    </tr>`).join('');
+
+  // Sort on header click
+  document.querySelectorAll('#sc-thead th[data-col]').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      if (scSortCol===col) scSortDir*=-1; else { scSortCol=col; scSortDir=-1; }
+      document.querySelectorAll('#sc-thead th').forEach(t=>t.className='');
+      th.className = scSortDir===-1?'sort-desc':'sort-asc';
+      scRenderResults();
+    };
+  });
+}
+
+// Send selected rows to charts
+window.scSendToCharts = function() {
+  const tickers = [...document.querySelectorAll('.sc-row-chk:checked')].map(c=>c.value);
+  if (!tickers.length) { alert('Select at least one row first'); return; }
+  openInCharts(tickers);
+};
+
+// Select all / none
+window.scSelectAll = function(chk) {
+  document.querySelectorAll('.sc-row-chk').forEach(c=>c.checked=chk.checked);
+};
+
+})(); // end Screener IIFE
+
 </script>
 
   <!-- ═══ AI ANALYSIS TAB ═══ -->
@@ -12349,6 +13117,131 @@ document.addEventListener('DOMContentLoaded', () => plInit());
     </div>
 
   </div><!-- /tab-patlab -->
+
+  <!-- ═══ CHARTS TAB ═══ -->
+  <div class="tab-panel" id="tab-charts">
+    <div class="ch-topbar">
+      <span class="ch-topbar-label">Layout</span>
+      <select class="ch-layout-sel" id="ch-layout-sel" onchange="chChangeLayout(this.value)">
+        <option value="1">1 Chart</option>
+        <option value="2">2 Charts</option>
+        <option value="4" selected>4 Charts</option>
+        <option value="6">6 Charts</option>
+        <option value="8">8 Charts</option>
+        <option value="10">10 Charts</option>
+      </select>
+      <button class="ch-sync-btn" id="ch-sync-btn" onclick="chToggleSync()">⇄ Sync Timeframe</button>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-left:auto">MA legend: <span style="color:#4ee8ff">9 EMA</span> · <span style="color:#ff9b4e">21 EMA</span> · <span style="color:#e8ff47">50 SMA</span> · <span style="color:#ff5277">200 SMA</span> · Volume sub-panel · ADR% (20d) per cell</span>
+    </div>
+    <div class="ch-grid" id="ch-grid" data-layout="4"></div>
+  </div><!-- /tab-charts -->
+
+  <!-- ═══ SCREENER TAB ═══ -->
+  <div class="tab-panel" id="tab-screener">
+    <div class="sc-layout">
+
+      <!-- Filter panel -->
+      <div class="sc-filters">
+        <div class="sc-filter-title">🔍 Screener Filters</div>
+
+        <div class="sc-filter-section">
+          <div class="sc-filter-section-hdr">Price &amp; Volume</div>
+          <div class="sc-row"><span class="sc-label">Price min</span><input class="sc-inp" id="sc-price-min" placeholder="e.g. 5"></div>
+          <div class="sc-row"><span class="sc-label">Price max</span><input class="sc-inp" id="sc-price-max" placeholder="e.g. 500"></div>
+          <div class="sc-row"><span class="sc-label">Dollar Vol min</span><input class="sc-inp" id="sc-dv-min" placeholder="e.g. 10"> M/day</div>
+        </div>
+
+        <div class="sc-filter-section">
+          <div class="sc-filter-section-hdr">MA Conditions (AND logic)</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-p10e"><label for="sc-ma-p10e">Price &gt; 10 EMA</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-p20e"><label for="sc-ma-p20e">Price &gt; 20 EMA</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-p50s"><label for="sc-ma-p50s">Price &gt; 50 SMA</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-10e20e"><label for="sc-ma-10e20e">10 EMA &gt; 20 EMA</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-10e50s"><label for="sc-ma-10e50s">10 EMA &gt; 50 SMA</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-20e50s"><label for="sc-ma-20e50s">20 EMA &gt; 50 SMA</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-ma-all"><label for="sc-ma-all">All aligned bullish</label></div>
+        </div>
+
+        <div class="sc-filter-section">
+          <div class="sc-filter-section-hdr">Relative Volume</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-rvol30-chk"><label for="sc-rvol30-chk">RVOL vs 30d avg ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-rvol30-min" placeholder="1.5">×</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-rvol10-chk"><label for="sc-rvol10-chk">RVOL vs 10d avg ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-rvol10-min" placeholder="1.5">×</div>
+        </div>
+
+        <div class="sc-filter-section">
+          <div class="sc-filter-section-hdr">Performance</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-perf1w-chk"><label for="sc-perf1w-chk">1 week ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-perf1w-min" placeholder="5">%</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-perf1m-chk"><label for="sc-perf1m-chk">1 month ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-perf1m-min" placeholder="10">%</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-perf3m-chk"><label for="sc-perf3m-chk">3 months ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-perf3m-min" placeholder="20">%</div>
+        </div>
+
+        <div class="sc-filter-section">
+          <div class="sc-filter-section-hdr">Earnings (most recent)</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-eps-beat"><label for="sc-eps-beat">EPS beat estimate</label></div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-eps-surp"><label for="sc-eps-surp">EPS surprise ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-eps-surp-min" placeholder="5">%</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-eps-yoy"><label for="sc-eps-yoy">EPS growth YoY ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-eps-yoy-min" placeholder="10">%</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-eps-qoq"><label for="sc-eps-qoq">EPS growth QoQ ≥</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-eps-qoq-min" placeholder="5">%</div>
+        </div>
+
+        <div class="sc-filter-section">
+          <div class="sc-filter-section-hdr">Catalysts</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-upg-chk"><label for="sc-upg-chk">Analyst upgrade within</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-upg-days" placeholder="30"> days</div>
+          <div class="sc-chk-row"><input type="checkbox" id="sc-news-chk"><label for="sc-news-chk">Major news within</label></div>
+          <div class="sc-chk-sub"><input class="sc-inp" id="sc-news-days" placeholder="7"> days</div>
+        </div>
+
+        <button class="sc-run-btn" id="sc-run-btn" onclick="scRun()">▶ Run Screener</button>
+        <div class="sc-progress" id="sc-progress">Set filters and click Run Screener</div>
+      </div>
+
+      <!-- Results area -->
+      <div class="sc-results-area">
+        <div class="sc-results-bar">
+          <div class="sc-results-count" id="sc-results-count"></div>
+          <button class="sc-send-charts-btn" onclick="scSendToCharts()">📊 Open Selected in Charts</button>
+        </div>
+        <div class="sc-tbl-wrap">
+          <table class="sc-tbl">
+            <thead id="sc-thead">
+              <tr>
+                <th class="sc-chk-cell"><input type="checkbox" onchange="scSelectAll(this)"></th>
+                <th data-col="sym">Ticker</th>
+                <th data-col="price" class="num">Price</th>
+                <th data-col="changePct" class="num">Chg%</th>
+                <th data-col="dv" class="num">$ Volume</th>
+                <th data-col="rv30" class="num">RVOL 30d</th>
+                <th data-col="rv10" class="num">RVOL 10d</th>
+                <th data-col="p1w" class="num">1W%</th>
+                <th data-col="p1m" class="num">1M%</th>
+                <th data-col="p3m" class="num">3M%</th>
+                <th data-col="sector">Sector</th>
+                <th>EPS</th>
+                <th data-col="epsSurpPct" class="num">Surprise%</th>
+                <th data-col="epsYoYPct" class="num">YoY%</th>
+                <th data-col="epsQoQPct" class="num">QoQ%</th>
+                <th data-col="lastEarningsDate">Last Earnings</th>
+                <th>Upgrade</th>
+                <th>News</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="sc-tbody">
+              <tr><td colspan="19" class="sc-empty">Run the screener to see results</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tab-screener -->
 
 </body>
 </html>
