@@ -2922,10 +2922,13 @@ function detectMACross(data) {
 // heuristics proved unreliable in testing and would mislabel legitimate setups.
 function detect21O50(data) {
   if (data.length < 60) return { signal: false };
+  // self-contained MA helpers (avoid depending on out-of-scope calcSMAArr/emaArr)
+  const _emaArr = (arr, p) => { if (!arr.length) return []; const k = 2/(p+1); let e = arr[0]; const o = [e]; for (let i=1;i<arr.length;i++){ e = arr[i]*k + e*(1-k); o.push(e); } return o; };
+  const _smaArr = (arr, p) => arr.map((_, i) => i < p - 1 ? null : arr.slice(i - p + 1, i + 1).reduce((a, b) => a + b, 0) / p);
   const c = data.map(d => d.c);
-  const e9 = emaArr(c, 9), e21 = emaArr(c, 21);
-  const s50 = calcSMAArr(c, 50);
-  const s200 = data.length >= 200 ? calcSMAArr(c, 200) : null;
+  const e9 = _emaArr(c, 9), e21 = _emaArr(c, 21);
+  const s50 = _smaArr(c, 50);
+  const s200 = data.length >= 200 ? _smaArr(c, 200) : null;
   const n = c.length - 1, cur = c[n];
   const ema9 = e9[n], ema21 = e21[n], sma50 = s50[n], sma200 = s200 ? s200[n] : null;
   if (ema9 == null || ema21 == null || sma50 == null) return { signal: false };
