@@ -764,6 +764,8 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .stag.nr4{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,255,71,.25)}
 .stag.nr7{background:rgba(232,255,71,.14);color:var(--accent);border:1px solid rgba(232,255,71,.35)}
 .stag.macross{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.3)}
+.stag.htf{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.5);font-weight:700}
+.stag.htfs{background:rgba(180,125,255,.10);color:var(--purple);border:1px solid rgba(180,125,255,.35);font-weight:600}
 .stag.pull50{background:var(--green-dim);color:var(--green);border:1px solid rgba(61,255,160,.3)}
 .stag.flat{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(180,125,255,.3)}
 .stag.cup{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(78,232,255,.3)}
@@ -1220,7 +1222,9 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <span class="strat-lbl">Strategies:</span>
     <button class="strat-btn active" data-strat="nr4"     data-color="accent">NR4</button>
     <button class="strat-btn active" data-strat="nr7"     data-color="accent">NR7</button>
-    <button class="strat-btn active" data-strat="macross" data-color="orange">MA Cross 20/50</button>
+    <button class="strat-btn active" data-strat="macross" data-color="orange">21O50</button>
+    <button class="strat-btn active" data-strat="htf"     data-color="purple">🚩 HTF</button>
+    <button class="strat-btn active" data-strat="htfs"    data-color="purple">🚩 HTF-Short</button>
     <button class="strat-btn active" data-strat="pull50"  data-color="green">50 SMA Pullback</button>
     <button class="strat-btn active" data-strat="flat"    data-color="purple">Flat Base</button>
     <button class="strat-btn active" data-strat="cup"     data-color="cyan">Cup &amp; Handle</button>
@@ -1252,7 +1256,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="stat-box cm"><div class="stat-n" id="st-scanned">0</div><div class="stat-lbl">Scanned</div></div>
     <div class="stat-box ca"><div class="stat-n ca" id="st-hits">0</div><div class="stat-lbl">Setups Found</div></div>
     <div class="stat-box ca"><div class="stat-n ca" id="st-nr">0</div><div class="stat-lbl">NR4 / NR7</div></div>
-    <div class="stat-box co"><div class="stat-n co" id="st-ma">0</div><div class="stat-lbl">MA Cross</div></div>
+    <div class="stat-box co"><div class="stat-n co" id="st-ma">0</div><div class="stat-lbl">21O50</div></div>
     <div class="stat-box cg"><div class="stat-n cg" id="st-pull">0</div><div class="stat-lbl">50 Pullback</div></div>
     <div class="stat-box cp"><div class="stat-n cp" id="st-pat">0</div><div class="stat-lbl">Patterns</div></div>
     <div class="stat-box cc"><div class="stat-n cc" id="st-hvc">0</div><div class="stat-lbl">HVC</div></div>
@@ -2069,7 +2073,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
           <option value="all">All strategies</option>
           <option value="nr4">NR4</option>
           <option value="nr7">NR7</option>
-          <option value="macross">MA Cross 20/50</option>
+          <option value="macross">21O50</option>
           <option value="pull50">50 SMA Pullback</option>
           <option value="flat">Flat Base</option>
           <option value="cup">Cup &amp; Handle</option>
@@ -2318,7 +2322,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
             <div class="chip-row" id="entry-strat-row">
               <button class="strat-chip" data-strat="nr4">NR4</button>
               <button class="strat-chip" data-strat="nr7">NR7</button>
-              <button class="strat-chip" data-strat="macross">MA Cross 20/50</button>
+              <button class="strat-chip" data-strat="macross">21O50</button>
               <button class="strat-chip" data-strat="pull50">50 SMA Pullback</button>
               <button class="strat-chip" data-strat="flat">Flat Base</button>
               <button class="strat-chip" data-strat="cup">Cup &amp; Handle</button>
@@ -2597,7 +2601,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 // State
 let activeTickers = [];
 let results       = [];
-let activeStrats  = new Set(['nr4','nr7','macross','pull50','flat','cup','vcp','hvc','hvc4']);
+let activeStrats  = new Set(['nr4','nr7','macross','htf','htfs','pull50','flat','cup','vcp','hvc','hvc4']);
 let scanning      = false;
 
 // Column sort state
@@ -2908,6 +2912,116 @@ function detectMACross(data) {
   return {signal:false};
 }
 
+// SUPERSEDED by detect21O50 (below) — detectMACross kept defined but unused.
+
+// ─── 21O50 detector (scanner build v1) ─────────────────────────────────────
+// Firm, tested logic only: the Watch/Trigger/Continuation/Valid state machine
+// + R2 absorption test, plus ROBUST structure flags (below-200 / no-200) that
+// need no threshold guessing. Full structure classification (in-range vs
+// standard vs 200-reclaim) is DEFERRED until R3 is finalised — slope-based
+// heuristics proved unreliable in testing and would mislabel legitimate setups.
+function detect21O50(data) {
+  if (data.length < 60) return { signal: false };
+  const c = data.map(d => d.c);
+  const e9 = emaArr(c, 9), e21 = emaArr(c, 21);
+  const s50 = calcSMAArr(c, 50);
+  const s200 = data.length >= 200 ? calcSMAArr(c, 200) : null;
+  const n = c.length - 1, cur = c[n];
+  const ema9 = e9[n], ema21 = e21[n], sma50 = s50[n], sma200 = s200 ? s200[n] : null;
+  if (ema9 == null || ema21 == null || sma50 == null) return { signal: false };
+
+  // Robust structure flags (no thresholds):
+  const noLongTerm = sma200 == null;                  // post-IPO / insufficient history
+  const below200   = sma200 != null && cur < sma200;  // counter-trend caution (firm finding)
+
+  // Most recent 21-cross-above-50 within the last 5 bars
+  let crossBar = -1;
+  for (let ago = 1; ago <= 5; ago++) {
+    const i = n - ago + 1;
+    if (i < 1 || s50[i] == null || s50[i - 1] == null) break;
+    if (e21[i - 1] <= s50[i - 1] && e21[i] > s50[i]) { crossBar = i; break; }
+  }
+
+  // R2 absorption: contiguous below-period immediately before the cross
+  function absorption(crossIdx) {
+    if (crossIdx < 1) return { bars: 0, depth: 0, ok: false };
+    let bars = 0, maxDepth = 0;
+    for (let i = crossIdx - 1; i >= 0; i--) {
+      if (s50[i] == null) break;
+      if (e21[i] <= s50[i]) { bars++; const d = (s50[i] - e21[i]) / s50[i] * 100; if (d > maxDepth) maxDepth = d; }
+      else break;
+    }
+    return { bars, depth: maxDepth, ok: (bars >= 5 || maxDepth >= 1.5) };  // R2 thresholds (tunable)
+  }
+
+  const base = { ema9, ema21, sma50, sma200, noLongTerm, below200 };
+
+  // WATCH — 9 reclaimed 50, 21 not yet (precursor)
+  if (ema9 > sma50 && ema21 <= sma50) return { signal: true, state: 'watch', ...base };
+
+  // TRIGGER — fresh cross + 9>21 + genuine absorption
+  if (crossBar >= 0 && ema9 > ema21) {
+    const abs = absorption(crossBar);
+    if (abs.ok) {
+      return { signal: true, state: 'trigger', barsAgo: n - crossBar + 1, absorption: abs,
+               caution: below200, ...base };  // caution = firm counter-trend flag
+    }
+    return { signal: true, state: 'continuation', absorption: abs, ...base };  // shallow dip, not fresh
+  }
+
+  // VALID — bullish stack, price holding the 21, no fresh cross
+  if (ema9 > ema21 && ema21 > sma50 && cur > ema21) return { signal: true, state: 'valid', ...base };
+
+  return { signal: false };
+}
+
+// ─── High Tight Flag detector (Standard + Short variant) ───────────────────
+// variant 'std':   pole ≥100% in ≤40 td, flag 15–25 td (3–5 wk)
+// variant 'short': pole ≥100% in ≤25 td, flag 5–15 td
+// Flag depth ≤25% from pole high (both). Trigger = break above a tight-volume inside bar.
+function detectHTF(data, variant) {
+  const poleMaxDays = variant === 'short' ? 25 : 40;
+  const flagMin     = variant === 'short' ? 5  : 15;
+  const flagMax     = variant === 'short' ? 15 : 25;
+  if (data.length < poleMaxDays + flagMax + 3) return { signal: false };
+  const c = data.map(d => d.c), v = data.map(d => d.v || 0), n = data.length - 1;
+
+  // pole high = highest close in the lookback, at least flagMin bars back (so a flag exists)
+  const look = poleMaxDays + flagMax + 1, startI = Math.max(0, n - look);
+  let poleHighIdx = -1, poleHigh = -Infinity;
+  for (let i = startI; i <= n - flagMin; i++) if (c[i] > poleHigh) { poleHigh = c[i]; poleHighIdx = i; }
+  if (poleHighIdx < 0) return { signal: false };
+
+  const flagDur = n - poleHighIdx;                            // flag duration in bars
+  if (flagDur < flagMin || flagDur > flagMax) return { signal: false };
+
+  const flagLow = Math.min(...c.slice(poleHighIdx, n + 1));
+  const flagDepth = (poleHigh - flagLow) / poleHigh * 100;    // pullback from pole high
+  if (flagDepth > 25) return { signal: false };
+
+  const poleStart = Math.max(0, poleHighIdx - poleMaxDays);
+  const poleBase = Math.min(...c.slice(poleStart, poleHighIdx + 1));
+  const poleGain = (poleHigh - poleBase) / poleBase * 100;    // pole magnitude
+  if (poleGain < 100) return { signal: false };
+
+  // inside bar in the last 3 bars, tight volume (below flag avg)
+  const flagVolAvg = v.slice(poleHighIdx, n + 1).reduce((a, b) => a + b, 0) / (flagDur + 1);
+  let insideIdx = -1;
+  for (let i = n; i >= Math.max(1, n - 2); i--) {
+    const ib = data[i], pb = data[i - 1];
+    if (ib.h <= pb.h && ib.l >= pb.l && (ib.v || 0) < flagVolAvg) { insideIdx = i; break; }
+  }
+  const baseInfo = { poleGain: +poleGain.toFixed(0), flagDur, flagDepth: +flagDepth.toFixed(1) };
+  if (insideIdx < 0) return { signal: false, ...baseInfo };   // valid flag but no inside-bar setup yet
+
+  // trigger: a later bar broke the inside bar's high
+  let triggered = false;
+  for (let i = insideIdx + 1; i <= n; i++) if (data[i].h > data[insideIdx].h) { triggered = true; break; }
+
+  return { signal: true, variant, ...baseInfo,
+           insideBarAgo: n - insideIdx, triggered, triggerPrice: +data[insideIdx].h.toFixed(2) };
+}
+
 function detect50Pull(data) {
   if (data.length < 60) return false;
   const c=data.map(d=>d.c), ma50=sma(c,50);
@@ -3000,8 +3114,22 @@ function analyzeStock(ticker, data) {
 
   if (detectNR4(data))       { signals.push('nr4');     details.push('Narrowest range of last 4 bars'); }
   if (detectNR7(data))       { signals.push('nr7');     details.push('Narrowest range of last 7 bars'); }
-  const mac=detectMACross(data);
-  if (mac.signal)            { signals.push('macross'); details.push(`20 SMA crossed above 50 SMA ${mac.barsAgo===1?'today':mac.barsAgo+' bars ago'}`); }
+  const x2150 = detect21O50(data);
+  if (x2150.signal && (x2150.state==='trigger' || x2150.state==='watch')) {
+    signals.push('macross');
+    if (x2150.state==='trigger') {
+      const a = x2150.absorption;
+      const cau = x2150.caution ? ' · ⚠ below 200 (counter-trend)' : '';
+      const ipo = x2150.noLongTerm ? ' · no 200 (post-IPO)' : '';
+      details.push(`21O50 ✅ TRIGGER ${x2150.barsAgo===1?'today':x2150.barsAgo+' bars ago'} · absorption ${a.bars}b/${a.depth.toFixed(1)}%${ipo}${cau}`);
+    } else {
+      details.push('21O50 ⏳ WATCH — 9 EMA reclaimed 50 SMA, 21 not yet');
+    }
+  }
+  const htfStd = detectHTF(data, 'std');
+  if (htfStd.signal) { signals.push('htf'); details.push(`🚩 HTF ${htfStd.triggered?'✅ TRIGGERED':'⏳ armed'} · pole +${htfStd.poleGain}% · flag ${htfStd.flagDur}d/${htfStd.flagDepth}% · break > $${htfStd.triggerPrice}`); }
+  const htfSh = detectHTF(data, 'short');
+  if (htfSh.signal) { signals.push('htfs'); details.push(`🚩 HTF-S ${htfSh.triggered?'✅ TRIGGERED':'⏳ armed'} · pole +${htfSh.poleGain}% · flag ${htfSh.flagDur}d/${htfSh.flagDepth}% · break > $${htfSh.triggerPrice}`); }
   if (detect50Pull(data))    { signals.push('pull50');  details.push('First pullback to 50 SMA after breakout'); }
   if (detectFlatBase(data))  { signals.push('flat');    details.push('Flat base — <5% depth, 25 bars, near breakout'); }
   if (detectCupHandle(data)) { signals.push('cup');     details.push('Cup & handle — near pivot point'); }
@@ -3143,7 +3271,7 @@ function renderTable() {
     return;
   }
 
-  const lbl={nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev',qm5:'⭐ QM 5-Star',qm7:'🌟 QM 7-Star EP',hammer_sup:'🔨 Hammer',rsi_rev:'📈 RSI Rev',bull_engulf:'⚡ Engulf'};
+  const lbl={nr4:'NR4',nr7:'NR7',macross:'21O50',htf:'🚩 HTF',htfs:'🚩 HTF-S',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev',qm5:'⭐ QM 5-Star',qm7:'🌟 QM 7-Star EP',hammer_sup:'🔨 Hammer',rsi_rev:'📈 RSI Rev',bull_engulf:'⚡ Engulf'};
 
   tbody.innerHTML=rows.map((r,i)=>{
     if (r.error) return `
@@ -3610,7 +3738,8 @@ let trades = [];
 let editingTradeId = null; // id of trade we're closing
 
 const STRAT_LABELS = {
-  nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 SMA Pull',
+  htf:'🚩 HTF', htfs:'🚩 HTF-Short',
+  nr4:'NR4', nr7:'NR7', macross:'21O50', htf:'🚩 HTF', htfs:'🚩 HTF-S', pull50:'50 SMA Pull',
   flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout',
   other:'Other'
 };
@@ -6477,7 +6606,7 @@ let currentDetailTicker = null;
 let tvScriptLoaded = false;
 
 const STRAT_NAMES = {
-  nr4:'NR4', nr7:'NR7', macross:'MA Cross 20/50', pull50:'50 SMA Pullback',
+  nr4:'NR4', nr7:'NR7', macross:'21O50', pull50:'50 SMA Pullback',
   flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout (Yesterday)',
   hvc4:'HVC Continuation (2–4d)',
 };
@@ -9097,7 +9226,7 @@ function getPlaybookHTML(r) {
   // Show top 2 strategies max
   return sigs.slice(0,2).map(sig => {
     const pb = PLAYBOOK[sig];
-    const stratName = {nr4:'NR4',nr7:'NR7',macross:'MA Cross',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev'}[sig] || sig;
+    const stratName = {nr4:'NR4',nr7:'NR7',macross:'21O50',htf:'🚩 HTF',htfs:'🚩 HTF-S',pull50:'50 Pull',flat:'Flat Base',cup:'Cup & Handle',vcp:'VCP',hvc:'HVC',hvc4:'HVC 2–4d',ema21:'21 EMA',ema_rev:'EMA Rev',cons_bo:'Consol BO',gap_hold:'Gap Hold',mean_rev:'Mean Rev'}[sig] || sig;
 
     // Compute actual price levels from result
     const price  = r.price || 0;
@@ -9684,7 +9813,7 @@ function renderShortlistV2() {
   const panel = g('shortlist-panel');
   if (!panel || !shortlistResults.length) return;
 
-  const lbl = { nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 Pull', flat:'Flat Base',
+  const lbl = { nr4:'NR4', nr7:'NR7', macross:'21O50', htf:'🚩 HTF', htfs:'🚩 HTF-S', pull50:'50 Pull', flat:'Flat Base',
     cup:'Cup & Handle', vcp:'VCP', hvc:'HVC', hvc4:'HVC 2–4d', ema21:'21 EMA',
     ema_rev:'EMA Rev', cons_bo:'Consol BO', gap_hold:'Gap Hold', mean_rev:'Mean Rev',
     qm5:'⭐ QM 5-Star', qm7:'🌟 QM 7-Star EP' };
@@ -10513,7 +10642,7 @@ renderJournal = function() {
 // STRATEGY CHANGE IN JOURNAL TRADE ROWS
 // ═════════════════════════════════════════════════════════════════════════════
 const ALL_STRATS = {
-  nr4:'NR4', nr7:'NR7', macross:'MA Cross', pull50:'50 SMA Pull', flat:'Flat Base',
+  nr4:'NR4', nr7:'NR7', macross:'21O50', htf:'🚩 HTF', htfs:'🚩 HTF-S', pull50:'50 SMA Pull', flat:'Flat Base',
   cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout', hvc4:'HVC 2–4d', ema21:'21 EMA Pull', other:'Other'
 };
 
