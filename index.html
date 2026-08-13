@@ -13431,9 +13431,20 @@ window.scSelectAll = function(chk) {
     .fu-note{font-size:10px;color:var(--muted);line-height:1.8;padding:10px 14px;background:rgba(232,255,71,.03);border-left:2px solid var(--accent);margin-top:14px}
     .fu-note b{color:var(--accent)}
     .fu-empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:10px;letter-spacing:1px}
+    .fu-keyrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:12px;position:relative}
+    .fu-keyrow::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px;background:var(--cyan)}
+    .fu-keylabel{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+    .fu-keystatus{font-size:10px;letter-spacing:.5px;white-space:nowrap}
   </style>
 
   <div class="tab-panel" id="tab-fundamentals">
+    <div class="fu-keyrow">
+      <span class="fu-keylabel">🔑 Finnhub Key</span>
+      <input class="fu-inp" id="fu-key-input" type="password" placeholder="paste key — free tier at finnhub.io" autocomplete="off" spellcheck="false" style="flex:1;min-width:240px">
+      <button class="btn btn-cyan" id="fu-key-save" style="padding:8px 16px">Save</button>
+      <span class="fu-keystatus" id="fu-key-status"></span>
+      <span style="font-size:9px;color:var(--muted);margin-left:auto">Same key as the ORB Live tab — saving here updates both</span>
+    </div>
     <div class="fu-ctrl">
       <div class="fu-field" style="flex:1">
         <label>Tickers (comma separated)</label>
@@ -13796,7 +13807,7 @@ function fuDetail(r) {
 async function fuRun() {
   if (fuRunning) return;
   const key = fuKey();
-  if (!key) { $('fu-status').innerHTML = '<span style="color:var(--red)">⚠ No Finnhub key — set one on the ORB Live tab</span>'; return; }
+  if (!key) { $('fu-status').innerHTML = '<span style="color:var(--red)">⚠ No Finnhub key — paste one in the key field above</span>'; return; }
   const raw = $('fu-tickers').value || '';
   const list = raw.split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
   if (!list.length) { $('fu-status').innerHTML = '<span style="color:var(--red)">⚠ Enter at least one ticker</span>'; return; }
@@ -13847,8 +13858,33 @@ document.addEventListener('click', e => {
   }
 });
 
+function fuKeyStatus() {
+  const kst = $('fu-key-status'); if (!kst) return;
+  const k = fuKey();
+  kst.innerHTML = k
+    ? `<span style="color:var(--green)">✓ saved (${k.slice(0,6)}…)</span>`
+    : `<span style="color:var(--orange)">not set</span>`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const runBtn = $('fu-run'); if (runBtn) runBtn.addEventListener('click', fuRun);
+
+  // Finnhub key row (mirrors the ORB Live tab — same localStorage key)
+  const ki = $('fu-key-input'), ks = $('fu-key-save');
+  if (ki) { const k = fuKey(); if (k) ki.value = k; }
+  if (ks) ks.addEventListener('click', () => {
+    const v = (ki.value || '').trim();
+    const kst = $('fu-key-status');
+    if (!v) { if (kst) kst.innerHTML = '<span style="color:var(--red)">enter a key first</span>'; return; }
+    localStorage.setItem('apex_finnhub_key', v);
+    const orbInp = document.getElementById('finnhub-key');
+    if (orbInp) orbInp.value = v;
+    const orbSt = document.getElementById('finnhub-status');
+    if (orbSt) { orbSt.textContent = 'Connected ✓'; orbSt.style.color = 'var(--green)'; }
+    fuKeyStatus();
+  });
+  if (ki) ki.addEventListener('keydown', e => { if (e.key === 'Enter' && ks) ks.click(); });
+  fuKeyStatus();
   const inp = $('fu-tickers');
   if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') fuRun(); });
   const wl = $('fu-wl');
@@ -13869,7 +13905,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Refresh watchlist dropdown whenever the tab is opened
 document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => { if (t.dataset.tab === 'fundamentals') fuRefreshWL(); });
+  t.addEventListener('click', () => { if (t.dataset.tab === 'fundamentals') { fuRefreshWL(); fuKeyStatus(); } });
 });
 
 })();
