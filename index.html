@@ -1047,6 +1047,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <button class="tab" data-tab="patlab">🔬 Pattern Lab</button>
     <button class="tab" data-tab="charts">📊 Charts</button>
     <button class="tab" data-tab="screener">🔍 Screener</button>
+    <button class="tab" data-tab="fundamentals">📑 Fundamentals</button>
   </div>
 
   <!-- Account size (global — used by position sizer across tabs) -->
@@ -13374,6 +13375,505 @@ window.scSelectAll = function(chk) {
       </div>
     </div>
   </div><!-- /tab-screener -->
+
+  <!-- ═══ FUNDAMENTALS TAB ═══ -->
+  <style>
+    .fu-ctrl{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:14px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:14px;position:relative}
+    .fu-ctrl::before{content:'';position:absolute;top:0;left:0;width:24px;height:2px;background:var(--accent)}
+    .fu-field{display:flex;flex-direction:column;gap:4px}
+    .fu-field label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+    .fu-inp{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;letter-spacing:1px;transition:border-color .2s}
+    .fu-inp:focus{border-color:var(--accent)}
+    #fu-tickers{min-width:340px;text-transform:uppercase}
+    .fu-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:8px 12px;outline:none;cursor:pointer}
+    .fu-status{font-size:10px;color:var(--muted);letter-spacing:.5px;margin-left:auto;text-align:right;line-height:1.6}
+    .fu-prog-wrap{height:2px;background:var(--border2);margin-bottom:14px;overflow:hidden;display:none}
+    .fu-prog{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));width:0%;transition:width .3s}
+    .fu-tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border)}
+    table.fu-tbl{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+    table.fu-tbl thead tr{border-bottom:1px solid var(--border2)}
+    table.fu-tbl th{padding:9px 12px;text-align:left;font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-weight:400;cursor:pointer;user-select:none;transition:color .15s}
+    table.fu-tbl th:hover{color:var(--accent)}
+    table.fu-tbl th.num{text-align:right}
+    table.fu-tbl th.sort-asc::after{content:' ↑';color:var(--accent)}
+    table.fu-tbl th.sort-desc::after{content:' ↓';color:var(--accent)}
+    table.fu-tbl td{padding:10px 12px;vertical-align:middle;font-variant-numeric:tabular-nums}
+    table.fu-tbl td.num{text-align:right}
+    table.fu-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+    table.fu-tbl tbody tr:hover{background:rgba(255,255,255,.015)}
+    .fu-tick{font-family:var(--font-display);font-weight:700;font-size:13px;color:#fff}
+    .fu-co{font-size:9px;color:var(--muted);display:block;margin-top:2px;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+    .fu-beat{color:var(--green);font-weight:600}
+    .fu-miss{color:var(--red);font-weight:600}
+    .fu-up{color:var(--green)} .fu-dn{color:var(--red)} .fu-flat{color:var(--muted)}
+    .fu-cons{display:inline-flex;align-items:center;gap:6px}
+    .fu-cons-bar{width:54px;height:4px;background:var(--border2);display:flex;overflow:hidden}
+    .fu-cons-b{height:100%;background:var(--green)} .fu-cons-h{height:100%;background:var(--orange)} .fu-cons-s{height:100%;background:var(--red)}
+    .fu-cons-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+    .fu-er{font-size:10px}
+    .fu-er-badge{font-size:8px;padding:1px 5px;letter-spacing:1px;text-transform:uppercase;margin-left:4px}
+    .fu-er-urgent{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,82,119,.4)}
+    .fu-er-soon{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,155,78,.3)}
+    .fu-er-far{background:rgba(74,85,104,.15);color:var(--muted);border:1px solid var(--border2)}
+    .fu-exp{cursor:pointer;color:var(--accent);font-size:10px;padding:2px 7px;border:1px solid rgba(232,255,71,.25);user-select:none}
+    .fu-exp:hover{background:rgba(232,255,71,.08)}
+    .fu-drow{display:none;background:rgba(232,255,71,.02);border-top:1px solid rgba(232,255,71,.1)}
+    .fu-drow.open{display:table-row}
+    .fu-dgrid{padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;white-space:normal}
+    .fu-dbox{padding:10px 12px;background:var(--bg);border:1px solid var(--border2)}
+    .fu-dbox h4{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin:0 0 8px;font-weight:400}
+    .fu-mini{width:100%;border-collapse:collapse;font-size:10px}
+    .fu-mini td{padding:3px 4px;border-bottom:1px solid var(--border)}
+    .fu-mini td.num{text-align:right;font-variant-numeric:tabular-nums}
+    .fu-news{font-size:10px;line-height:1.6;margin-bottom:6px}
+    .fu-news a{color:var(--text);text-decoration:none} .fu-news a:hover{color:var(--accent)}
+    .fu-news .src{font-size:8px;color:var(--muted);letter-spacing:.5px}
+    .fu-note{font-size:10px;color:var(--muted);line-height:1.8;padding:10px 14px;background:rgba(232,255,71,.03);border-left:2px solid var(--accent);margin-top:14px}
+    .fu-note b{color:var(--accent)}
+    .fu-empty{text-align:center;padding:48px 20px;color:var(--muted);font-size:10px;letter-spacing:1px}
+  </style>
+
+  <div class="tab-panel" id="tab-fundamentals">
+    <div class="fu-ctrl">
+      <div class="fu-field" style="flex:1">
+        <label>Tickers (comma separated)</label>
+        <input class="fu-inp" id="fu-tickers" type="text" placeholder="MU, INTC, NVDA, AMD ...">
+      </div>
+      <div class="fu-field">
+        <label>Or load watchlist</label>
+        <select class="fu-sel" id="fu-wl"><option value="">— select —</option></select>
+      </div>
+      <div class="fu-field">
+        <label>Depth</label>
+        <select class="fu-sel" id="fu-depth">
+          <option value="quick">Quick (3 calls/ticker)</option>
+          <option value="full" selected>Full (7 calls/ticker)</option>
+        </select>
+      </div>
+      <button class="btn btn-accent" id="fu-run" style="padding:9px 20px">▶ Fetch Fundamentals</button>
+      <button class="btn btn-ghost" id="fu-copy" style="padding:9px 14px" title="Copy results as JSON">⧉ JSON</button>
+      <div class="fu-status" id="fu-status">Finnhub · free tier<br>auto rate-limited to 55/min</div>
+    </div>
+
+    <div class="fu-prog-wrap" id="fu-prog-wrap"><div class="fu-prog" id="fu-prog"></div></div>
+
+    <div class="fu-tbl-wrap">
+      <table class="fu-tbl">
+        <thead id="fu-thead"><tr>
+          <th data-fus="ticker">Ticker</th>
+          <th data-fus="erDays">Next ER</th>
+          <th class="num" data-fus="surprisePct">Last EPS (act/est)</th>
+          <th class="num" data-fus="epsGrowth">EPS YoY</th>
+          <th class="num" data-fus="revGrowth">Rev YoY</th>
+          <th class="num" data-fus="grossMargin">Gross&nbsp;M</th>
+          <th class="num" data-fus="netMargin">Net&nbsp;M</th>
+          <th class="num" data-fus="pe">P/E</th>
+          <th class="num" data-fus="bullPct">Analysts</th>
+          <th data-fus="lastAction">Recent Action</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="fu-tbody">
+          <tr><td colspan="11"><div class="fu-empty">Enter tickers (or pick a watchlist) and click Fetch Fundamentals</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fu-note">
+      <b>Source:</b> Finnhub — earnings surprises, analyst consensus, TTM metrics, upgrades/downgrades, news and next earnings date, all pulled live with your saved key.
+      <b>Not covered:</b> analyst <i>price targets</i> are a Finnhub premium endpoint (returns 403 on the free tier), and forward guidance / M&amp;A narrative still needs reading the actual release.
+      <b>Programmatic:</b> <code style="color:var(--cyan)">await fundamentals(['MU','INTC'])</code> returns the same data as a JSON array.
+    </div>
+  </div><!-- /tab-fundamentals -->
+
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// FUNDAMENTALS TAB — Finnhub-backed fundamental pull
+// Exposes window.fundamentals(tickers, opts) for programmatic/agent use.
+// ═════════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+
+let fuResults = [];
+let fuSort = { col: null, dir: -1 };
+let fuRunning = false;
+
+// ── Rate limiter: Finnhub free tier is 60 req/min. Stay at 55 for headroom. ──
+const fuStamps = [];
+async function fuThrottle() {
+  const now = Date.now();
+  while (fuStamps.length && now - fuStamps[0] > 60000) fuStamps.shift();
+  if (fuStamps.length >= 55) {
+    const wait = 60000 - (now - fuStamps[0]) + 150;
+    await new Promise(r => setTimeout(r, wait));
+    return fuThrottle();
+  }
+  fuStamps.push(Date.now());
+}
+
+async function fuGet(url) {
+  await fuThrottle();
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return { __err: r.status };
+    return await r.json();
+  } catch (e) { return { __err: e.message }; }
+}
+
+const fuKey = () => (localStorage.getItem('apex_finnhub_key') || '').trim();
+const fuIso  = d => d.toISOString().slice(0,10);
+const fuNum  = (v, d=2) => (v === null || v === undefined || isNaN(v)) ? null : +(+v).toFixed(d);
+
+// ── Fetch one ticker ────────────────────────────────────────────────────────
+async function fuOne(ticker, depth, key) {
+  const T = encodeURIComponent(ticker);
+  const today = new Date();
+  const in90  = new Date(Date.now() + 90*864e5);
+  const ago90 = new Date(Date.now() - 90*864e5);
+  const ago14 = new Date(Date.now() - 14*864e5);
+
+  const core = [
+    fuGet(`https://finnhub.io/api/v1/stock/earnings?symbol=${T}&limit=4&token=${key}`),
+    fuGet(`https://finnhub.io/api/v1/stock/recommendation?symbol=${T}&token=${key}`),
+    fuGet(`https://finnhub.io/api/v1/stock/metric?symbol=${T}&metric=all&token=${key}`),
+  ];
+  const extra = depth === 'full' ? [
+    fuGet(`https://finnhub.io/api/v1/stock/profile2?symbol=${T}&token=${key}`),
+    fuGet(`https://finnhub.io/api/v1/stock/upgrade-downgrade?symbol=${T}&from=${fuIso(ago90)}&token=${key}`),
+    fuGet(`https://finnhub.io/api/v1/company-news?symbol=${T}&from=${fuIso(ago14)}&to=${fuIso(today)}&token=${key}`),
+    fuGet(`https://finnhub.io/api/v1/calendar/earnings?symbol=${T}&from=${fuIso(today)}&to=${fuIso(in90)}&token=${key}`),
+  ] : [];
+
+  const [earn, rec, met, prof, upg, news, cal] = await Promise.all([...core, ...extra]);
+
+  const o = { ticker, error: null };
+
+  // Earnings history + latest surprise
+  const eArr = Array.isArray(earn) ? earn : [];
+  o.earnings = eArr.map(e => ({
+    period: e.period, quarter: e.quarter, year: e.year,
+    actual: fuNum(e.actual), estimate: fuNum(e.estimate),
+    surprise: fuNum(e.surprise), surprisePct: fuNum(e.surprisePercent, 1)
+  }));
+  const e0 = o.earnings[0] || null;
+  o.lastActual   = e0 ? e0.actual : null;
+  o.lastEstimate = e0 ? e0.estimate : null;
+  o.surprisePct  = e0 ? e0.surprisePct : null;
+  o.lastPeriod   = e0 ? e0.period : null;
+  o.beatStreak   = o.earnings.filter(e => e.surprisePct > 0).length;
+
+  // Analyst consensus
+  const r0 = Array.isArray(rec) && rec.length ? rec[0] : null;
+  if (r0) {
+    const sb=r0.strongBuy||0, b=r0.buy||0, h=r0.hold||0, s=r0.sell||0, ss=r0.strongSell||0;
+    const total = sb+b+h+s+ss;
+    o.analysts = { period: r0.period, strongBuy: sb, buy: b, hold: h, sell: s, strongSell: ss, total };
+    o.bullPct = total ? +(((sb+b)/total)*100).toFixed(0) : null;
+    o.bearPct = total ? +(((s+ss)/total)*100).toFixed(0) : null;
+    o.consensus = !total ? null
+      : o.bullPct >= 70 ? 'Strong Buy'
+      : o.bullPct >= 50 ? 'Buy'
+      : o.bearPct >= 40 ? 'Sell'
+      : 'Hold';
+  } else { o.analysts = null; o.bullPct = null; o.consensus = null; }
+
+  // TTM metrics
+  const m = met && met.metric ? met.metric : null;
+  o.metrics = m ? {
+    pe: fuNum(m.peTTM), ps: fuNum(m.psTTM), pb: fuNum(m.pbAnnual),
+    grossMargin: fuNum(m.grossMarginTTM,1), netMargin: fuNum(m.netProfitMarginTTM,1),
+    operMargin: fuNum(m.operatingMarginTTM,1),
+    revGrowth: fuNum(m.revenueGrowthTTMYoy,1), epsGrowth: fuNum(m.epsGrowthTTMYoy,1),
+    roe: fuNum(m.roeTTM,1), roa: fuNum(m.roaTTM,1),
+    debtToEquity: fuNum(m['totalDebt/totalEquityQuarterly']),
+    currentRatio: fuNum(m.currentRatioQuarterly),
+    beta: fuNum(m.beta), hi52: fuNum(m['52WeekHigh']), lo52: fuNum(m['52WeekLow'])
+  } : null;
+
+  // Profile
+  o.company  = prof && prof.name ? prof.name : null;
+  o.industry = prof && prof.finnhubIndustry ? prof.finnhubIndustry : null;
+  o.mktCapM  = prof && prof.marketCapitalization ? Math.round(prof.marketCapitalization) : null;
+
+  // Upgrades / downgrades
+  o.upgrades = Array.isArray(upg) ? upg.slice(0,6).map(u => ({
+    date: u.gradeTime ? new Date(u.gradeTime*1000).toISOString().slice(0,10) : null,
+    firm: u.company, from: u.fromGrade, to: u.toGrade, action: u.action
+  })) : [];
+  o.lastAction = o.upgrades.length ? o.upgrades[0] : null;
+
+  // News
+  o.news = Array.isArray(news) ? news.slice(0,5).map(n => ({
+    headline: n.headline, url: n.url, source: n.source,
+    date: n.datetime ? new Date(n.datetime*1000).toISOString().slice(0,10) : null
+  })) : [];
+
+  // Next earnings
+  const ev = cal && Array.isArray(cal.earningsCalendar) && cal.earningsCalendar.length ? cal.earningsCalendar[0] : null;
+  if (ev) {
+    o.nextEarnings = { date: ev.date, hour: ev.hour || '', epsEstimate: fuNum(ev.epsEstimate) };
+    o.erDays = Math.ceil((new Date(ev.date + 'T12:00:00') - today) / 864e5);
+  } else { o.nextEarnings = null; o.erDays = null; }
+
+  if (!eArr.length && !r0 && !m) o.error = 'no data returned';
+  return o;
+}
+
+// ── Public API ──────────────────────────────────────────────────────────────
+window.fundamentals = async function(tickers, opts) {
+  opts = opts || {};
+  const depth = opts.depth || 'full';
+  const key = opts.key || fuKey();
+  if (!key) throw new Error('No Finnhub key — save one on the ORB Live tab.');
+  const list = (Array.isArray(tickers) ? tickers : String(tickers).split(/[,\s]+/))
+    .map(t => String(t).trim().toUpperCase()).filter(Boolean);
+  const out = [];
+  for (let i = 0; i < list.length; i++) {
+    if (opts.onProgress) opts.onProgress(i, list.length, list[i]);
+    try { out.push(await fuOne(list[i], depth, key)); }
+    catch (e) { out.push({ ticker: list[i], error: e.message }); }
+  }
+  if (opts.onProgress) opts.onProgress(list.length, list.length, null);
+  return out;
+};
+
+// ── UI wiring ───────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function fuRefreshWL() {
+  const sel = $('fu-wl'); if (!sel) return;
+  let wls = {};
+  try { wls = JSON.parse(localStorage.getItem('apex_watchlists') || '{}'); } catch {}
+  const names = Object.keys(wls).sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— select —</option>' +
+    names.map(n => `<option value="${n}"${n===cur?' selected':''}>${n} (${wls[n].length})</option>`).join('');
+}
+
+function fuFmtPct(v, dp) {
+  if (v === null || v === undefined) return '<span class="fu-flat">—</span>';
+  const cls = v > 0 ? 'fu-up' : v < 0 ? 'fu-dn' : 'fu-flat';
+  return `<span class="${cls}">${v>0?'+':''}${v.toFixed(dp===undefined?1:dp)}%</span>`;
+}
+
+function fuRender() {
+  const tb = $('fu-tbody'); if (!tb) return;
+  if (!fuResults.length) {
+    tb.innerHTML = '<tr><td colspan="11"><div class="fu-empty">No results yet</div></td></tr>';
+    return;
+  }
+  let rows = fuResults.slice();
+  if (fuSort.col) {
+    rows.sort((a,b) => {
+      const get = o => {
+        switch(fuSort.col){
+          case 'ticker': return o.ticker;
+          case 'erDays': return o.erDays === null ? 9999 : o.erDays;
+          case 'surprisePct': return o.surprisePct === null ? -9999 : o.surprisePct;
+          case 'epsGrowth': return o.metrics && o.metrics.epsGrowth !== null ? o.metrics.epsGrowth : -99999;
+          case 'revGrowth': return o.metrics && o.metrics.revGrowth !== null ? o.metrics.revGrowth : -99999;
+          case 'grossMargin': return o.metrics && o.metrics.grossMargin !== null ? o.metrics.grossMargin : -9999;
+          case 'netMargin': return o.metrics && o.metrics.netMargin !== null ? o.metrics.netMargin : -9999;
+          case 'pe': return o.metrics && o.metrics.pe !== null ? o.metrics.pe : 999999;
+          case 'bullPct': return o.bullPct === null ? -1 : o.bullPct;
+          case 'lastAction': return o.lastAction ? (o.lastAction.date||'') : '';
+          default: return 0;
+        }
+      };
+      const av = get(a), bv = get(b);
+      if (typeof av === 'string') return fuSort.dir * av.localeCompare(bv);
+      return fuSort.dir * (av - bv);
+    });
+  }
+
+  tb.innerHTML = rows.map((r, i) => {
+    if (r.error) return `<tr><td class="fu-tick">${r.ticker}</td>
+      <td colspan="10" style="color:var(--red);font-size:10px">⚠ ${r.error}</td></tr>`;
+
+    const m = r.metrics || {};
+    // Next earnings
+    let er = '<span class="fu-flat">—</span>';
+    if (r.nextEarnings) {
+      const d = r.erDays;
+      const cls = d <= 7 ? 'fu-er-urgent' : d <= 21 ? 'fu-er-soon' : 'fu-er-far';
+      const hr = r.nextEarnings.hour === 'bmo' ? 'BMO' : r.nextEarnings.hour === 'amc' ? 'AMC' : '';
+      er = `<span class="fu-er">${r.nextEarnings.date}${hr?` <span style="color:var(--muted);font-size:9px">${hr}</span>`:''}
+            <span class="fu-er-badge ${cls}">${d<=0?'now':d+'d'}</span></span>`;
+    }
+    // EPS surprise
+    let eps = '<span class="fu-flat">—</span>';
+    if (r.lastActual !== null) {
+      const beat = r.surprisePct !== null && r.surprisePct > 0;
+      eps = `<span class="${beat?'fu-beat':'fu-miss'}">${r.lastActual}</span>
+             <span style="color:var(--muted)">/${r.lastEstimate}</span>
+             <span class="${beat?'fu-beat':'fu-miss'}" style="font-size:9px">${r.surprisePct>0?'+':''}${r.surprisePct}%</span>`;
+    }
+    // Analyst consensus bar
+    let cons = '<span class="fu-flat">—</span>';
+    if (r.analysts && r.analysts.total) {
+      const a = r.analysts, t = a.total;
+      const bp = ((a.strongBuy+a.buy)/t*100), hp = (a.hold/t*100), sp = ((a.sell+a.strongSell)/t*100);
+      const col = r.bullPct>=70?'var(--green)':r.bullPct>=50?'var(--accent)':'var(--orange)';
+      cons = `<span class="fu-cons">
+        <span class="fu-cons-bar"><span class="fu-cons-b" style="width:${bp}%"></span><span class="fu-cons-h" style="width:${hp}%"></span><span class="fu-cons-s" style="width:${sp}%"></span></span>
+        <span class="fu-cons-lbl" style="color:${col}">${r.consensus}</span>
+        <span style="font-size:9px;color:var(--muted)">${t}</span></span>`;
+    }
+    // Last action
+    let act = '<span class="fu-flat">—</span>';
+    if (r.lastAction) {
+      const a = r.lastAction;
+      const isUp = /upgrade|init|raise/i.test(a.action||'');
+      const isDn = /downgrade|lower|cut/i.test(a.action||'');
+      const c = isUp ? 'var(--green)' : isDn ? 'var(--red)' : 'var(--muted)';
+      act = `<span style="font-size:10px"><span style="color:${c}">${(a.action||'—')}</span>
+             <span style="color:var(--muted)"> ${a.firm||''}</span>
+             ${a.to?`<span style="color:var(--text)"> → ${a.to}</span>`:''}
+             <span style="color:var(--muted);font-size:9px"> ${a.date||''}</span></span>`;
+    }
+
+    return `<tr>
+      <td><span class="fu-tick">${r.ticker}</span>${r.company?`<span class="fu-co" title="${r.company}">${r.company}</span>`:''}</td>
+      <td>${er}</td>
+      <td class="num">${eps}</td>
+      <td class="num">${fuFmtPct(m.epsGrowth)}</td>
+      <td class="num">${fuFmtPct(m.revGrowth)}</td>
+      <td class="num">${m.grossMargin!==null&&m.grossMargin!==undefined?m.grossMargin+'%':'<span class="fu-flat">—</span>'}</td>
+      <td class="num">${m.netMargin!==null&&m.netMargin!==undefined?m.netMargin+'%':'<span class="fu-flat">—</span>'}</td>
+      <td class="num">${m.pe!==null&&m.pe!==undefined?m.pe:'<span class="fu-flat">—</span>'}</td>
+      <td class="num">${cons}</td>
+      <td>${act}</td>
+      <td><span class="fu-exp" data-fuexp="${i}">▶</span></td>
+    </tr>
+    <tr class="fu-drow" data-fudrow="${i}"><td colspan="11">${fuDetail(r)}</td></tr>`;
+  }).join('');
+
+  // header sort indicators
+  document.querySelectorAll('#fu-thead th[data-fus]').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.fus === fuSort.col) th.classList.add(fuSort.dir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+function fuDetail(r) {
+  const m = r.metrics || {};
+  const eh = r.earnings && r.earnings.length ? `<table class="fu-mini">
+      <tr><td style="color:var(--muted)">Period</td><td class="num" style="color:var(--muted)">Actual</td><td class="num" style="color:var(--muted)">Est</td><td class="num" style="color:var(--muted)">Surprise</td></tr>
+      ${r.earnings.map(e => `<tr><td>Q${e.quarter} ${e.year}</td><td class="num">${e.actual}</td><td class="num" style="color:var(--muted)">${e.estimate}</td>
+        <td class="num"><span class="${e.surprisePct>0?'fu-beat':'fu-miss'}">${e.surprisePct>0?'+':''}${e.surprisePct}%</span></td></tr>`).join('')}
+    </table>` : '<div style="color:var(--muted);font-size:10px">No earnings history</div>';
+
+  const val = `<table class="fu-mini">
+      ${[['P/E TTM',m.pe],['P/S TTM',m.ps],['P/B',m.pb],['Oper margin',m.operMargin!==null&&m.operMargin!==undefined?m.operMargin+'%':null],
+         ['ROE',m.roe!==null&&m.roe!==undefined?m.roe+'%':null],['ROA',m.roa!==null&&m.roa!==undefined?m.roa+'%':null],
+         ['Debt/Equity',m.debtToEquity],['Current ratio',m.currentRatio],['Beta',m.beta],
+         ['52wk range',(m.lo52!==null&&m.lo52!==undefined)?`${m.lo52} – ${m.hi52}`:null],
+         ['Mkt cap',r.mktCapM?('$'+(r.mktCapM>=1e6?(r.mktCapM/1e6).toFixed(2)+'T':r.mktCapM>=1e3?(r.mktCapM/1e3).toFixed(1)+'B':r.mktCapM+'M')):null],
+         ['Industry',r.industry]]
+        .map(([k,v]) => `<tr><td style="color:var(--muted)">${k}</td><td class="num">${v===null||v===undefined?'—':v}</td></tr>`).join('')}
+    </table>`;
+
+  const ug = r.upgrades && r.upgrades.length
+    ? r.upgrades.map(u => `<div style="font-size:10px;margin-bottom:5px;line-height:1.5">
+        <span style="color:${/upgrade|init|raise/i.test(u.action||'')?'var(--green)':/downgrade|lower|cut/i.test(u.action||'')?'var(--red)':'var(--muted)'}">${u.action||'—'}</span>
+        <span style="color:var(--text)"> ${u.firm||''}</span>
+        ${u.from||u.to?`<span style="color:var(--muted)"> ${u.from||'?'} → ${u.to||'?'}</span>`:''}
+        <span style="color:var(--muted);font-size:9px"> ${u.date||''}</span></div>`).join('')
+    : '<div style="color:var(--muted);font-size:10px">No rating changes in 90d</div>';
+
+  const nw = r.news && r.news.length
+    ? r.news.map(n => `<div class="fu-news"><a href="${n.url}" target="_blank" rel="noopener">${n.headline}</a>
+        <div class="src">${n.source||''} · ${n.date||''}</div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:10px">No news in 14d</div>';
+
+  return `<div class="fu-dgrid">
+    <div class="fu-dbox"><h4>Earnings history (last 4)</h4>${eh}</div>
+    <div class="fu-dbox"><h4>Valuation &amp; quality</h4>${val}</div>
+    <div class="fu-dbox"><h4>Rating changes (90d)</h4>${ug}</div>
+    <div class="fu-dbox"><h4>Recent news (14d)</h4>${nw}</div>
+  </div>`;
+}
+
+async function fuRun() {
+  if (fuRunning) return;
+  const key = fuKey();
+  if (!key) { $('fu-status').innerHTML = '<span style="color:var(--red)">⚠ No Finnhub key — set one on the ORB Live tab</span>'; return; }
+  const raw = $('fu-tickers').value || '';
+  const list = raw.split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+  if (!list.length) { $('fu-status').innerHTML = '<span style="color:var(--red)">⚠ Enter at least one ticker</span>'; return; }
+
+  fuRunning = true;
+  const btn = $('fu-run'); btn.disabled = true; btn.textContent = '⟳ Fetching…';
+  $('fu-prog-wrap').style.display = 'block';
+  const t0 = performance.now();
+
+  try {
+    fuResults = await window.fundamentals(list, {
+      depth: $('fu-depth').value,
+      key,
+      onProgress: (done, total, cur) => {
+        $('fu-prog').style.width = (done/total*100) + '%';
+        $('fu-status').innerHTML = cur
+          ? `Fetching <b style="color:var(--accent)">${cur}</b> — ${done+1}/${total}`
+          : `Done — ${total} tickers`;
+        if (done && done <= total) fuRender();
+      }
+    });
+    const secs = ((performance.now()-t0)/1000).toFixed(1);
+    const ok = fuResults.filter(r => !r.error).length;
+    $('fu-status').innerHTML = `✓ <b style="color:var(--green)">${ok}/${fuResults.length}</b> tickers in ${secs}s<br><span style="color:var(--muted)">Finnhub · ${$('fu-depth').value} depth</span>`;
+    fuRender();
+  } catch (e) {
+    $('fu-status').innerHTML = `<span style="color:var(--red)">✗ ${e.message}</span>`;
+  } finally {
+    fuRunning = false;
+    btn.disabled = false; btn.textContent = '▶ Fetch Fundamentals';
+    setTimeout(() => { $('fu-prog-wrap').style.display = 'none'; $('fu-prog').style.width = '0%'; }, 800);
+  }
+}
+
+// Events
+document.addEventListener('click', e => {
+  const ex = e.target.closest('.fu-exp[data-fuexp]');
+  if (ex) {
+    const row = document.querySelector(`.fu-drow[data-fudrow="${ex.dataset.fuexp}"]`);
+    if (row) { const open = row.classList.toggle('open'); ex.textContent = open ? '▼' : '▶'; }
+    return;
+  }
+  const th = e.target.closest('#fu-thead th[data-fus]');
+  if (th) {
+    const c = th.dataset.fus;
+    if (fuSort.col === c) fuSort.dir *= -1; else { fuSort.col = c; fuSort.dir = c === 'ticker' ? 1 : -1; }
+    fuRender();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const runBtn = $('fu-run'); if (runBtn) runBtn.addEventListener('click', fuRun);
+  const inp = $('fu-tickers');
+  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') fuRun(); });
+  const wl = $('fu-wl');
+  if (wl) wl.addEventListener('change', () => {
+    if (!wl.value) return;
+    let wls = {}; try { wls = JSON.parse(localStorage.getItem('apex_watchlists') || '{}'); } catch {}
+    if (wls[wl.value]) $('fu-tickers').value = wls[wl.value].join(', ');
+  });
+  const cp = $('fu-copy');
+  if (cp) cp.addEventListener('click', () => {
+    if (!fuResults.length) return;
+    navigator.clipboard.writeText(JSON.stringify(fuResults, null, 2))
+      .then(() => { cp.textContent = '✓ Copied'; setTimeout(() => cp.textContent = '⧉ JSON', 1400); })
+      .catch(() => {});
+  });
+  fuRefreshWL();
+});
+
+// Refresh watchlist dropdown whenever the tab is opened
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => { if (t.dataset.tab === 'fundamentals') fuRefreshWL(); });
+});
+
+})();
+</script>
 
 </body>
 </html>
