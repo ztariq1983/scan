@@ -7766,6 +7766,8 @@ document.querySelectorAll('.tab').forEach(t=>{
 loadKeys();
 updateFeedBadge();
 loadProxyUrl();
+document.querySelectorAll('.dossier-chk').forEach(c => { c.checked = dossierEnabled(); });
+updateDossierBadge();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
@@ -9268,6 +9270,420 @@ if (typeof STRAT_NAMES !== 'undefined') {
 
 
 // ═════════════════════════════════════════════════════════════════════════════
+// APEX DOSSIER — feed the app's own data to the AI models
+// ═════════════════════════════════════════════════════════════════════════════
+// Previously aiRunAnalyst() sent the model nothing but "Stock: NVDA / date", then
+// told it to go web-search for price, moving averages, valuation and analyst
+// ratings — all of which this app already holds locally and more reliably. That
+// made the AI tabs roughly equivalent to asking claude.ai directly.
+//
+// buildTickerDossier() assembles the terminal's own data into a compact block that
+// gets prepended to every analyst prompt, so the models reason over verified
+// numbers and spend their web-search budget only on things Apex genuinely lacks
+// (qualitative context, breaking news, management commentary).
+
+const _dossierCache = new Map();   // ticker -> { day, text, meta }
+
+const _dN = n => (n == null || isNaN(n)) ? null : +n;
+const _dMoney = n => {
+  n = _dN(n); if (n == null) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e12) return (n/1e12).toFixed(2) + 'T';
+  if (a >= 1e9)  return (n/1e9).toFixed(2) + 'B';
+  if (a >= 1e6)  return (n/1e6).toFixed(1) + 'M';
+  if (a >= 1e3)  return (n/1e3).toFixed(1) + 'K';
+  return n.toFixed(2);
+};
+const _dPct = n => { n = _dN(n); return n == null ? '—' : (n >= 0 ? '+' : '') + n.toFixed(1) + '%'; };
+const _dNum = (n, d = 2) => { n = _dN(n); return n == null ? '—' : n.toFixed(d); };
+
+async function _fhJSON(path, key) {
+  if (!key) return null;
+  try {
+    const sep = path.includes('?') ? '&' : '?';
+    const r = await fetch(`https://finnhub.io/api/v1/${path}${sep}token=${key}`,
+                          { signal: AbortSignal.timeout(12000) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+// ── Technical block from Alpaca bars (always available, no extra key) ─────────
+function _dossierTechnicals(data) {
+  const c = data.map(d => d.c), n = c.length;
+  const last = data[n-1], prev = data[n-2];
+  const price = last.c;
+
+  const sma = (arr, p) => arr.length < p ? null : arr.slice(-p).reduce((a,b)=>a+b,0)/p;
+  const emaN = (arr, p) => {
+    if (arr.length < p) return null;
+    const k = 2/(p+1); let e = arr.slice(0,p).reduce((a,b)=>a+b,0)/p;
+    for (let i=p;i<arr.length;i++) e = arr[i]*k + e*(1-k);
+    return e;
+  };
+
+  const ema9 = emaN(c,9), ema21 = emaN(c,21), sma50 = sma(c,50), sma200 = sma(c,200);
+  const hi52 = Math.max(...data.slice(-252).map(d=>d.h));
+  const lo52 = Math.min(...data.slice(-252).map(d=>d.l));
+
+  // ADR% — average daily range over 20 sessions
+  const adr = data.slice(-20).reduce((s,d)=>s+((d.h-d.l)/d.l*100),0)/Math.min(20,data.length);
+  const avgV = data.slice(-21,-1).reduce((s,d)=>s+d.v,0)/Math.min(20,data.length-1);
+  const rvol = avgV > 0 ? last.v/avgV : null;
+
+  // RSI(14)
+  let g=0, l=0;
+  for (let i=n-14;i<n;i++){ const ch=c[i]-c[i-1]; if(ch>0)g+=ch; else l-=ch; }
+  const rs = l===0 ? 100 : g/l;
+  const rsi = 100 - (100/(1+rs));
+
+  const perf = d => { const i=n-1-d; return i>=0 ? (price-c[i])/c[i]*100 : null; };
+  const rel = (v, label) => v == null ? `${label} n/a`
+    : `${label} ${_dNum(v)} (${price>v?'above':'below'} by ${_dPct((price-v)/v*100)})`;
+
+  return {
+    price, changePct: prev ? (price-prev.c)/prev.c*100 : null,
+    hi52, lo52, fromHigh: (price-hi52)/hi52*100, adr, rvol, rsi,
+    ema9, ema21, sma50, sma200,
+    perf: { w1: perf(5), m1: perf(21), m3: perf(63), m6: perf(126), y1: perf(252) },
+    text: [
+      `Last close: $${_dNum(price)} (${_dPct(prev ? (price-prev.c)/prev.c*100 : null)} on the day)`,
+      `52-week range: $${_dNum(lo52)} – $${_dNum(hi52)}  ·  ${_dPct((price-hi52)/hi52*100)} from the high`,
+      `Moving averages: ${rel(ema9,'9EMA')}; ${rel(ema21,'21EMA')}; ${rel(sma50,'50SMA')}; ${rel(sma200,'200SMA')}`,
+      `MA structure: ${(ema9&&ema21&&sma50&&sma200)
+        ? ((ema9>ema21 && ema21>sma50 && sma50>sma200) ? 'fully stacked bullish'
+          : (ema9<ema21 && ema21<sma50 && sma50<sma200) ? 'fully stacked bearish' : 'mixed / transitioning')
+        : 'insufficient history'}`,
+      `RSI(14): ${_dNum(rsi,1)}  ·  ADR(20d): ${_dNum(adr,2)}%  ·  RVOL vs 20d: ${rvol?_dNum(rvol,2)+'x':'—'}`,
+      `Performance: 1w ${_dPct(perf(5))} · 1m ${_dPct(perf(21))} · 3m ${_dPct(perf(63))} · 6m ${_dPct(perf(126))} · 1y ${_dPct(perf(252))}`,
+    ].join('\n'),
+  };
+}
+
+// ── Relative strength vs SPY and the sector ETF ───────────────────────────────
+async function _dossierRS(ticker, data) {
+  try {
+    const sectorETF = (typeof getSectorETF === 'function') ? getSectorETF(ticker) : null;
+    const need = ['SPY']; if (sectorETF && sectorETF !== ticker) need.push(sectorETF);
+    const bench = {};
+    for (const b of need) { try { bench[b] = await fetchDaily(b); } catch {} }
+
+    const relPerf = (bars, d) => {
+      const c = bars.map(x=>x.c), n = c.length, i = n-1-d;
+      return i>=0 ? (c[n-1]-c[i])/c[i]*100 : null;
+    };
+    const mine = d => relPerf(data, d);
+    const lines = [];
+    for (const [name, bars] of Object.entries(bench)) {
+      const parts = [21,63,126].map(d => {
+        const a = mine(d), b = relPerf(bars, d);
+        return (a==null||b==null) ? null : `${d===21?'1m':d===63?'3m':'6m'} ${_dPct(a-b)}`;
+      }).filter(Boolean);
+      if (parts.length) lines.push(`vs ${name}: ${parts.join(' · ')}`);
+    }
+    if (!lines.length) return null;
+    return `Relative strength (outperformance, percentage points):\n${lines.join('\n')}`
+         + (sectorETF ? `\nSector proxy used: ${sectorETF}` : '');
+  } catch { return null; }
+}
+
+// ── Apex's own strategy signals ───────────────────────────────────────────────
+function _dossierSignals(ticker, data) {
+  try {
+    const r = analyzeStock(ticker, data);
+    if (!r || r.error) return null;
+    if (!r.signals || !r.signals.length) {
+      return 'Apex strategy scan: no setups currently firing on this name.';
+    }
+    const names = (typeof STRAT_NAMES !== 'undefined') ? STRAT_NAMES : {};
+    const list = r.signals.map(s => `  - ${names[s] || s}`).join('\n');
+    const det  = (r.details || []).map(d => `  · ${d}`).join('\n');
+    return `Apex strategy scan — ${r.signals.length} setup(s) firing:\n${list}`
+         + (det ? `\nDetail:\n${det}` : '');
+  } catch { return null; }
+}
+
+// ── Fundamentals via Finnhub /stock/metric ────────────────────────────────────
+function _dossierFundamentals(metric, profile) {
+  const m = metric?.metric;
+  if (!m && !profile) return null;
+  const L = [];
+  if (profile) {
+    L.push(`Company: ${profile.name || '—'}  ·  ${profile.finnhubIndustry || 'industry n/a'}  ·  ${profile.country || ''}`.trim());
+    if (profile.marketCapitalization) L.push(`Market cap: $${_dMoney(profile.marketCapitalization*1e6)}`);
+    if (profile.shareOutstanding)     L.push(`Shares outstanding: ${_dMoney(profile.shareOutstanding*1e6)}`);
+  }
+  if (m) {
+    const row = (label, ...keys) => {
+      for (const k of keys) if (m[k] != null) return `${label}: ${_dNum(m[k])}`;
+      return null;
+    };
+    // Finnhub returns margins/returns/growth already expressed as percentages.
+    const rowPct = (label, ...keys) => {
+      for (const k of keys) if (m[k] != null) return `${label}: ${_dNum(m[k],1)}%`;
+      return null;
+    };
+    const vals = [
+      row('P/E (TTM)', 'peTTM', 'peBasicExclExtraTTM'),
+      row('P/S (TTM)', 'psTTM'),
+      row('P/B', 'pbAnnual', 'pbQuarterly'),
+      row('EV/EBITDA', 'evEbitdaTTM', 'currentEv/freeCashFlowTTM'),
+    ].filter(Boolean);
+    if (vals.length) L.push('Valuation — ' + vals.join('  ·  '));
+
+    const marg = [
+      rowPct('gross margin', 'grossMarginTTM'),
+      rowPct('operating margin', 'operatingMarginTTM'),
+      rowPct('net margin', 'netProfitMarginTTM'),
+    ].filter(Boolean);
+    if (marg.length) L.push('Margins — ' + marg.join('  ·  '));
+
+    const qual = [
+      rowPct('ROE', 'roeTTM'), rowPct('ROA', 'roaTTM'), rowPct('ROIC', 'roiTTM'),
+      row('debt/equity', 'totalDebt/totalEquityQuarterly', 'totalDebt/totalEquityAnnual'),
+      row('current ratio', 'currentRatioQuarterly', 'currentRatioAnnual'),
+    ].filter(Boolean);
+    if (qual.length) L.push('Quality & balance sheet — ' + qual.join('  ·  '));
+
+    const grow = [
+      rowPct('revenue growth TTM YoY', 'revenueGrowthTTMYoy'),
+      rowPct('revenue growth 5y', 'revenueGrowth5Y'),
+      rowPct('EPS growth TTM YoY', 'epsGrowthTTMYoy'),
+      rowPct('EPS growth 5y', 'epsGrowth5Y'),
+    ].filter(Boolean);
+    if (grow.length) L.push('Growth — ' + grow.join('  ·  '));
+
+    if (m.beta != null) L.push(`Other — beta ${_dNum(m.beta)}`);
+    // 52-week range deliberately omitted here: it's already computed from the
+    // price bars above, and two near-but-unequal figures would let the model
+    // contradict its own ground truth.
+  }
+  return L.length ? 'FUNDAMENTALS\n' + L.join('\n') : null;
+}
+
+// ── Earnings history + surprises ──────────────────────────────────────────────
+function _dossierEarnings(earn, cal) {
+  const L = [];
+  if (Array.isArray(earn) && earn.length) {
+    const rows = earn.slice(0,4).map(e => {
+      const surp = (e.actual != null && e.estimate) ? ((e.actual-e.estimate)/Math.abs(e.estimate)*100) : null;
+      return `  ${e.period || '—'}: actual ${_dNum(e.actual)} vs est ${_dNum(e.estimate)}`
+           + (surp != null ? ` (${_dPct(surp)} surprise)` : '');
+    });
+    L.push('Last 4 reported quarters (EPS):\n' + rows.join('\n'));
+    const beats = earn.slice(0,4).filter(e => e.actual != null && e.estimate != null && e.actual > e.estimate).length;
+    L.push(`Beat rate over those 4 quarters: ${beats}/4`);
+  }
+  const next = cal?.earningsCalendar?.[0];
+  if (next?.date) L.push(`Next scheduled earnings: ${next.date}${next.hour ? ' (' + next.hour + ')' : ''}`);
+  return L.length ? 'EARNINGS\n' + L.join('\n') : null;
+}
+
+// ── Sell-side view ────────────────────────────────────────────────────────────
+function _dossierAnalyst(rec, pt, price) {
+  const L = [];
+  if (Array.isArray(rec) && rec.length) {
+    const r = rec[0];
+    const buy = (r.strongBuy||0)+(r.buy||0), hold = r.hold||0, sell = (r.sell||0)+(r.strongSell||0);
+    const tot = buy+hold+sell;
+    L.push(`Consensus (${r.period || 'latest'}): ${buy} buy · ${hold} hold · ${sell} sell`
+         + (tot ? ` — ${Math.round(buy/tot*100)}% bullish of ${tot} analysts` : ''));
+    if (rec[1]) {
+      const p = rec[1], pBuy = (p.strongBuy||0)+(p.buy||0);
+      const delta = buy - pBuy;
+      if (delta !== 0) L.push(`Buy ratings ${delta>0?'increased':'decreased'} by ${Math.abs(delta)} vs the prior period`);
+    }
+  }
+  if (pt && (pt.targetMean || pt.targetHigh)) {
+    const up = (price && pt.targetMean) ? (pt.targetMean-price)/price*100 : null;
+    L.push(`Price targets: mean $${_dNum(pt.targetMean)} · low $${_dNum(pt.targetLow)} · high $${_dNum(pt.targetHigh)}`
+         + (up != null ? ` — mean implies ${_dPct(up)} vs current price` : ''));
+  }
+  return L.length ? 'SELL-SIDE VIEW\n' + L.join('\n') : null;
+}
+
+// ── Insider activity ──────────────────────────────────────────────────────────
+function _dossierInsider(ins) {
+  const rows = ins?.data;
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const recent = rows
+    .filter(d => (d.transactionCode || '').toUpperCase() === 'P' || (d.transactionCode || '').toUpperCase() === 'S')
+    .slice(0, 40);
+  if (!recent.length) return null;
+  let bought = 0, sold = 0, bShares = 0, sShares = 0;
+  for (const d of recent) {
+    const code = (d.transactionCode||'').toUpperCase();
+    const sh = Math.abs(d.change || d.share || 0);
+    if (code === 'P') { bought++; bShares += sh; } else { sold++; sShares += sh; }
+  }
+  const last = recent[0];
+  return 'INSIDER ACTIVITY (open-market only, most recent filings)\n'
+       + `Buys: ${bought} filings / ${_dMoney(bShares)} shares  ·  Sells: ${sold} filings / ${_dMoney(sShares)} shares\n`
+       + `Net direction: ${bShares > sShares ? 'net buying' : sShares > bShares ? 'net selling' : 'balanced'}\n`
+       + `Most recent: ${last.name || '—'} ${(last.transactionCode||'').toUpperCase()==='P'?'bought':'sold'} `
+       + `${_dMoney(Math.abs(last.change||0))} shares on ${last.transactionDate || '—'}`;
+}
+
+// ── Institutional / 13F whales already cached in this session ─────────────────
+function _dossierWhales(ticker) {
+  try {
+    if (typeof whaleTickerCache === 'undefined') return null;
+    const hits = whaleTickerCache[ticker.toUpperCase()];
+    if (!hits || !hits.length) return null;
+    return 'INSTITUTIONAL (from 13F filings you have loaded in Smart Money)\n'
+         + hits.slice(0,8).map(h =>
+             `  ${h.fund}: ${_dMoney(h.shares)} shares` + (h.value ? ` (~$${_dMoney(h.value*1000)})` : '')
+             + (h.reportDate ? ` as of ${h.reportDate}` : '')).join('\n');
+  } catch { return null; }
+}
+
+// ── Recent headlines ──────────────────────────────────────────────────────────
+function _dossierNews(news) {
+  if (!Array.isArray(news) || !news.length) return null;
+  const top = news.slice(0, 8).map(n => {
+    const d = n.datetime ? new Date(n.datetime*1000).toISOString().slice(0,10) : '—';
+    return `  ${d} — ${(n.headline||'').slice(0,140)}${n.source ? ' [' + n.source + ']' : ''}`;
+  });
+  return 'RECENT HEADLINES (from your Finnhub feed)\n' + top.join('\n');
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Main builder
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ─── Dossier UI helpers ───────────────────────────────────────────────────────
+const DOSSIER_KEY = 'apex_dossier_enabled';
+function dossierEnabled() { return localStorage.getItem(DOSSIER_KEY) !== '0'; }
+function setDossierEnabled(v) {
+  localStorage.setItem(DOSSIER_KEY, v ? '1' : '0');
+  document.querySelectorAll('.dossier-chk').forEach(c => { c.checked = v; });
+  updateDossierBadge();
+}
+function updateDossierBadge(dos) {
+  document.querySelectorAll('.dossier-badge').forEach(el => {
+    if (!dossierEnabled()) {
+      el.textContent = 'off — models will web-search for everything';
+      el.style.color = 'var(--orange)';
+      return;
+    }
+    if (dos) {
+      el.textContent = `✓ ${dos.ticker}: ${dos.sections} sections, ${(dos.chars/1000).toFixed(1)}k chars`
+        + (dos.missing.length ? ` · ${dos.missing.length} gap(s)` : '');
+      el.style.color = 'var(--green)';
+    } else {
+      el.textContent = 'on — your data is sent as ground truth';
+      el.style.color = 'var(--muted)';
+    }
+  });
+}
+
+// Preview exactly what gets sent, so nothing is a black box.
+async function previewDossier(which) {
+  const tk = (document.getElementById(which === 'gm' ? 'gm-ticker' : 'ai-ticker').value || '').trim().toUpperCase();
+  const out = document.getElementById(which === 'gm' ? 'gm-out-market' : 'ai-out-market');
+  if (!tk) { alert('Enter a ticker first.'); return; }
+  if (out) out.textContent = 'Building dossier…';
+  try {
+    const dos = await buildTickerDossier(tk, {
+      force: true,
+      onProgress: m => { if (out) out.textContent = 'Building dossier… ' + m; }
+    });
+    if (out) out.textContent = dos.text;
+    updateDossierBadge(dos);
+  } catch (e) {
+    if (out) out.textContent = 'Dossier failed: ' + e.message;
+  }
+}
+window.previewDossier = previewDossier;
+window.setDossierEnabled = setDossierEnabled;
+
+async function buildTickerDossier(ticker, { onProgress = null, force = false } = {}) {
+  const TK = (ticker || '').trim().toUpperCase();
+  if (!TK) throw new Error('No ticker');
+
+  const day = new Date().toISOString().slice(0,10);
+  if (!force) {
+    const hit = _dossierCache.get(TK);
+    if (hit && hit.day === day) return hit;
+  }
+
+  const step = m => { if (onProgress) onProgress(m); };
+  const sections = [], missing = [], sources = [];
+
+  // ── Price / technicals / signals / RS — Alpaca, no Finnhub key needed ───────
+  let bars = null;
+  step('fetching price history…');
+  try { bars = await fetchDaily(TK); } catch (e) { missing.push(`price history (${e.message})`); }
+
+  if (bars && bars.length > 30) {
+    const t = _dossierTechnicals(bars);
+    sections.push('PRICE & TECHNICALS (from your Alpaca ' + (typeof getFeed==='function' ? getFeed().toUpperCase() : '') + ' feed)\n' + t.text);
+    sources.push('Alpaca daily bars');
+
+    step('computing relative strength…');
+    const rsBlock = await _dossierRS(TK, bars);
+    if (rsBlock) { sections.push(rsBlock); sources.push('Alpaca (SPY / sector ETF)'); }
+    else missing.push('relative strength');
+
+    const sig = _dossierSignals(TK, bars);
+    if (sig) { sections.push(sig); sources.push('Apex strategy detectors'); }
+  } else if (bars) {
+    missing.push('technicals (insufficient bar history)');
+  }
+
+  // ── Finnhub-dependent sections ─────────────────────────────────────────────
+  const fhKey = (typeof getFinnhubKey === 'function') ? getFinnhubKey() : '';
+  if (!fhKey) {
+    missing.push('fundamentals, earnings, analyst ratings, insider activity and headlines (no Finnhub key saved)');
+  } else {
+    step('fetching fundamentals & analyst data…');
+    const [metric, profile, earn, cal, rec, pt, ins, news] = await Promise.all([
+      _fhJSON(`stock/metric?symbol=${TK}&metric=all`, fhKey),
+      _fhJSON(`stock/profile2?symbol=${TK}`, fhKey),
+      _fhJSON(`stock/earnings?symbol=${TK}&limit=4`, fhKey),
+      _fhJSON(`calendar/earnings?symbol=${TK}`, fhKey),
+      _fhJSON(`stock/recommendation?symbol=${TK}`, fhKey),
+      _fhJSON(`stock/price-target?symbol=${TK}`, fhKey),
+      _fhJSON(`stock/insider-transactions?symbol=${TK}`, fhKey),
+      _fhJSON(`company-news?symbol=${TK}&from=${new Date(Date.now()-30*864e5).toISOString().slice(0,10)}&to=${day}`, fhKey),
+    ]);
+
+    const price = bars ? bars[bars.length-1].c : null;
+    const add = (block, label, src) => {
+      if (block) { sections.push(block); if (src) sources.push(src); }
+      else missing.push(label);
+    };
+    add(_dossierFundamentals(metric, profile), 'fundamentals', 'Finnhub /stock/metric');
+    add(_dossierEarnings(earn, cal), 'earnings history', 'Finnhub /stock/earnings');
+    add(_dossierAnalyst(rec, pt, price), 'analyst ratings & targets', 'Finnhub /stock/recommendation');
+    add(_dossierInsider(ins), 'insider transactions', 'Finnhub /stock/insider-transactions');
+    add(_dossierNews(news), 'recent headlines', 'Finnhub /company-news');
+  }
+
+  const whales = _dossierWhales(TK);
+  if (whales) { sections.push(whales); sources.push('SEC 13F via your proxy'); }
+
+  // ── Assemble ───────────────────────────────────────────────────────────────
+  const header =
+`=== APEX TERMINAL DOSSIER: ${TK} ===
+Generated ${day} from the user's own data feeds. Treat every figure below as
+verified ground truth — do NOT web-search to re-derive it, and do not contradict
+it. Use your web search budget only for what is absent here: qualitative context,
+management commentary, competitive dynamics, and news beyond the headlines given.`;
+
+  const gaps = missing.length
+    ? `\n\n=== DATA NOT AVAILABLE ===\nThe following could not be retrieved. Treat as UNKNOWN — do not assume zero or neutral:\n`
+      + missing.map(m => `  - ${m}`).join('\n')
+    : '';
+
+  const text = header + '\n\n' + sections.join('\n\n') + gaps + '\n\n=== END DOSSIER ===';
+  const out = { day, text, sections: sections.length, missing, sources, ticker: TK,
+                chars: text.length };
+  _dossierCache.set(TK, out);
+  return out;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // AI ANALYSIS TAB
 // ═════════════════════════════════════════════════════════════════════════════
 
@@ -9377,37 +9793,82 @@ async function streamClaude({ apiKey, system, userMsg, outEl, statusEl, useSearc
 const ANALYST_CFG = {
   market: {
     system: `You are a quantitative market and technical analyst for a professional trading firm.
-You have a web search tool — USE IT NOW to get current data before writing your report.
-Search for: "[TICKER] stock price today", "[TICKER] technical analysis [MONTH YEAR]", "[TICKER] 50 day 200 day moving average [YEAR]".
-Then write a structured report covering: current price, trend direction (short/medium/long term), key MAs (50/200-day status), RSI and MACD readings, volume patterns, key support/resistance levels, and any notable chart patterns.
-~250 words. Short labelled sections. Lead with the actual current price you found via search.`,
+
+The user's message begins with an APEX TERMINAL DOSSIER containing verified price,
+moving-average, RSI, ADR, RVOL, relative-strength and strategy-signal data pulled
+from their own market-data feed. That data is authoritative. Do NOT search the web
+to re-derive any figure it already contains, and never state a price or MA that
+contradicts it.
+
+Use web search ONLY for what the dossier lacks: chart-pattern commentary from other
+analysts, unusual options activity, short interest, and any technical development
+in the last few sessions that raw bars wouldn't reveal.
+
+Write a structured report covering: trend across short/medium/long horizons using
+the supplied MAs, what the relative-strength figures imply about leadership, the
+volume picture, key support/resistance derived from the 52-week range and MAs, and
+how the firing Apex signals (if any) fit the technical picture.
+~250 words. Short labelled sections. If the dossier lists something under DATA NOT
+AVAILABLE, say so rather than guessing.`,
     key: 'market'
   },
   news: {
     system: `You are a financial news and event analyst for a professional trading firm.
-You have a web search tool — USE IT NOW to find current news before writing your report.
-Search for: "[TICKER] stock news [MONTH YEAR]", "[TICKER] earnings", "[TICKER] latest announcement", and any relevant macro/sector news.
-Then write a structured report covering: recent company news and announcements, upcoming catalysts (earnings date, product launches, FDA dates), industry/sector trends, macro factors (Fed, rates, sector rotation), and regulatory or legal risks.
-~250 words. Short labelled sections. Only report news you actually found via search.`,
+
+The user's message begins with an APEX TERMINAL DOSSIER. It may already contain
+recent headlines and the next scheduled earnings date — treat those as confirmed.
+
+This is the analyst where web search matters most, because the dossier holds
+numbers, not narrative. Search for: recent company announcements, management
+commentary, sector and macro developments, regulatory or legal matters, and
+anything explaining the price and volume behaviour shown in the dossier.
+
+Write a structured report covering: recent news and announcements, upcoming
+catalysts (use the dossier's earnings date if present), industry and sector trends,
+macro factors, and regulatory or legal risk.
+~250 words. Short labelled sections. Only report news you actually found.`,
     key: 'news'
   },
   social: {
     system: `You are a market sentiment analyst for a professional trading firm.
-You have a web search tool — USE IT NOW to find current analyst ratings and sentiment before writing your report.
-Search for: "[TICKER] analyst ratings [YEAR]", "[TICKER] price target upgrade downgrade", "[TICKER] short interest [YEAR]", "[TICKER] options flow unusual activity".
-Then write a structured report covering: current analyst consensus and recent upgrades/downgrades, price target range, short interest and days-to-cover, notable options activity, and retail/institutional sentiment indicators.
-~250 words. Short labelled sections. Only report figures found via search.`,
+
+The user's message begins with an APEX TERMINAL DOSSIER which may already contain
+analyst consensus counts, price targets, and insider transaction activity from the
+user's own data feed. Treat those as authoritative and do not re-search them.
+
+Use web search for what the dossier lacks: short interest and days-to-cover,
+unusual options flow, retail sentiment, and the reasoning behind any recent
+rating changes.
+
+Write a structured report covering: what the supplied consensus and target range
+imply, the direction of insider activity and whether it corroborates or contradicts
+sell-side sentiment, short interest, options activity, and overall positioning.
+~250 words. Short labelled sections. Flag genuine disagreement between insiders,
+analysts and price action — that tension is the most useful output here.`,
     key: 'social'
   },
   fund: {
     system: `You are a fundamental equity analyst for a professional trading firm.
-You have a web search tool — USE IT NOW to find current financial data before writing your report.
-Search for: "[TICKER] revenue earnings [YEAR]", "[TICKER] P/E ratio EV/EBITDA valuation", "[TICKER] quarterly results", "[TICKER] financial metrics margins FCF".
-Then write a structured report covering: recent and projected revenue/EPS growth, profit margins and free cash flow, balance sheet health (cash vs debt), valuation multiples vs sector peers, and competitive moat assessment.
-~250 words. Short labelled sections. Use actual figures found via search.`,
+
+The user's message begins with an APEX TERMINAL DOSSIER containing verified
+valuation multiples, margins, returns, balance-sheet ratios, growth rates and
+earnings-surprise history from their own data feed. Those figures are authoritative
+— do NOT web-search to re-derive them and do not contradict them.
+
+Use web search ONLY for what the dossier lacks: peer-group multiples for comparison,
+competitive positioning and moat, management capital-allocation record, segment
+detail, and guidance commentary.
+
+Write a structured report covering: growth quality and durability, margin trend and
+what drives it, balance-sheet strength, valuation in the context of the company's
+own history and peers, and a moat assessment. The user is investing rather than
+trading, so weight durability and capital allocation over near-term momentum.
+~250 words. Short labelled sections. Anything listed under DATA NOT AVAILABLE
+should be named as unknown, not estimated.`,
     key: 'fund'
   }
 };
+
 
 async function aiRunAnalyst(type) {
   const apiKey = document.getElementById('ai-api-key').value.trim() || aiLoadKey();
@@ -9422,6 +9883,21 @@ async function aiRunAnalyst(type) {
   const statusEl = document.getElementById('ai-status-' + type);
 
   let userMsg = `Stock: ${ticker}\nAnalysis date: ${date}`;
+
+  // Prepend the terminal's own verified data, if enabled.
+  if (dossierEnabled()) {
+    try {
+      statusEl.textContent = 'building dossier from your data…';
+      const dos = await buildTickerDossier(ticker, {
+        onProgress: m => { statusEl.textContent = 'dossier: ' + m; }
+      });
+      userMsg = dos.text + '\n\n' + userMsg;
+      updateDossierBadge(dos);
+    } catch (e) {
+      console.warn('[apex] dossier failed, falling back to search-only:', e.message);
+      statusEl.textContent = 'dossier unavailable — search-only';
+    }
+  }
   if (ctx) userMsg += `\n\nAdditional context provided by user:\n${ctx}`;
 
   const result = await streamClaude({ apiKey, system: cfg.system, userMsg, outEl, statusEl, useSearch: true });
@@ -9441,7 +9917,10 @@ function aiGetBase() {
     aiReports.social && `SENTIMENT REPORT:\n${aiReports.social}`,
     aiReports.fund   && `FUNDAMENTALS REPORT:\n${aiReports.fund}`,
   ].filter(Boolean).join('\n\n---\n\n');
-  return { apiKey, ticker, date, reportsText };
+  // Debate stages reason over the analyst reports PLUS the raw terminal data,
+  // so a bull/bear case can cite figures directly rather than relaying prose.
+  const dosText = dossierEnabled() ? (_dossierCache.get(ticker)?.text || '') : '';
+  return { apiKey, ticker, date, reportsText: dosText ? dosText + '\n\n' + reportsText : reportsText };
 }
 async function aiRunBull() {
   const { apiKey, ticker, date, reportsText } = aiGetBase();
@@ -9608,10 +10087,10 @@ async function streamGemini({ apiKey, system, userMsg, outEl, statusEl, useSearc
 }
 
 const GM_CFG = {
-  market: { system: `You are a quantitative market and technical analyst for a professional trading firm.\nUse Google Search to find current price and technical data before writing your report.\nSearch for: "[TICKER] stock price today", "[TICKER] technical analysis [MONTH YEAR]", "[TICKER] 50 day 200 day moving average".\nWrite a structured report: current price, trend direction, key MAs (50/200-day), RSI and MACD, volume patterns, support/resistance, chart patterns.\n~250 words. Short labelled sections. Lead with actual current price found.` },
-  news:   { system: `You are a financial news and event analyst for a professional trading firm.\nUse Google Search to find current news before writing your report.\nSearch for: "[TICKER] stock news [MONTH YEAR]", "[TICKER] earnings date", "[TICKER] latest announcement".\nWrite a structured report: recent company news, upcoming catalysts, industry/sector trends, macro factors, regulatory risks.\n~250 words. Short labelled sections. Only report news actually found.` },
-  social: { system: `You are a market sentiment analyst for a professional trading firm.\nUse Google Search to find current analyst ratings and sentiment before writing your report.\nSearch for: "[TICKER] analyst ratings [YEAR]", "[TICKER] price target upgrade downgrade", "[TICKER] short interest [YEAR]".\nWrite a structured report: analyst consensus, upgrades/downgrades, price target range, short interest, options activity, retail sentiment.\n~250 words. Short labelled sections. Only report figures actually found.` },
-  fund:   { system: `You are a fundamental equity analyst for a professional trading firm.\nUse Google Search to find current financial data before writing your report.\nSearch for: "[TICKER] revenue earnings [YEAR]", "[TICKER] P/E ratio valuation", "[TICKER] quarterly results [YEAR]".\nWrite a structured report: revenue/EPS growth, margins and FCF, balance sheet health, valuation multiples vs peers, competitive moat.\n~250 words. Short labelled sections. Use actual figures found.` }
+  market: { system: `You are a quantitative market and technical analyst for a professional trading firm.\nThe user's message starts with an APEX TERMINAL DOSSIER holding verified price, MA, RSI, ADR, RVOL, relative-strength and strategy-signal data from their own feed. Treat it as authoritative — do NOT search to re-derive any figure in it, and never contradict it.\nUse Google Search only for what it lacks: analyst chart commentary, options activity, short interest, very recent technical developments.\nReport: trend across horizons using the supplied MAs, what relative strength implies about leadership, volume picture, support/resistance from the 52w range and MAs, and how any firing Apex signals fit.\n~250 words. Short labelled sections. Name anything under DATA NOT AVAILABLE as unknown.` },
+  news:   { system: `You are a financial news and event analyst for a professional trading firm.\nThe user's message starts with an APEX TERMINAL DOSSIER which may already list recent headlines and the next earnings date — treat those as confirmed.\nSearch matters most here, because the dossier holds numbers not narrative. Use Google Search for announcements, management commentary, sector and macro developments, regulatory matters, and anything explaining the price/volume behaviour shown.\nReport: recent news, upcoming catalysts, sector trends, macro factors, regulatory risk.\n~250 words. Short labelled sections. Only report news actually found.` },
+  social: { system: `You are a market sentiment analyst for a professional trading firm.\nThe user's message starts with an APEX TERMINAL DOSSIER which may already contain analyst consensus, price targets and insider activity. Treat those as authoritative; do not re-search them.\nUse Google Search for short interest, days-to-cover, options flow, retail sentiment, and the reasoning behind recent rating changes.\nReport: what the supplied consensus and targets imply, whether insider activity corroborates or contradicts sell-side sentiment, short interest, options activity, positioning.\n~250 words. Flag genuine disagreement between insiders, analysts and price action.` },
+  fund:   { system: `You are a fundamental equity analyst for a professional trading firm.\nThe user's message starts with an APEX TERMINAL DOSSIER holding verified valuation multiples, margins, returns, balance-sheet ratios, growth rates and earnings-surprise history. Authoritative — do NOT re-derive or contradict.\nUse Google Search only for peer multiples, competitive moat, management capital allocation, segment detail and guidance commentary.\nReport: growth quality and durability, margin trend and drivers, balance-sheet strength, valuation vs the company's own history and peers, moat. The user is investing rather than trading — weight durability and capital allocation over near-term momentum.\n~250 words. Anything under DATA NOT AVAILABLE is unknown, not estimated.` }
 };
 
 async function gmRunAnalyst(type) {
@@ -9631,6 +10110,20 @@ async function gmRunAnalyst(type) {
     .replace(/\[YEAR\]/g, year);
 
   let userMsg = `Stock: ${ticker}\nAnalysis date: ${date}`;
+
+  const gmStatusEl = document.getElementById('gm-status-' + type);
+  if (dossierEnabled()) {
+    try {
+      if (gmStatusEl) gmStatusEl.textContent = 'building dossier from your data…';
+      const dos = await buildTickerDossier(ticker, {
+        onProgress: m => { if (gmStatusEl) gmStatusEl.textContent = 'dossier: ' + m; }
+      });
+      userMsg = dos.text + '\n\n' + userMsg;
+      updateDossierBadge(dos);
+    } catch (e) {
+      console.warn('[apex] dossier failed, falling back to search-only:', e.message);
+    }
+  }
   if (ctx) userMsg += `\n\nAdditional context:\n${ctx}`;
 
   const result = await streamGemini({
@@ -9653,7 +10146,8 @@ function gmGetBase() {
     gmReports.social && `SENTIMENT REPORT:\n${gmReports.social}`,
     gmReports.fund   && `FUNDAMENTALS REPORT:\n${gmReports.fund}`,
   ].filter(Boolean).join('\n\n---\n\n');
-  return { apiKey, ticker, date, reportsText };
+  const dosText = dossierEnabled() ? (_dossierCache.get(ticker)?.text || '') : '';
+  return { apiKey, ticker, date, reportsText: dosText ? dosText + '\n\n' + reportsText : reportsText };
 }
 async function gmRunBull() {
   const { apiKey, ticker, date, reportsText } = gmGetBase();
@@ -9717,6 +10211,8 @@ loadAccountSize();
 loadKeys();
 updateFeedBadge();
 loadProxyUrl();
+document.querySelectorAll('.dossier-chk').forEach(c => { c.checked = dossierEnabled(); });
+updateDossierBadge();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
@@ -11173,6 +11669,20 @@ window.scSelectAll = function(chk) {
       <button class="btn btn-cyan" id="ai-run-all-btn" onclick="aiRunAll()">▶ Run All</button>
     </div>
 
+
+    <!-- Apex data dossier -->
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:12px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1.5px;color:var(--text);text-transform:uppercase;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" class="dossier-chk" checked onchange="setDossierEnabled(this.checked)">
+        📊 Send Apex data
+      </label>
+      <span class="dossier-badge" style="font-size:10px;color:var(--muted)">on — your data is sent as ground truth</span>
+      <button class="btn btn-ghost" style="padding:5px 12px;font-size:9px;margin-left:auto" onclick="previewDossier('ai')">👁 Preview dossier</button>
+      <span style="font-size:9px;color:var(--muted);width:100%;line-height:1.6">
+        Sends your price/MA/RS data, firing strategy signals, fundamentals, earnings history, analyst targets, insider activity and 13F holdings as verified ground truth — so Claude spends its search budget on narrative instead of re-deriving numbers you already have.
+      </span>
+    </div>
+
     <!-- Phase 1: Analyst Team -->
     <div class="ai-phase">
       <div class="ai-phase-hdr">
@@ -11305,7 +11815,20 @@ window.scSelectAll = function(chk) {
       <input class="ai-date-inp" id="gm-date" type="date">
       <label>Context</label>
       <input class="ai-context-inp" id="gm-context" placeholder="Optional: paste in any relevant news, data, or notes for Gemini to use…">
-      <button class="btn btn-cyan" id="gm-run-all-btn" onclick="gmRunAll()">▶ Run All</button>
+      <button class="btn btn-cyan" id="gm-run-all-btn" onclick="gmRunAll
+    <!-- Apex data dossier -->
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:12px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1.5px;color:var(--text);text-transform:uppercase;cursor:pointer;white-space:nowrap">
+        <input type="checkbox" class="dossier-chk" checked onchange="setDossierEnabled(this.checked)">
+        📊 Send Apex data
+      </label>
+      <span class="dossier-badge" style="font-size:10px;color:var(--muted)">on — your data is sent as ground truth</span>
+      <button class="btn btn-ghost" style="padding:5px 12px;font-size:9px;margin-left:auto" onclick="previewDossier('gm')">👁 Preview dossier</button>
+      <span style="font-size:9px;color:var(--muted);width:100%;line-height:1.6">
+        Sends your price/MA/RS data, firing strategy signals, fundamentals, earnings history, analyst targets, insider activity and 13F holdings as verified ground truth — so Gemini spends its search budget on narrative instead of re-deriving numbers you already have.
+      </span>
+    </div>
+()">▶ Run All</button>
     </div>
 
     <!-- Phase 1 -->
