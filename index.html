@@ -1647,6 +1647,21 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
   <!-- ═══ SMART MONEY TAB ═══ -->
   <div class="tab-panel" id="tab-smart">
 
+    <!-- Data proxy config -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:14px;flex-wrap:wrap">
+      <span style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap">🛰 Data Proxy</span>
+      <input id="proxy-url" type="text" placeholder="https://apex-proxy.YOUR-NAME.workers.dev"
+        style="flex:1;min-width:260px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:6px 10px;outline:none"
+        autocomplete="off" spellcheck="false">
+      <button class="btn btn-cyan" id="proxy-save" style="padding:6px 14px">Save</button>
+      <button class="btn btn-ghost" id="proxy-test" style="padding:6px 14px">Test</button>
+      <span id="proxy-status" style="font-size:10px;color:var(--muted)"></span>
+      <span style="font-size:9px;color:var(--muted);width:100%;line-height:1.6">
+        SEC blocks browser access entirely (no CORS) and Yahoo requires a server-side cookie+crumb handshake.
+        Leave blank to fall back to public CORS proxies — these are unreliable and are why this tab breaks.
+      </span>
+    </div>
+
     <!-- Sub-tab navigation -->
     <div class="sm-subtabs">
       <button class="sm-subtab active" data-sm="insider">📋 Insider Trades</button>
@@ -4924,26 +4939,113 @@ function renderCongress(data) {
 // ─── 13F (SEC EDGAR) ────────────────────────────────────────────────────────
 // Helper: SEC requires User-Agent identification. Browser fetch can't set User-Agent
 // directly, but going through public CORS proxies works. Try several in order.
-async function secFetch(url) {
-  const proxies = [
+// ═════════════════════════════════════════════════════════════════════════════
+// DATA PROXY LAYER
+// ═════════════════════════════════════════════════════════════════════════════
+// SEC states plainly that "data.sec.gov does not support Cross Origin Resource
+// Scripting (CORS)", and SEC also requires a User-Agent with contact details —
+// a header browsers are forbidden from setting. Yahoo's quoteSummary needs a
+// cookie+crumb handshake that likewise can't happen client-side. So Smart Money
+// needs a server-side hop. Configure your own Cloudflare Worker in the Smart
+// Money tab; the old public proxies remain only as a degraded fallback.
+
+const PROXY_KEY = 'apex_proxy_url';
+const getProxyUrl = () => (localStorage.getItem(PROXY_KEY) || '').replace(/\/+$/, '');
+
+// Ordered list of proxy builders: your Worker first, then the public ones.
+function proxyChain() {
+  const chain = [];
+  const mine = getProxyUrl();
+  if (mine) chain.push(u => `${mine}/?url=${encodeURIComponent(u)}`);
+  chain.push(
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
-  let lastErr = '';
-  for (const proxy of proxies) {
+  );
+  return chain;
+}
+
+// Fetch `url` through the proxy chain, returning response text.
+async function proxyFetchText(url, { timeout = 15000, minLength = 20 } = {}) {
+  let lastErr = 'no proxy configured';
+  const chain = proxyChain();
+  for (let i = 0; i < chain.length; i++) {
+    const label = (i === 0 && getProxyUrl()) ? 'your proxy' : `public proxy ${i}`;
     try {
-      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(15000) });
-      if (!r.ok) { lastErr = `HTTP ${r.status} via ${proxy.name||'proxy'}`; continue; }
+      const r = await fetch(chain[i](url), { signal: AbortSignal.timeout(timeout) });
+      if (!r.ok) { lastErr = `HTTP ${r.status} via ${label}`; continue; }
       const text = await r.text();
-      if (!text || text.length < 20) { lastErr = 'empty response'; continue; }
+      if (!text || text.length < minLength) { lastErr = `empty response via ${label}`; continue; }
       return text;
-    } catch(e) {
-      lastErr = e.message;
+    } catch (e) {
+      lastErr = `${e.name === 'TimeoutError' ? 'timeout' : e.message} via ${label}`;
     }
   }
-  throw new Error(`SEC fetch failed: ${lastErr}`);
+  throw new Error(lastErr);
 }
+
+function loadProxyUrl() {
+  const el = g('proxy-url');
+  if (el) el.value = getProxyUrl();
+  updateProxyStatus();
+}
+function updateProxyStatus(msg, color) {
+  const el = g('proxy-status');
+  if (!el) return;
+  if (msg) { el.textContent = msg; el.style.color = color || 'var(--muted)'; return; }
+  const u = getProxyUrl();
+  el.textContent = u ? '✓ using your proxy' : '⚠ public proxies (unreliable)';
+  el.style.color = u ? 'var(--green)' : 'var(--orange)';
+}
+
+async function secFetch(url) {
+  try {
+    return await proxyFetchText(url);
+  } catch (e) {
+    throw new Error(`SEC fetch failed: ${e.message}`);
+  }
+}
+
+// ─── Proxy settings UI ────────────────────────────────────────────────────────
+g('proxy-save')?.addEventListener('click', () => {
+  const v = (g('proxy-url').value || '').trim().replace(/\/+$/, '');
+  if (v && !/^https:\/\/.+/.test(v)) {
+    updateProxyStatus('⚠ must start with https://', 'var(--red)');
+    return;
+  }
+  localStorage.setItem(PROXY_KEY, v);
+  updateProxyStatus(v ? '✓ saved' : 'cleared — using public proxies', v ? 'var(--green)' : 'var(--orange)');
+  setTimeout(() => updateProxyStatus(), 2000);
+});
+
+g('proxy-test')?.addEventListener('click', async () => {
+  const v = (g('proxy-url').value || '').trim().replace(/\/+$/, '');
+  if (!v) { updateProxyStatus('⚠ enter a URL first', 'var(--orange)'); return; }
+  updateProxyStatus('testing…', 'var(--muted)');
+
+  // 1) Is the Worker alive at all?
+  try {
+    const h = await fetch(`${v}/health`, { signal: AbortSignal.timeout(12000) });
+    if (!h.ok) throw new Error(`health returned HTTP ${h.status}`);
+    const j = await h.json().catch(() => null);
+    if (!j?.ok) throw new Error('unrecognised health response');
+  } catch (e) {
+    updateProxyStatus(`✗ unreachable — ${e.message}`, 'var(--red)');
+    return;
+  }
+
+  // 2) Real SEC round-trip — the test that actually matters.
+  try {
+    const r = await fetch(`${v}/?url=${encodeURIComponent('https://www.sec.gov/files/company_tickers.json')}`,
+                          { signal: AbortSignal.timeout(20000) });
+    if (!r.ok) throw new Error(`SEC fetch returned HTTP ${r.status}`);
+    const t = await r.text();
+    if (t.length < 1000) throw new Error('SEC response suspiciously small');
+    updateProxyStatus('✓ working — SEC reachable', 'var(--green)');
+  } catch (e) {
+    updateProxyStatus(`✗ health OK but SEC failed — ${e.message}`, 'var(--red)');
+  }
+});
 
 async function fetch13F() {
   const input = g('thirteenf-input').value.trim();
@@ -5791,11 +5893,7 @@ async function loadDetailInstitutional(ticker) {
     // v8 — different format, majorHoldersBreakdown only but more reliable
     `https://query2.finance.yahoo.com/v8/finance/chart/${TK}?modules=majorHoldersBreakdown`,
   ];
-  const proxies = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
+  const proxies = proxyChain();
 
   let yahooData = null;
   for (const yUrl of yahooUrls) {
@@ -5863,10 +5961,7 @@ async function loadDetailInstitutional(ticker) {
   // ── Layer 5: Try stockanalysis.com via proxy ──────────────────────────────
   try {
     const saUrl = `https://stockanalysis.com/stocks/${TK.toLowerCase()}/institutional/`;
-    const proxies2 = [
-      u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-      u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    ];
+    const proxies2 = proxyChain();
     for (const proxy of proxies2) {
       try {
         const r = await fetch(proxy(saUrl), { signal: AbortSignal.timeout(10000) });
@@ -7670,6 +7765,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 // Load saved keys and watchlists on page ready
 loadKeys();
 updateFeedBadge();
+loadProxyUrl();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
@@ -9620,6 +9716,7 @@ loadAccountSize();
 // Load saved keys and watchlists on page ready
 loadKeys();
 updateFeedBadge();
+loadProxyUrl();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
