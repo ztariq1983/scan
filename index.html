@@ -159,7 +159,7 @@ table.etf-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .btn-green:hover{background:var(--green);color:#000}
 @media(max-width:700px){.ai-debate-grid{grid-template-columns:1fr}}
 
-/* ─── Journal ─────────────────────────────────────────────────────── */
+/* ─── Orange panel variant ────────────────────────────────────────── */
 .panel.orange::before{background:var(--orange)}
 .panel.orange .panel-title{color:var(--orange)}
 .btn-orange{background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange)}
@@ -1020,7 +1020,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
   <header>
     <div>
       <div class="brand-name">AP<em>E</em>X</div>
-      <div class="brand-sub">Scanner · ETFs · Journal</div>
+      <div class="brand-sub">Scanner · ETFs · Smart Money</div>
     </div>
     <div class="header-meta">
       <div style="display:flex;gap:8px;align-items:center">
@@ -1030,6 +1030,9 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="live-ind" style="margin-left:6px"><div class="live-dot"></div>Live</div>
       </div>
       <div class="ts" id="ts">—</div>
+      <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;color:var(--muted)">
+        Feed: <span id="feed-badge" style="font-weight:700">—</span>
+      </div>
     </div>
   </header>
 
@@ -1039,7 +1042,6 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <button class="tab" data-tab="etfs">ETFs <span class="tab-count" id="etf-tab-count"></span></button>
     <button class="tab" data-tab="orb">ORB Live <span class="tab-count" id="orb-tab-count"></span></button>
     <button class="tab" data-tab="smart">Smart Money</button>
-    <button class="tab" data-tab="journal" style="display:none">Journal <span class="tab-count" id="journal-tab-count"></span></button>
     <button class="tab" data-tab="rs">📈 RS Rank</button>
     <button class="tab" data-tab="learn">📚 Learn</button>
     <button class="tab" data-tab="ai">⚡ AI</button>
@@ -1050,15 +1052,6 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <button class="tab" data-tab="fundamentals">📑 Fundamentals</button>
   </div>
 
-  <!-- Account size (global — used by position sizer across tabs) -->
-  <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap">
-    <span style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;white-space:nowrap">💰 Account Size</span>
-    <input type="number" id="account-size" placeholder="e.g. 10000" step="100"
-      style="width:130px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:6px 10px;outline:none"
-      title="Total trading account in your currency">
-    <span style="font-size:10px;color:var(--muted);letter-spacing:.5px">Used by position sizer (2% risk = max loss per trade)</span>
-    <span id="acct-size-saved" style="font-size:10px;color:var(--green);display:none">✓ Saved</span>
-  </div>
 
   <!-- CORS warning (visible on any tab when triggered) -->
   <div id="cors-warn">
@@ -1196,6 +1189,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
       Position Sizer <span style="color:var(--muted)">2% account risk</span>
     </div>
     <div class="sizer-grid">
+      <div class="sizer-field"><label>Account Size <span id="acct-size-saved" style="color:var(--green);display:none">✓</span></label><input type="number" id="account-size" step="100" placeholder="e.g. 10000" title="Total account in your currency — also used by the Playbook risk calc"></div>
       <div class="sizer-field"><label>Entry Price</label><input type="number" id="sz-entry" step="0.01" placeholder="0.00"></div>
       <div class="sizer-field"><label>Stop Price</label><input type="number" id="sz-stop" step="0.01" placeholder="0.00"></div>
       <div class="sizer-field"><label>Risk % (default 2%)</label><input type="number" id="sz-risk-pct" step="0.1" value="2" min="0.1" max="10"></div>
@@ -1919,237 +1913,6 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 
   </div><!-- /tab-smart -->
 
-  <!-- ═══ JOURNAL TAB ═══ -->
-  <div class="tab-panel" id="tab-journal" style="display:none">
-
-    <!-- New trade button + stats -->
-    <div class="panel orange">
-      <div class="panel-title">
-        Trade Journal
-        <span id="journal-count" style="color:var(--muted)">0 trades</span>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-orange" id="btn-new-trade">+ Log New Trade</button>
-        <button class="btn btn-ghost" id="btn-export-journal">⬇ Export JSON</button>
-        <button class="btn btn-ghost" id="btn-import-journal">⬆ Import JSON</button>
-        <button class="btn" id="btn-import-t212" style="background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.3)">📥 Import Trading 212 CSV</button>
-        <div style="position:relative;display:inline-block">
-          <button class="btn btn-ghost" id="btn-bulk-delete" style="color:var(--red);border-color:rgba(255,82,119,.3)">🗑 Bulk Delete ▾</button>
-          <div id="bulk-delete-menu" style="display:none;position:absolute;top:100%;left:0;z-index:200;background:var(--surface);border:1px solid var(--border);min-width:200px;padding:6px 0;margin-top:2px">
-            <div class="bulk-del-opt" id="bulk-del-t212" style="padding:8px 14px;font-size:11px;cursor:pointer;color:var(--muted)">Delete all T212 imports</div>
-            <div class="bulk-del-opt" id="bulk-del-open" style="padding:8px 14px;font-size:11px;cursor:pointer;color:var(--muted)">Delete all open trades</div>
-            <div class="bulk-del-opt" id="bulk-del-all"  style="padding:8px 14px;font-size:11px;cursor:pointer;color:var(--red)">Delete ALL trades ⚠</div>
-          </div>
-        </div>
-        <input type="file" id="journal-file"    accept=".json" style="display:none">
-        <input type="file" id="t212-csv-file"   accept=".csv"  style="display:none">
-        <div style="font-size:10px;color:var(--muted);letter-spacing:.5px;flex:1;min-width:200px">
-          All P/L is tracked as <b style="color:var(--accent)">% gain/loss</b> (FX-neutral). Saved to browser localStorage.
-        </div>
-      </div>
-    </div>
-
-    <!-- Overall stats dashboard -->
-    <div class="jdash" id="jdash">
-      <!-- populated by JS -->
-    </div>
-
-    <!-- Equity Curve + Performance Engine -->
-    <div class="strat-perf-wrap equity-section">
-      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <span>📈 Equity Curve</span>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <label style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px;font-weight:400">
-            Starting Balance
-            <input type="number" id="equity-starting-bal" placeholder="e.g. 10000" step="100"
-              style="width:110px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:4px 8px;outline:none"
-              title="Your account balance before your first trade">
-          </label>
-          <select id="equity-mode" style="background:var(--bg);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:10px;padding:4px 8px;outline:none">
-            <option value="compound">Compound (realistic)</option>
-            <option value="currency">Currency £/$</option>
-            <option value="pct">% stacked (legacy)</option>
-          </select>
-        </div>
-      </div>
-      <div style="padding:14px 20px">
-
-        <!-- Capital Injection Log -->
-        <div style="margin-bottom:14px;padding:12px 14px;background:var(--bg);border:1px solid var(--border2)">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:9px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase">💰 Capital Deposits / Withdrawals</span>
-            <button id="btn-toggle-injections" style="font-size:9px;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:1px">▼ Show</button>
-          </div>
-          <div id="injection-panel" style="display:none">
-            <!-- Add injection form -->
-            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
-              <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px">
-                Date
-                <input type="date" id="inj-date" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none;width:130px">
-              </label>
-              <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px">
-                Amount (+ deposit / − withdrawal)
-                <input type="number" id="inj-amount" placeholder="e.g. 5000 or -2000" step="100"
-                  style="width:160px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none">
-              </label>
-              <label style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;flex-direction:column;gap:3px">
-                Note (optional)
-                <input type="text" id="inj-note" placeholder="e.g. Monthly top-up"
-                  style="width:160px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 8px;outline:none">
-              </label>
-              <button id="btn-add-injection" class="btn" style="background:rgba(78,232,255,.12);color:var(--cyan);border:1px solid rgba(78,232,255,.3);padding:5px 12px;font-size:10px">+ Add</button>
-            </div>
-            <!-- Injection list -->
-            <div id="injection-list" style="max-height:140px;overflow-y:auto"></div>
-          </div>
-        </div>
-
-        <div id="equity-stats-row" class="equity-stats-row"></div>
-        <div class="equity-chart-wrap" style="margin-top:12px" id="equity-curve-wrap">
-          <div style="color:var(--muted);font-size:11px;text-align:center;padding:30px">Close trades to see your equity curve</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Day of Week Performance -->
-    <div class="strat-perf-wrap equity-section">
-      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
-        <span>📅 Day-of-Week Performance</span>
-        <span style="font-size:9px;color:var(--muted);font-weight:400">Avg P&L% by entry day</span>
-      </div>
-      <div style="padding:14px 20px">
-        <div class="dow-grid" id="dow-chart"></div>
-      </div>
-    </div>
-
-    <!-- Mistake Tracking Dashboard -->
-    <div class="strat-perf-wrap" id="mistake-panel">
-      <div class="panel-title" style="color:var(--red);display:flex;justify-content:space-between;align-items:center">
-        <span>🔴 Mistake Tracker — Rule Adherence</span>
-        <span style="font-size:9px;color:var(--muted);font-weight:400">Based on closed trades with mistakes logged</span>
-      </div>
-      <div id="mistake-chart-content" style="padding:14px 20px">
-        <div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">Log mistakes on trades to see which ones cost you the most</div>
-      </div>
-    </div>
-
-    <!-- Per-strategy performance table -->
-    <div class="strat-perf-wrap">
-      <div class="panel-title" style="color:var(--accent)">Performance by Strategy</div>
-      <div style="overflow-x:auto">
-        <table class="perf-tbl">
-          <thead><tr>
-            <th>Strategy</th>
-            <th class="num">Trades</th>
-            <th class="num">Wins</th>
-            <th class="num">Losses</th>
-            <th class="num">Win %</th>
-            <th class="num">Avg Win</th>
-            <th class="num">Avg Loss</th>
-            <th class="num">Expectancy</th>
-            <th class="num">Total %</th>
-          </tr></thead>
-          <tbody id="perf-tbody">
-            <tr><td colspan="9"><div class="empty-cell" style="padding:40px 20px"><div class="es">No closed trades yet</div></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Trade log -->
-    <div class="results-panel">
-      <div class="res-header">
-        <div class="res-title">Trade Log</div>
-      </div>
-      <div class="trade-filters">
-        <span class="trade-filters-lbl">Filter:</span>
-        <select id="trade-filter-status">
-          <option value="all">All statuses</option>
-          <option value="open">Open only</option>
-          <option value="closed">Closed only</option>
-          <option value="win">Wins only</option>
-          <option value="loss">Losses only</option>
-        </select>
-        <select id="trade-filter-strat">
-          <option value="all">All strategies</option>
-          <option value="nr4">NR4</option>
-          <option value="nr7">NR7</option>
-          <option value="macross">21O50</option>
-          <option value="pull50">50 SMA Pullback</option>
-          <option value="flat">Flat Base</option>
-          <option value="cup">Cup &amp; Handle</option>
-          <option value="vcp">VCP</option>
-          <option value="hvc">HVC Breakout</option>
-          <option value="hvc4">HVC 2–4 Day</option>
-          <option value="ema21">21 EMA Pull</option>
-          <option value="ema_rev">EMA Reversion</option>
-          <option value="cons_bo">Consolidation BO</option>
-          <option value="gap_hold">Earnings Gap Hold</option>
-          <option value="mean_rev">Mean Reversion</option>
-          <option value="qm5">QM 5-Star</option>
-          <option value="qm7">QM 7-Star EP</option>
-          <option value="other">Other</option>
-        </select>
-        <select id="trade-sort">
-          <option value="date-desc">Newest first</option>
-          <option value="date-asc">Oldest first</option>
-          <option value="pl-desc">Best P/L first</option>
-          <option value="pl-asc">Worst P/L first</option>
-        </select>
-        <button id="btn-aggregate-view" class="btn btn-ghost" style="font-size:10px;padding:5px 12px;letter-spacing:1px" title="Group all buys/sells per ticker into a single net position">
-          ⊞ Aggregate by Ticker
-        </button>
-      </div>
-
-      <!-- Aggregate position view (hidden by default) -->
-      <div id="aggregate-panel" style="display:none">
-        <div style="font-size:9px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;padding:10px 0 8px;border-bottom:1px solid var(--border2);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-          <span>⊞ Aggregate Positions — Net shares after all buys &amp; sells</span>
-          <span id="aggregate-summary" style="color:var(--muted)"></span>
-        </div>
-        <div class="tbl-wrap">
-          <table class="trade-tbl" id="aggregate-tbl">
-            <thead><tr>
-              <th>Ticker</th>
-              <th class="num">Net Shares</th>
-              <th class="num">Avg Cost</th>
-              <th class="num">Total Invested</th>
-              <th class="num">Realised P/L%</th>
-              <th class="num">Realised P/L £</th>
-              <th class="ctr">Trades</th>
-              <th class="ctr">Status</th>
-              <th class="ctr">Actions</th>
-            </tr></thead>
-            <tbody id="aggregate-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="tbl-wrap">
-        <table class="trade-tbl">
-          <thead><tr>
-            <th>Ticker</th>
-            <th>Entry Date</th>
-            <th class="num">Entry Price</th>
-            <th>Strategy</th>
-            <th>Exit Date</th>
-            <th class="num">Exit Price</th>
-            <th class="num">P/L %</th>
-            <th>Reason</th>
-            <th class="ctr">Status</th>
-            <th class="ctr">Actions</th>
-          </tr></thead>
-          <tbody id="trade-tbody">
-            <tr><td colspan="10"><div class="empty-cell">
-              <div class="ei">◷</div>
-              <div class="et">No Trades Logged</div>
-              <div class="es">Click "+ Log New Trade" above to add your first entry</div>
-            </div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div><!-- /tab-journal -->
 
   <!-- ═══ RS RANK TAB ═══ -->
   <div class="tab-panel" id="tab-rs">
@@ -2664,7 +2427,7 @@ async function testConnection() {
     const end   = new Date().toISOString().split('T')[0];
     const start = new Date(Date.now() - 15 * 864e5).toISOString().split('T')[0];
     const url   = `https://data.alpaca.markets/v2/stocks/AAPL/bars`
-                + `?timeframe=1Day&start=${start}&end=${end}&limit=10&feed=iex&sort=asc`;
+                + `?timeframe=1Day&start=${start}&end=${end}&limit=10&feed=${getFeed()}&sort=asc`;
 
     const r = await fetch(url, {
       headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret }
@@ -2856,41 +2619,162 @@ function deleteSelectedWatchlist() {
   setInfo(`✓ Deleted <b>"${name}"</b>`);
 }
 
-// ─── Alpaca fetch ─────────────────────────────────────────────────────────────
-async function fetchDaily(ticker) {
-  const {key, secret} = getKeys();
-  if (!key || !secret) throw new Error('No API keys — enter and save above');
+// ═════════════════════════════════════════════════════════════════════════════
+// ALPACA DATA LAYER — batched, paginated, SIP-by-default
+// ═════════════════════════════════════════════════════════════════════════════
+// Alpaca's free "Basic" plan DOES include full SIP (all-exchange) historical data.
+// The only condition is that `end` must be >= 15 minutes in the past. IEX is only
+// ~2-3% of consolidated volume, so every volume-based signal (HVC, VCP, RVOL,
+// QM5/QM7, gap scan) is far more accurate on SIP. We default to SIP and fall back
+// to IEX automatically if the account isn't entitled.
+//   docs: https://docs.alpaca.markets/us/docs/market-data-faq
 
-  const end   = new Date();
-  const start = new Date(); start.setDate(start.getDate() - 280);
-  const fmt   = d => d.toISOString().split('T')[0];
-  const url   = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars`
-              + `?timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=300&feed=iex&sort=asc`;
+const FEED_KEY = 'apex_alpaca_feed';
+const APCA_BASE = 'https://data.alpaca.markets/v2/stocks';
+
+function getFeed()      { return localStorage.getItem(FEED_KEY) || 'sip'; }
+function setFeed(f)     { localStorage.setItem(FEED_KEY, f); updateFeedBadge(); }
+
+// end must be >=15 min old for free-tier SIP. 16 min for clock-skew safety.
+function alpacaEndISO(bufferMin = 16) {
+  return new Date(Date.now() - bufferMin * 60000).toISOString();
+}
+function alpacaStartISO(days) {
+  return new Date(Date.now() - days * 864e5).toISOString();
+}
+
+function updateFeedBadge() {
+  const el = g('feed-badge');
+  if (!el) return;
+  const f = getFeed();
+  el.textContent = f === 'sip' ? 'SIP · full volume' : 'IEX · partial volume';
+  el.style.color = f === 'sip' ? 'var(--green)' : 'var(--orange)';
+  el.title = f === 'sip'
+    ? 'Consolidated tape — all US exchanges. Volume signals are accurate.'
+    : 'IEX only (~2-3% of real volume). Volume-based signals are unreliable.';
+}
+
+// Single fetch with SIP->IEX downgrade and one 429 retry.
+async function alpacaFetch(url) {
+  const { key, secret } = getKeys();
+  if (!key || !secret) throw new Error('No API keys — enter and save above');
+  const headers = { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret, 'Accept': 'application/json' };
 
   let resp;
   try {
-    resp = await fetch(url, {
-      headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret, 'Accept': 'application/json' }
-    });
+    resp = await fetch(url, { headers });
   } catch (e) {
     if (e.name === 'TypeError') throw new Error('CORS blocked — serve file over http://');
     throw new Error(`Network: ${e.message}`);
   }
 
+  // Not entitled to SIP -> downgrade this session and retry on IEX.
+  if ((resp.status === 403 || resp.status === 401) && url.includes('feed=sip')) {
+    const retryUrl = url.replace('feed=sip', 'feed=iex');
+    const retry = await fetch(retryUrl, { headers }).catch(() => null);
+    if (retry && retry.ok) {
+      if (getFeed() === 'sip') { setFeed('iex'); console.warn('[apex] SIP not entitled — falling back to IEX feed'); }
+      return retry;
+    }
+  }
+
+  // Rate limited (Basic tier = 200/min) -> back off once and retry.
+  if (resp.status === 429) {
+    await new Promise(r => setTimeout(r, 2500));
+    resp = await fetch(url, { headers });
+  }
+
   if (resp.status === 401) throw new Error('Invalid API keys');
-  if (resp.status === 403) throw new Error('Access denied');
-  if (resp.status === 404) throw new Error(`Symbol not found: ${ticker}`);
-  if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.message || `HTTP ${resp.status}`); }
+  if (resp.status === 403) throw new Error('Access denied for this feed');
+  if (resp.status === 429) throw new Error('Rate limited (200/min on the free plan) — try a smaller list');
+  if (!resp.ok) {
+    const b = await resp.json().catch(() => ({}));
+    throw new Error(b.message || `HTTP ${resp.status}`);
+  }
+  return resp;
+}
 
-  const j    = await resp.json();
-  const bars = j?.bars;
-  if (!bars || !bars.length) throw new Error('No data — may not be on IEX feed');
-  if (bars.length < 10)      throw new Error(`Only ${bars.length} bars returned`);
+// Multi-symbol daily bars with CORRECT pagination.
+//
+// Critical: Alpaca's `limit` is the TOTAL bar count across ALL symbols in the
+// request, not per symbol. Results are sorted by symbol, so a naive
+// "50 symbols, limit=300" call returns ~300 bars for the FIRST symbol and
+// nothing for the other 49 — silently. We therefore request limit=10000 (the
+// max page size) and follow next_page_token until the batch is exhausted.
+//   docs: https://docs.alpaca.markets/us/reference/stockbars
+async function alpacaBarsBatch(symbols, opts = {}) {
+  const {
+    days = 280,
+    timeframe = '1Day',
+    chunkSize = 30,          // 30 x ~280 bars = ~8400, comfortably under the 10k page cap
+    onProgress = null,
+  } = opts;
 
-  const data = bars
-    .map(b => ({ date: new Date(b.t), o: b.o, h: b.h, l: b.l, c: b.c, v: b.v }))
-    .filter(d => d.c > 0 && d.h > 0 && d.l > 0 && d.o > 0);
-  if (data.length < 10) throw new Error('Insufficient clean bars');
+  const feed  = getFeed();
+  const start = alpacaStartISO(days);
+  const end   = alpacaEndISO();
+  const out   = {};
+  let done = 0;
+
+  for (let i = 0; i < symbols.length; i += chunkSize) {
+    const chunk = symbols.slice(i, i + chunkSize);
+    let pageToken = null, guard = 0;
+
+    do {
+      const url = `${APCA_BASE}/bars?symbols=${encodeURIComponent(chunk.join(','))}`
+                + `&timeframe=${timeframe}`
+                + `&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+                + `&limit=10000&feed=${feed}&sort=asc`
+                + (pageToken ? `&page_token=${encodeURIComponent(pageToken)}` : '');
+
+      const resp = await alpacaFetch(url);
+      const j = await resp.json();
+
+      for (const [sym, arr] of Object.entries(j.bars || {})) {
+        if (!out[sym]) out[sym] = [];
+        for (const b of arr) {
+          if (b.c > 0 && b.h > 0 && b.l > 0 && b.o > 0) {
+            out[sym].push({ date: new Date(b.t), o: b.o, h: b.h, l: b.l, c: b.c, v: b.v });
+          }
+        }
+      }
+      pageToken = j.next_page_token || null;
+    } while (pageToken && ++guard < 50);
+
+    done = Math.min(i + chunkSize, symbols.length);
+    if (onProgress) onProgress(done, symbols.length);
+    if (done < symbols.length) await new Promise(r => setTimeout(r, 120));
+  }
+  return out;
+}
+
+// ─── Per-session bar cache ────────────────────────────────────────────────────
+// Scanner, RS Rank, heatmap and regime all want the same 280 days. Without this
+// they each refetch from scratch.
+const _barCache = new Map();   // ticker -> { day, data }
+const _cacheDay = () => new Date().toISOString().slice(0, 10);
+
+function cacheBars(map) {
+  const day = _cacheDay();
+  for (const [sym, data] of Object.entries(map)) _barCache.set(sym, { day, data });
+}
+function cachedBars(ticker) {
+  const hit = _barCache.get(ticker);
+  return hit && hit.day === _cacheDay() ? hit.data : null;
+}
+function clearBarCache() { _barCache.clear(); }
+
+// ─── Alpaca fetch (single ticker — now cache-aware) ───────────────────────────
+async function fetchDaily(ticker) {
+  const hit = cachedBars(ticker);
+  if (hit) return hit;
+
+  const map  = await alpacaBarsBatch([ticker]);
+  const data = map[ticker];
+  if (!data || !data.length) throw new Error(`No data for ${ticker} — may be delisted or OTC`);
+  if (data.length < 10)      throw new Error(`Only ${data.length} bars returned`);
+
+  cacheBars({ [ticker]: data });
   return data;
 }
 
@@ -3171,32 +3055,56 @@ async function runScan() {
   g('cors-warn').style.display='none';
   const btn=g('btn-scan'); btn.disabled=true; btn.classList.add('running'); btn.textContent='⟳ Scanning...';
   g('stats-strip').style.display='flex'; g('tbody').innerHTML='';
-  const prog=g('prog'); let done=0, corsHit=false;
+  const prog=g('prog');
 
-  for (const ticker of activeTickers) {
-    if (corsHit) {
-      results.push({ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:'Halted — fix CORS first'});
-      done++; continue;
-    }
-    setInfo(`Scanning <b>${ticker}</b>… (${done+1}/${activeTickers.length})`);
-    try {
-      const data = await fetchDaily(ticker);
-      results.push(analyzeStock(ticker, data));
-    } catch(e) {
-      if (e.message.includes('CORS')||e.message.includes('blocked')||e.name==='TypeError') {
-        corsHit=true; g('cors-warn').style.display='block';
+  // ── Stage 1: batch-fetch every ticker's bars ────────────────────────────────
+  // Was one HTTP request per ticker; now ~30 symbols per request with proper
+  // pagination. A 500-ticker scan drops from ~500 requests to ~17, which also
+  // keeps us under the free plan's 200 req/min ceiling.
+  let barsMap = {};
+  try {
+    barsMap = await alpacaBarsBatch(activeTickers, {
+      onProgress: (n, total) => {
+        prog.style.width = (n / total * 70) + '%';
+        setInfo(`Fetching bars… <b>${n}</b>/${total} <span style="color:var(--muted)">· ${getFeed().toUpperCase()} feed</span>`);
       }
-      results.push({ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:e.message});
+    });
+  } catch (e) {
+    if (e.message.includes('CORS') || e.message.includes('blocked')) g('cors-warn').style.display='block';
+    scanning=false; btn.disabled=false; btn.classList.remove('running'); btn.textContent='▶ Run Scan';
+    setInfo(`<span style="color:var(--red)">Scan failed — ${e.message}</span>`);
+    prog.style.width='0%';
+    return;
+  }
+  cacheBars(barsMap);
+
+  // ── Stage 2: analyse ────────────────────────────────────────────────────────
+  setInfo(`Analysing <b>${activeTickers.length}</b> tickers…`);
+  let done = 0;
+  for (const ticker of activeTickers) {
+    const data = barsMap[ticker];
+    if (!data || data.length < 10) {
+      results.push({ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,
+                    errMsg: data ? `Only ${data.length} bars` : 'No data — delisted or OTC'});
+    } else {
+      try {
+        results.push(analyzeStock(ticker, data));
+      } catch(e) {
+        results.push({ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:e.message});
+      }
     }
     done++;
-    prog.style.width=(done/activeTickers.length*100)+'%';
-    renderTable(); updateStats();
+    if (done % 25 === 0 || done === activeTickers.length) {
+      prog.style.width = (70 + done / activeTickers.length * 30) + '%';
+      renderTable(); updateStats();
+    }
   }
+  renderTable(); updateStats();
 
   scanning=false; btn.disabled=false; btn.classList.remove('running'); btn.textContent='▶ Run Scan';
   const hits=results.filter(r=>!r.error&&r.signals.some(s=>activeStrats.has(s))).length;
   const fails=results.filter(r=>r.error).length;
-  setInfo(`Scan complete — <b>${activeTickers.length}</b> scanned, <b>${hits}</b> setups found${fails?`, <span style="color:var(--red)">${fails} failed</span>`:''}`);
+  setInfo(`Scan complete — <b>${activeTickers.length}</b> scanned on <b>${getFeed().toUpperCase()}</b>, <b>${hits}</b> setups found${fails?`, <span style="color:var(--red)">${fails} failed</span>`:''}`);
   g('btn-retry').style.display=fails?'inline-block':'none';
   g('ts').textContent='Updated '+new Date().toLocaleTimeString();
   setTimeout(()=>prog.style.width='0%',1200);
@@ -3206,6 +3114,7 @@ async function retrySingle(ticker) {
   const idx=results.findIndex(r=>r.ticker===ticker); if(idx===-1) return;
   results[idx]={ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:false};
   renderTable();
+  _barCache.delete(ticker);   // force a real refetch, don't replay the cached failure
   try { results[idx]=analyzeStock(ticker, await fetchDaily(ticker)); }
   catch(e) { results[idx]={ticker,price:0,changePct:0,volRatio:0,signals:[],details:[],error:true,errMsg:e.message}; }
   renderTable(); updateStats();
@@ -3733,986 +3642,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && g('modal-holdings').classList.contains('open')) closeHoldingsModal();
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-// JOURNAL
-// ═════════════════════════════════════════════════════════════════════════════
-
-const JOURNAL_KEY = 'apex_journal';
-let trades = [];
-let editingTradeId = null; // id of trade we're closing
-
-const STRAT_LABELS = {
-  htf:'🚩 HTF', htfs:'🚩 HTF-Short',
-  nr4:'NR4', nr7:'NR7', macross:'21O50', htf:'🚩 HTF', htfs:'🚩 HTF-S', pull50:'50 SMA Pull',
-  flat:'Flat Base', cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout',
-  other:'Other'
-};
-
-function getTrades() {
-  try { return JSON.parse(localStorage.getItem(JOURNAL_KEY) || '[]'); }
-  catch { return []; }
-}
-
-function saveTrades(list) {
-  trades = list;
-  localStorage.setItem(JOURNAL_KEY, JSON.stringify(list));
-  const count = list.length;
-  g('journal-count').textContent = count + (count === 1 ? ' trade' : ' trades');
-  g('journal-tab-count').textContent = count ? `(${count})` : '';
-}
-
-function todayISO() {
-  const d = new Date();
-  return d.toISOString().split('T')[0];
-}
-
-function fmtDate(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
-}
-
-// ─── Entry modal ──────────────────────────────────────────────────────────
-let entryStrat = null;
-
-function openEntryModal() {
-  entryStrat = null;
-  g('entry-modal-title').textContent = 'New Trade Entry';
-  g('entry-ticker').value = '';
-  g('entry-date').value = todayISO();
-  g('entry-price').value = '';
-  g('entry-size').value = '';
-  g('entry-notes').value = '';
-  document.querySelectorAll('.strat-chip').forEach(c => c.classList.remove('active'));
-  setEntryMode('full'); // always start in full mode
-  g('modal-entry').classList.add('open');
-  setTimeout(() => g('entry-ticker').focus(), 100);
-}
-
-// ── Entry modal mode toggle ────────────────────────────────────────────────
-function setEntryMode(mode) {
-  const isFull = mode === 'full';
-  g('entry-form-full').style.display  = isFull ? '' : 'none';
-  g('entry-form-quick').style.display = isFull ? 'none' : '';
-  g('entry-mode-full').style.background  = isFull ? 'rgba(255,155,78,.12)' : 'transparent';
-  g('entry-mode-full').style.color       = isFull ? 'var(--orange)' : 'var(--muted)';
-  g('entry-mode-quick').style.background = isFull ? 'transparent' : 'rgba(255,155,78,.12)';
-  g('entry-mode-quick').style.color      = isFull ? 'var(--muted)' : 'var(--orange)';
-}
-
-g('entry-mode-full').addEventListener('click',  () => setEntryMode('full'));
-g('entry-mode-quick').addEventListener('click', () => {
-  setEntryMode('quick');
-  g('ql-date').value = todayISO();
-  // Reset quick-log strat chips
-  document.querySelectorAll('#ql-strat-row .strat-chip').forEach(c => c.classList.remove('active'));
-  document.querySelector('#ql-strat-row [data-ql-strat="other"]')?.classList.add('active');
-  qlStrat = 'other';
-  if (g('ql-preview')) g('ql-preview').style.display = 'none';
-  setTimeout(() => g('ql-ticker').focus(), 50);
-});
-
-// Quick-log strategy chips
-let qlStrat = 'other';
-document.querySelectorAll('#ql-strat-row [data-ql-strat]').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('#ql-strat-row .strat-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    qlStrat = chip.dataset.qlStrat;
-  });
-});
-
-// Live P&L% preview
-function updateQLPreview() {
-  const pnl      = parseFloat(g('ql-pnl')?.value);
-  const invested = parseFloat(g('ql-invested')?.value);
-  const preview  = g('ql-preview');
-  const previewText = g('ql-preview-text');
-  if (!preview || !previewText) return;
-  if (isNaN(pnl)) { preview.style.display = 'none'; return; }
-  const pct = invested > 0 ? (pnl / invested * 100) : null;
-  const col = pnl >= 0 ? 'var(--green)' : 'var(--red)';
-  preview.style.display = 'block';
-  previewText.innerHTML = `
-    <span style="color:${col};font-weight:700;font-size:14px">${pnl>=0?'+':''}£${pnl.toFixed(2)}</span>
-    ${pct!=null?`<span style="color:${col};margin-left:10px">${pct>=0?'+':''}${pct.toFixed(2)}%</span>`:''}
-    ${invested>0?`<span style="color:var(--muted);margin-left:10px;font-size:10px">on £${invested.toLocaleString('en-GB')} invested</span>`:''}
-    ${pct==null?`<span style="color:var(--muted);margin-left:10px;font-size:10px">(enter invested amount for P&L%)</span>`:''}`;
-}
-g('ql-pnl')?.addEventListener('input', updateQLPreview);
-g('ql-invested')?.addEventListener('input', updateQLPreview);
-
-// Quick-log save
-g('ql-save')?.addEventListener('click', () => {
-  const ticker   = g('ql-ticker').value.trim().toUpperCase();
-  const date     = g('ql-date').value;
-  const pnl      = parseFloat(g('ql-pnl').value);
-  const shares   = parseFloat(g('ql-shares').value) || null;
-  const invested = parseFloat(g('ql-invested').value) || null;
-  const status   = g('ql-status').value;
-  const notes    = g('ql-notes').value.trim();
-
-  if (!ticker) { alert('Enter a ticker symbol.'); g('ql-ticker').focus(); return; }
-  if (!date)   { alert('Enter a date.'); return; }
-  if (isNaN(pnl)) { alert('Enter a P&L value (e.g. 450 or -120).'); g('ql-pnl').focus(); return; }
-
-  const plPct = invested > 0 ? parseFloat((pnl / invested * 100).toFixed(3)) : null;
-
-  const trade = {
-    id:         'ql_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-    ticker,
-    entryDate:  date,
-    exitDate:   status === 'closed' ? date : null,
-    entryPrice: invested && shares > 0 ? parseFloat((invested / shares).toFixed(4)) : 0,
-    exitPrice:  null,
-    plPct,
-    plGBP:      pnl,
-    shares,
-    invested,
-    strategy:   qlStrat,
-    notes,
-    exitReason: '',
-    mistakes:   [],
-    status,
-    source:     'quick',
-  };
-
-  const trades = getTrades();
-  trades.unshift(trade);
-  saveTrades(trades);
-
-  // Reset
-  ['ql-ticker','ql-pnl','ql-shares','ql-invested','ql-notes'].forEach(id => { if(g(id)) g(id).value=''; });
-  if (g('ql-preview')) g('ql-preview').style.display = 'none';
-  qlStrat = 'other';
-  document.querySelectorAll('#ql-strat-row .strat-chip').forEach(c => c.classList.remove('active'));
-  document.querySelector('#ql-strat-row [data-ql-strat="other"]')?.classList.add('active');
-
-  g('modal-entry').classList.remove('open');
-  renderJournal();
-});
-
-g('ql-cancel')?.addEventListener('click', () => g('modal-entry').classList.remove('open'));
-
-function closeEntryModal() {
-  g('modal-entry').classList.remove('open');
-}
-
-function saveEntry() {
-  const ticker = g('entry-ticker').value.trim().toUpperCase();
-  const date = g('entry-date').value;
-  const price = parseFloat(g('entry-price').value);
-  const size = g('entry-size').value.trim();
-  const notes = g('entry-notes').value.trim();
-
-  if (!ticker) { alert('Enter a ticker'); return; }
-  if (!date) { alert('Pick an entry date'); return; }
-  if (isNaN(price) || price <= 0) { alert('Enter a valid entry price'); return; }
-  if (!entryStrat) { alert('Pick a strategy'); return; }
-
-  const newTrade = {
-    id: Date.now() + '-' + Math.random().toString(36).slice(2,8),
-    ticker, entryDate: date, entryPrice: price, size, entryNotes: notes,
-    strategy: entryStrat,
-    exitDate: null, exitPrice: null, plPct: null, exitReason: null, exitNotes: null,
-    status: 'open',
-    createdAt: new Date().toISOString()
-  };
-
-  const list = getTrades();
-  list.push(newTrade);
-  saveTrades(list);
-  closeEntryModal();
-  renderJournal();
-}
-
-// ─── Exit modal ──────────────────────────────────────────────────────────
-let exitReason = null;
-
-function openExitModal(tradeId) {
-  const t = getTrades().find(x => x.id === tradeId);
-  if (!t) return;
-  editingTradeId = tradeId;
-  exitReason = null;
-
-  g('exit-ticker-name').textContent = t.ticker;
-  g('exit-subtitle').textContent = `Entry: ${fmtDate(t.entryDate)} @ $${t.entryPrice.toFixed(2)} · ${STRAT_LABELS[t.strategy] || t.strategy}`;
-  g('exit-date').value = todayISO();
-  g('exit-price').value = '';
-  g('exit-pl').value = '';
-  g('exit-notes').value = '';
-  document.querySelectorAll('.reason-chip').forEach(c => c.classList.remove('active'));
-  g('modal-exit').classList.add('open');
-  setTimeout(() => g('exit-price').focus(), 100);
-}
-
-function closeExitModal() {
-  g('modal-exit').classList.remove('open');
-  editingTradeId = null;
-}
-
-// Auto-calc P/L when exit price is entered
-function autoCalcPL() {
-  if (!editingTradeId) return;
-  const t = getTrades().find(x => x.id === editingTradeId);
-  if (!t) return;
-  const exitPx = parseFloat(g('exit-price').value);
-  if (isNaN(exitPx) || exitPx <= 0) return;
-  const pl = ((exitPx - t.entryPrice) / t.entryPrice) * 100;
-  g('exit-pl').value = pl.toFixed(2);
-}
-
-function saveExit() {
-  if (!editingTradeId) return;
-  const list = getTrades();
-  const idx = list.findIndex(x => x.id === editingTradeId);
-  if (idx === -1) return;
-
-  const date = g('exit-date').value;
-  const exitPriceRaw = g('exit-price').value.trim();
-  const plRaw = g('exit-pl').value.trim();
-  const notes = g('exit-notes').value.trim();
-
-  if (!date) { alert('Pick an exit date'); return; }
-  if (plRaw === '' || isNaN(parseFloat(plRaw))) { alert('Enter P/L % (or enter exit price to auto-calc)'); return; }
-  if (!exitReason) { alert('Pick an exit reason'); return; }
-
-  const pl = parseFloat(plRaw);
-  list[idx] = {
-    ...list[idx],
-    exitDate: date,
-    exitPrice: exitPriceRaw ? parseFloat(exitPriceRaw) : null,
-    plPct: pl,
-    exitReason,
-    exitNotes: notes,
-    status: pl > 0.1 ? 'win' : pl < -0.1 ? 'loss' : 'be',
-    closedAt: new Date().toISOString()
-  };
-  saveTrades(list);
-  closeExitModal();
-  renderJournal();
-}
-
-function deleteTrade(tradeId) {
-  const trades = getTrades();
-  const t = trades.find(x => x.id === tradeId);
-  if (!t) return;
-
-  const plStr = t.plPct != null ? ` · P/L: ${t.plPct >= 0 ? '+' : ''}${t.plPct.toFixed(2)}%` : '';
-  const msg   = `Delete this trade?\n\n`
-              + `${t.ticker} — entered ${fmtDate(t.entryDate)} @ $${t.entryPrice?.toFixed(2) || '?'}${plStr}\n\n`
-              + `This removes it from all journal stats, equity curve, and expectancy calculations.`;
-
-  if (!confirm(msg)) return;
-  saveTrades(trades.filter(x => x.id !== tradeId));
-  renderJournal();
-}
-
-// ─── Stats / Dashboard ────────────────────────────────────────────────────
-function calcStats(tradeList) {
-  const closed = tradeList.filter(t => t.status !== 'open' && t.plPct != null);
-  const wins   = closed.filter(t => t.plPct > 0.1);
-  const losses = closed.filter(t => t.plPct < -0.1);
-  const winPct = closed.length ? (wins.length / closed.length) * 100 : 0;
-  const avgWin = wins.length ? wins.reduce((a,b)=>a+b.plPct,0) / wins.length : 0;
-  const avgLoss = losses.length ? losses.reduce((a,b)=>a+b.plPct,0) / losses.length : 0;
-  const total = closed.reduce((a,b)=>a+b.plPct,0);
-  // Expectancy = (WinRate × AvgWin) + (LossRate × AvgLoss)  [avgLoss is negative]
-  const expectancy = closed.length ? ((winPct/100) * avgWin) + (((100-winPct)/100) * avgLoss) : 0;
-  return {
-    total: tradeList.length,
-    open: tradeList.filter(t => t.status === 'open').length,
-    closed: closed.length,
-    wins: wins.length,
-    losses: losses.length,
-    winPct, avgWin, avgLoss, expectancy,
-    totalPct: total,
-  };
-}
-
-function renderDashboard() {
-  const s = calcStats(trades);
-  const plColor = s.totalPct > 0 ? 'cg' : s.totalPct < 0 ? 'co' : 'cm';
-  const expColor = s.expectancy > 0 ? 'cg' : s.expectancy < 0 ? 'co' : 'cm';
-  g('jdash').innerHTML = `
-    <div class="stat-box cm"><div class="stat-n">${s.total}</div><div class="stat-lbl">Total Trades</div></div>
-    <div class="stat-box co"><div class="stat-n co">${s.open}</div><div class="stat-lbl">Open</div></div>
-    <div class="stat-box cm"><div class="stat-n">${s.closed}</div><div class="stat-lbl">Closed</div></div>
-    <div class="stat-box cg"><div class="stat-n cg">${s.wins}</div><div class="stat-lbl">Wins</div></div>
-    <div class="stat-box co"><div class="stat-n" style="color:var(--red)">${s.losses}</div><div class="stat-lbl">Losses</div></div>
-    <div class="stat-box ca"><div class="stat-n ca">${s.winPct.toFixed(1)}%</div><div class="stat-lbl">Win Rate</div></div>
-    <div class="stat-box cg"><div class="stat-n cg">${s.avgWin >= 0 ? '+' : ''}${s.avgWin.toFixed(2)}%</div><div class="stat-lbl">Avg Win</div></div>
-    <div class="stat-box cm"><div class="stat-n" style="color:var(--red)">${s.avgLoss.toFixed(2)}%</div><div class="stat-lbl">Avg Loss</div></div>
-    <div class="stat-box ${expColor}"><div class="stat-n ${expColor}">${s.expectancy >= 0 ? '+' : ''}${s.expectancy.toFixed(2)}%</div><div class="stat-lbl">Expectancy</div></div>
-    <div class="stat-box ${plColor}"><div class="stat-n ${plColor}">${s.totalPct >= 0 ? '+' : ''}${s.totalPct.toFixed(2)}%</div><div class="stat-lbl">Total P/L</div></div>
-  `;
-}
-
-function renderStrategyPerf() {
-  const byStrat = {};
-  for (const t of trades) {
-    if (t.status === 'open' || t.plPct == null) continue;
-    if (!byStrat[t.strategy]) byStrat[t.strategy] = [];
-    byStrat[t.strategy].push(t);
-  }
-
-  const rows = Object.entries(byStrat)
-    .map(([strat, list]) => ({ strat, ...calcStats(list), trades: list.length }))
-    .sort((a,b) => b.expectancy - a.expectancy);
-
-  const tbody = g('perf-tbody');
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-cell" style="padding:40px 20px"><div class="es">No closed trades yet — strategy breakdown appears once you close trades</div></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = rows.map(r => {
-    const wrColor = r.winPct >= 60 ? 'var(--green)' : r.winPct >= 40 ? 'var(--accent)' : r.winPct >= 25 ? 'var(--orange)' : 'var(--red)';
-    const expCls = r.expectancy > 0 ? 'pl-up' : r.expectancy < 0 ? 'pl-down' : '';
-    const totCls = r.totalPct > 0 ? 'pl-up' : r.totalPct < 0 ? 'pl-down' : '';
-    const stagCls = r.strat === 'other' ? 'flat' : r.strat;
-    return `<tr>
-      <td><span class="strat-pill stag ${stagCls}">${STRAT_LABELS[r.strat] || r.strat}</span></td>
-      <td class="num">${r.closed}</td>
-      <td class="num pl-up">${r.wins}</td>
-      <td class="num pl-down">${r.losses}</td>
-      <td class="num"><div class="wr-bar-wrap"><div class="wr-bar"><div class="wr-fill" style="width:${Math.min(100,r.winPct)}%;background:${wrColor}"></div></div><span class="wr-txt">${r.winPct.toFixed(0)}%</span></div></td>
-      <td class="num pl-up">+${r.avgWin.toFixed(2)}%</td>
-      <td class="num pl-down">${r.avgLoss.toFixed(2)}%</td>
-      <td class="num ${expCls}">${r.expectancy >= 0 ? '+' : ''}${r.expectancy.toFixed(2)}%</td>
-      <td class="num ${totCls}">${r.totalPct >= 0 ? '+' : ''}${r.totalPct.toFixed(2)}%</td>
-    </tr>`;
-  }).join('');
-}
-
-// ─── Trade log table ──────────────────────────────────────────────────────
-function renderTradeLog() {
-  const status = g('trade-filter-status').value;
-  const strat  = g('trade-filter-strat').value;
-  const sort   = g('trade-sort').value;
-
-  let filtered = [...trades];
-  if (status !== 'all') {
-    if (status === 'open') filtered = filtered.filter(t => t.status === 'open');
-    else if (status === 'closed') filtered = filtered.filter(t => t.status !== 'open');
-    else filtered = filtered.filter(t => t.status === status);
-  }
-  if (strat !== 'all') filtered = filtered.filter(t => t.strategy === strat);
-
-  filtered.sort((a,b) => {
-    if (sort === 'date-desc') return (b.entryDate || '').localeCompare(a.entryDate || '');
-    if (sort === 'date-asc')  return (a.entryDate || '').localeCompare(b.entryDate || '');
-    if (sort === 'pl-desc')   return (b.plPct ?? -Infinity) - (a.plPct ?? -Infinity);
-    if (sort === 'pl-asc')    return (a.plPct ??  Infinity) - (b.plPct ??  Infinity);
-    return 0;
-  });
-
-  const tbody = g('trade-tbody');
-  if (!filtered.length) {
-    tbody.innerHTML = trades.length
-      ? `<tr><td colspan="10"><div class="empty-cell"><div class="ei">◌</div><div class="et">No matches</div><div class="es">Adjust filters above</div></div></td></tr>`
-      : `<tr><td colspan="10"><div class="empty-cell"><div class="ei">◷</div><div class="et">No Trades Logged</div><div class="es">Click "+ Log New Trade" above to add your first entry</div></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = filtered.map((t, i) => {
-    const plCls = t.plPct == null ? '' : t.plPct > 0 ? 'pl-up' : t.plPct < 0 ? 'pl-down' : '';
-    const plStr = t.plPct == null ? '—' : (t.plPct >= 0 ? '+' : '') + t.plPct.toFixed(2) + '%';
-    const exitPxStr = t.exitPrice != null ? '$' + t.exitPrice.toFixed(2) : '—';
-    const stagCls = t.strategy === 'other' ? 'flat' : t.strategy;
-    const statusLbl = t.status === 'open' ? 'Open' : t.status === 'win' ? 'Win' : t.status === 'loss' ? 'Loss' : 'BE';
-    const titleNotes = [t.entryNotes && `Entry: ${t.entryNotes}`, t.exitNotes && `Exit: ${t.exitNotes}`].filter(Boolean).join(' | ');
-    const t212Badge  = t.source === 't212'
-      ? `<span style="font-size:8px;letter-spacing:1px;color:var(--cyan);background:rgba(78,232,255,.1);border:1px solid rgba(78,232,255,.25);padding:1px 5px;margin-left:5px;vertical-align:middle">T212</span>`
-      : '';
-    const quickBadge = t.source === 'quick'
-      ? `<span style="font-size:8px;letter-spacing:1px;color:var(--orange);background:rgba(255,155,78,.1);border:1px solid rgba(255,155,78,.25);padding:1px 5px;margin-left:5px;vertical-align:middle">⚡</span>`
-      : '';
-    const sharesStr = t.shares ? `<span style="font-size:9px;color:var(--muted);margin-left:4px">${t.shares > 0 ? t.shares.toFixed(t.shares < 1 ? 4 : 0) + ' shares' : ''}</span>` : '';
-    return `<tr style="animation-delay:${i*30}ms" ${titleNotes ? `title="${titleNotes.replace(/"/g,'&quot;')}"` : ''}>
-      <td class="td-tick">${t.ticker}${t212Badge}${quickBadge}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${t.ticker}" target="_blank">TV ↗</a>${sharesStr}</td>
-      <td class="trade-date">${fmtDate(t.entryDate)}</td>
-      <td class="num">${t.entryPrice ? '$' + t.entryPrice.toFixed(2) : t.invested ? '£'+t.invested.toLocaleString('en-GB') : '—'}</td>
-      <td><span class="strat-pill stag ${stagCls}">${STRAT_LABELS[t.strategy] || t.strategy}</span></td>
-      <td class="trade-date">${fmtDate(t.exitDate)}</td>
-      <td class="num">${exitPxStr}</td>
-      <td class="num ${plCls}">${plStr}${t.plGBP != null && t.source === 'quick' ? `<br><span style="font-size:9px;color:${t.plGBP>=0?'var(--green)':'var(--red)'}">${t.plGBP>=0?'+':''}£${Math.abs(t.plGBP).toFixed(2)}</span>` : ''}</td>
-      <td style="font-size:10px;color:var(--muted)">${t.exitReason || '—'}</td>
-      <td class="ctr"><span class="trade-status ${t.status}">${statusLbl}</span></td>
-      <td class="ctr"><div class="td-act">
-        ${t.status === 'open' ? `<button class="act-btn exit" data-exit="${t.id}">Close →</button>` : ''}
-        <button class="act-btn" data-change-strat="${t.id}" title="Change strategy" style="color:var(--orange);border-color:rgba(255,155,78,.4)">✎</button>
-        <button class="act-btn del" data-del-trade="${t.id}">✕</button>
-      </div></td>
-    </tr>`;
-  }).join('');
-
-  tbody.querySelectorAll('[data-exit]').forEach(b => b.addEventListener('click', () => openExitModal(b.dataset.exit)));
-  tbody.querySelectorAll('[data-change-strat]').forEach(b => b.addEventListener('click', () => changeTradeStrategy(b.dataset.changeStrat)));
-  // Note: [data-del-trade] uses a delegated listener below (never needs re-attaching)
-}
-
-// ── Single delegated delete listener on trade tbody ────────────────────────
-// Attached once — survives all re-renders because it's on the container not the buttons
-g('trade-tbody').addEventListener('click', e => {
-  const btn = e.target.closest('[data-del-trade]');
-  if (btn) deleteTrade(btn.dataset.delTrade);
-});
-
-// ─── Aggregate Position View ──────────────────────────────────────────────────
-let aggregateViewActive = false;
-
-function buildAggregatePositions(trades) {
-  // Group all trades by ticker, aggregate net shares, avg cost, realised P&L
-  const map = {};
-
-  for (const t of trades) {
-    const tk = t.ticker.toUpperCase().trim();
-    if (!map[tk]) {
-      map[tk] = {
-        ticker:          tk,
-        totalBuyShares:  0,
-        totalBuyCost:    0,   // sum of (shares × price) for all buys
-        totalSellShares: 0,
-        totalSellValue:  0,   // sum of (shares × price) for all sells
-        realisedPL:      0,   // £ value from T212 result field if available
-        realisedPLPct:   [],  // array of individual plPct values to avg
-        tradeCount:      0,
-        openCount:       0,
-        closedCount:     0,
-        strategies:      new Set(),
-        firstDate:       t.entryDate,
-        lastDate:        t.entryDate,
-      };
-    }
-
-    const pos = map[tk];
-    pos.tradeCount++;
-
-    const shares = parseFloat(t.shares) || 0;
-    const entryPx = parseFloat(t.entryPrice) || 0;
-    const exitPx  = parseFloat(t.exitPrice)  || 0;
-
-    if (t.status === 'open') {
-      pos.openCount++;
-      pos.totalBuyShares += shares || 0;
-      pos.totalBuyCost   += (shares || 0) * entryPx;
-    } else {
-      pos.closedCount++;
-      // Entry side
-      const buyShares = shares || 0;
-      pos.totalBuyShares  += buyShares;
-      pos.totalBuyCost    += buyShares * entryPx;
-      // Exit side
-      pos.totalSellShares += buyShares;
-      pos.totalSellValue  += buyShares * exitPx;
-
-      if (t.plPct != null) pos.realisedPLPct.push(t.plPct);
-    }
-
-    if (t.strategy && t.strategy !== 'other') pos.strategies.add(t.strategy);
-    if (t.entryDate && t.entryDate < pos.firstDate) pos.firstDate = t.entryDate;
-    if (t.exitDate  && t.exitDate  > pos.lastDate)  pos.lastDate  = t.exitDate;
-    if (t.entryDate && t.entryDate > pos.lastDate)  pos.lastDate  = t.entryDate;
-  }
-
-  return Object.values(map).map(pos => {
-    const netShares   = pos.totalBuyShares - pos.totalSellShares;
-    const avgCost     = pos.totalBuyShares > 0 ? pos.totalBuyCost / pos.totalBuyShares : 0;
-    const totalInvested = netShares > 0 ? netShares * avgCost : pos.totalBuyCost;
-    // Realised P&L in currency (sell proceeds - buy cost for closed portion)
-    const realisedPLGBP = pos.totalSellValue - (pos.totalSellShares * avgCost);
-    // Weighted avg P&L% from individual trades
-    const avgPLPct = pos.realisedPLPct.length
-      ? pos.realisedPLPct.reduce((a,b) => a+b, 0) / pos.realisedPLPct.length
-      : null;
-
-    const status = netShares > 0.001 ? 'open' : 'closed';
-
-    return {
-      ...pos,
-      netShares,
-      avgCost,
-      totalInvested,
-      realisedPLGBP,
-      avgPLPct,
-      status,
-      strategies: [...pos.strategies],
-    };
-  }).sort((a,b) => {
-    // Open positions first, then by total invested descending
-    if (a.status !== b.status) return a.status === 'open' ? -1 : 1;
-    return Math.abs(b.totalInvested) - Math.abs(a.totalInvested);
-  });
-}
-
-function renderAggregateView() {
-  const allTrades = getTrades();
-  const positions = buildAggregatePositions(allTrades);
-  const tbody     = g('aggregate-tbody');
-  if (!tbody) return;
-
-  if (!positions.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-cell"><div class="ei">◌</div><div class="et">No Trades</div><div class="es">Log trades or import a Trading 212 CSV to see aggregate positions</div></div></td></tr>`;
-    return;
-  }
-
-  const totalOpen   = positions.filter(p => p.status === 'open').length;
-  const totalClosed = positions.filter(p => p.status === 'closed').length;
-  const totalPLGBP  = positions.reduce((a,b) => a + (b.realisedPLGBP || 0), 0);
-  const sumEl = g('aggregate-summary');
-  if (sumEl) sumEl.innerHTML = `${totalOpen} open · ${totalClosed} closed · Net P&L: <b style="color:${totalPLGBP>=0?'var(--green)':'var(--red)'}">${totalPLGBP>=0?'+':''}£${Math.abs(totalPLGBP).toFixed(2)}</b>`;
-
-  tbody.innerHTML = positions.map((pos, i) => {
-    const plCls    = pos.avgPLPct == null ? '' : pos.avgPLPct > 0 ? 'pl-up' : pos.avgPLPct < 0 ? 'pl-down' : '';
-    const plStr    = pos.avgPLPct != null ? (pos.avgPLPct>=0?'+':'') + pos.avgPLPct.toFixed(2) + '%' : '—';
-    const plGBPCls = pos.realisedPLGBP > 0 ? 'pl-up' : pos.realisedPLGBP < 0 ? 'pl-down' : '';
-    const plGBPStr = pos.closedCount > 0
-      ? (pos.realisedPLGBP>=0?'+':'') + '£' + Math.abs(pos.realisedPLGBP).toFixed(2)
-      : '—';
-    const netSharesStr = pos.netShares > 0.001
-      ? `<b style="color:var(--green)">+${pos.netShares.toFixed(pos.netShares<1?4:pos.netShares<10?2:0)}</b>`
-      : `<span style="color:var(--muted)">0 (closed)</span>`;
-    const avgCostStr   = pos.avgCost > 0 ? '$' + pos.avgCost.toFixed(2) : '—';
-    const investedStr  = pos.totalInvested > 0 ? '£' + pos.totalInvested.toFixed(2) : '—';
-    const stratTags    = pos.strategies.slice(0,2).map(s =>
-      `<span class="stag ${s}" style="font-size:8px;padding:1px 5px">${STRAT_LABELS[s]||s}</span>`
-    ).join('');
-    const statusBadge  = pos.status === 'open'
-      ? `<span class="trade-status open">Open</span>`
-      : `<span class="trade-status closed">Closed</span>`;
-
-    return `<tr style="animation-delay:${i*20}ms">
-      <td class="td-tick">
-        ${pos.ticker}
-        <a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${pos.ticker}" target="_blank">TV ↗</a>
-        ${pos.source === 't212' ? `<span style="font-size:8px;color:var(--cyan);background:rgba(78,232,255,.1);border:1px solid rgba(78,232,255,.2);padding:1px 4px;margin-left:4px">T212</span>` : ''}
-        <div style="margin-top:3px">${stratTags}</div>
-      </td>
-      <td class="num">${netSharesStr}</td>
-      <td class="num">${avgCostStr}</td>
-      <td class="num" style="color:var(--muted)">${investedStr}</td>
-      <td class="num ${plCls}">${plStr}</td>
-      <td class="num ${plGBPCls}">${plGBPStr}</td>
-      <td class="ctr" style="font-size:10px">
-        <span style="color:var(--green)">${pos.closedCount} closed</span>
-        ${pos.openCount ? `<br><span style="color:var(--accent)">${pos.openCount} open</span>` : ''}
-      </td>
-      <td class="ctr">${statusBadge}</td>
-      <td class="ctr">
-        <div class="td-act">
-          <button class="act-btn del" data-del-ticker="${pos.ticker}"
-            title="Delete all ${pos.tradeCount} trade${pos.tradeCount!==1?'s':''} for ${pos.ticker}">
-            🗑 All
-          </button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-// ── Delegated delete listener on aggregate tbody ───────────────────────────
-g('aggregate-tbody').addEventListener('click', e => {
-  const btn = e.target.closest('[data-del-ticker]');
-  if (!btn) return;
-  const ticker = btn.dataset.delTicker;
-  const trades = getTrades();
-  const matching = trades.filter(t => t.ticker.toUpperCase() === ticker.toUpperCase());
-  if (!matching.length) return;
-
-  const closed = matching.filter(t => t.status !== 'open');
-  const open   = matching.filter(t => t.status === 'open');
-  const plSum  = closed.reduce((a,t) => a + (t.plPct||0), 0);
-  const plAvg  = closed.length ? (plSum / closed.length).toFixed(2) : null;
-
-  const msg = `Delete ALL trades for ${ticker}?\n\n`
-    + `${matching.length} total trades\n`
-    + `${closed.length} closed${plAvg != null ? ` · avg P/L ${plAvg >= 0 ? '+' : ''}${plAvg}%` : ''}\n`
-    + `${open.length} open positions\n\n`
-    + `This removes them from all journal stats and cannot be undone.`;
-
-  if (!confirm(msg)) return;
-  saveTrades(trades.filter(t => t.ticker.toUpperCase() !== ticker.toUpperCase()));
-  renderJournal();
-  // Stay in aggregate view and refresh it
-  renderAggregateView();
-});
-
-// ─── Toggle handler ────────────────────────────────────────────────────────
-g('btn-aggregate-view').addEventListener('click', () => {
-  aggregateViewActive = !aggregateViewActive;
-  const aggPanel  = g('aggregate-panel');
-  const tblWrap   = g('aggregate-panel')?.nextElementSibling; // the normal tbl-wrap
-
-  if (aggregateViewActive) {
-    g('btn-aggregate-view').textContent  = '☰ Individual Trades';
-    g('btn-aggregate-view').style.background = 'rgba(78,232,255,.2)';
-    g('btn-aggregate-view').style.borderColor = 'var(--cyan)';
-    aggPanel.style.display = 'block';
-    renderAggregateView();
-    // Hide normal trade table
-    document.querySelectorAll('.tbl-wrap').forEach(el => {
-      if (el.contains(g('trade-tbody'))) el.style.display = 'none';
-    });
-  } else {
-    g('btn-aggregate-view').textContent  = '⊞ Aggregate by Ticker';
-    g('btn-aggregate-view').style.background = '';
-    g('btn-aggregate-view').style.borderColor = '';
-    aggPanel.style.display = 'none';
-    document.querySelectorAll('.tbl-wrap').forEach(el => {
-      if (el.contains(g('trade-tbody'))) el.style.display = '';
-    });
-  }
-});
-
-function renderJournal() {
-  trades = getTrades();
-  g('journal-count').textContent = trades.length + (trades.length === 1 ? ' trade' : ' trades');
-  g('journal-tab-count').textContent = trades.length ? `(${trades.length})` : '';
-  renderDashboard();
-  renderStrategyPerf();
-  renderTradeLog();
-  if (aggregateViewActive) renderAggregateView();
-}
-
-// ─── Import / export ──────────────────────────────────────────────────────
-function exportJournal() {
-  const data = JSON.stringify(trades, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `apex-journal-${todayISO()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importJournal(file) {
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const imported = JSON.parse(ev.target.result);
-      if (!Array.isArray(imported)) throw new Error('not an array');
-      if (!confirm(`Import ${imported.length} trades?\n\n"Replace" overwrites existing, "Cancel" aborts.\nClick OK to MERGE (add to existing).`)) {
-        // User clicked cancel — do nothing
-        return;
-      }
-      const existing = getTrades();
-      const existingIds = new Set(existing.map(t => t.id));
-      const merged = [...existing, ...imported.filter(t => !existingIds.has(t.id))];
-      saveTrades(merged);
-      renderJournal();
-      alert(`Imported ${imported.length} trades (${merged.length - existing.length} new).`);
-    } catch(e) {
-      alert('Failed to import: ' + e.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-// ─── Trading 212 CSV Importer ─────────────────────────────────────────────────
-function parseT212CSV(text) {
-  const lines = text.trim().split('\n');
-  if (!lines.length) throw new Error('Empty file');
-
-  // Parse header row — T212 uses comma-separated, values may be quoted
-  const parseRow = line => {
-    const cols = [];
-    let cur = '', inQuote = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQuote = !inQuote; continue; }
-      if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; continue; }
-      cur += ch;
-    }
-    cols.push(cur.trim());
-    return cols;
-  };
-
-  const headers = parseRow(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9]/g, '_'));
-
-  // Column index helpers — T212 column names vary slightly by export version
-  const idx = name => {
-    const exact = headers.indexOf(name);
-    if (exact >= 0) return exact;
-    return headers.findIndex(h => h.includes(name.split('_')[0]));
-  };
-
-  const iAction   = idx('action');
-  const iTime     = idx('time');
-  const iTicker   = idx('ticker');
-  const iName     = idx('name');
-  const iShares   = idx('no__of_shares') >= 0 ? idx('no__of_shares') : headers.findIndex(h => h.includes('share') && !h.includes('price'));
-  const iPrice    = headers.findIndex(h => h.includes('price') && h.includes('share'));
-  const iCcy      = headers.findIndex(h => h.includes('currency') && h.includes('price'));
-  const iResult   = headers.findIndex(h => h.includes('result'));
-  const iTotal    = headers.findIndex(h => h.includes('total') && !h.includes('fee'));
-  const iNotes    = idx('notes');
-  const iID       = idx('id');
-
-  if (iAction < 0 || iTime < 0) {
-    throw new Error('Could not find required columns (Action, Time). Make sure you export from Trading 212 History → Export CSV.');
-  }
-
-  const BUY_ACTIONS  = ['market buy','limit buy','stop buy','buy'];
-  const SELL_ACTIONS = ['market sell','limit sell','stop sell','sell'];
-
-  const rows = lines.slice(1).map(l => parseRow(l)).filter(r => r.length > 2);
-
-  // Group buys and sells by ticker to match trades
-  const buyMap  = {};   // ticker → [buy rows]
-  const sellMap = {};   // ticker → [sell rows]
-
-  for (const row of rows) {
-    const action = (row[iAction] || '').toLowerCase().trim();
-    const ticker = (row[iTicker] || '').toUpperCase().trim();
-    if (!ticker || ticker === 'N/A') continue;
-    if (BUY_ACTIONS.some(a => action.includes(a))) {
-      if (!buyMap[ticker]) buyMap[ticker] = [];
-      buyMap[ticker].push(row);
-    } else if (SELL_ACTIONS.some(a => action.includes(a))) {
-      if (!sellMap[ticker]) sellMap[ticker] = [];
-      sellMap[ticker].push(row);
-    }
-  }
-
-  const trades = [];
-
-  // Match buys to sells — FIFO: earliest buy matched to earliest sell
-  const allTickers = new Set([...Object.keys(buyMap), ...Object.keys(sellMap)]);
-
-  for (const ticker of allTickers) {
-    const buys  = (buyMap[ticker]  || []).sort((a,b) => (a[iTime]||'').localeCompare(b[iTime]||''));
-    const sells = (sellMap[ticker] || []).sort((a,b) => (a[iTime]||'').localeCompare(b[iTime]||''));
-
-    // FIFO matching
-    let buyQueue = buys.map(r => ({
-      row: r,
-      date:    (r[iTime] || '').split(' ')[0],
-      price:   parseFloat(r[iPrice]) || 0,
-      shares:  parseFloat(r[iShares]) || 0,
-      remaining: parseFloat(r[iShares]) || 0,
-    }));
-
-    for (const sellRow of sells) {
-      const sellDate   = (sellRow[iTime] || '').split(' ')[0];
-      const sellPrice  = parseFloat(sellRow[iPrice]) || 0;
-      let   sellShares = parseFloat(sellRow[iShares]) || 0;
-      const t212Result = parseFloat(sellRow[iResult]) || null;
-      const t212ID     = sellRow[iID] || Date.now().toString(36) + Math.random().toString(36).slice(2);
-
-      // Find matching buys (FIFO)
-      while (sellShares > 0 && buyQueue.length > 0) {
-        const buy = buyQueue[0];
-        const matched = Math.min(buy.remaining, sellShares);
-        sellShares     -= matched;
-        buy.remaining  -= matched;
-
-        const entryPrice = buy.price;
-        const exitPrice  = sellPrice;
-        const plPct      = entryPrice > 0 ? ((exitPrice - entryPrice) / entryPrice) * 100 : 0;
-
-        // Use T212's reported result for P&L in GBP if available
-        const notes = [
-          sellRow[iNotes] || '',
-          t212Result != null ? `T212 result: £${t212Result.toFixed(2)}` : '',
-          `T212 ID: ${t212ID}`,
-        ].filter(Boolean).join(' · ');
-
-        trades.push({
-          id:          't212_' + t212ID + '_' + buy.row[iID],
-          ticker,
-          entryDate:   buy.date,
-          entryPrice,
-          exitDate:    sellDate,
-          exitPrice,
-          plPct:       parseFloat(plPct.toFixed(3)),
-          shares:      matched,
-          currency:    sellRow[iCcy] || 'GBP',
-          strategy:    'other',
-          notes,
-          exitReason:  'Market Sell',
-          mistakes:    [],
-          status:      'closed',
-          source:      't212',
-        });
-
-        if (buy.remaining <= 0.0001) buyQueue.shift();
-      }
-    }
-
-    // Remaining buys with no matching sell = open positions
-    for (const buy of buyQueue) {
-      if (buy.remaining <= 0.0001) continue;
-      trades.push({
-        id:         't212_open_' + (buy.row[iID] || ticker + buy.date),
-        ticker,
-        entryDate:  buy.date,
-        entryPrice: buy.price,
-        shares:     buy.remaining,
-        currency:   buy.row[iCcy] || 'GBP',
-        strategy:   'other',
-        notes:      'Imported from Trading 212 — open position',
-        mistakes:   [],
-        status:     'open',
-        source:     't212',
-      });
-    }
-  }
-
-  return trades;
-}
-
-function importT212CSV(file) {
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const trades = parseT212CSV(ev.target.result);
-      if (!trades.length) {
-        alert('No trades found in this CSV.\n\nMake sure you exported from:\nTrading 212 → Activity → Export');
-        return;
-      }
-
-      const closed = trades.filter(t => t.status === 'closed').length;
-      const open   = trades.filter(t => t.status === 'open').length;
-      const tickers = [...new Set(trades.map(t => t.ticker))].sort();
-
-      const preview = `Trading 212 CSV — ready to import:\n\n` +
-        `📊 ${closed} closed trades\n` +
-        `📂 ${open} open positions\n` +
-        `🏷 ${tickers.length} unique tickers: ${tickers.slice(0,8).join(', ')}${tickers.length>8?'…':''}\n\n` +
-        `Trades will be MERGED with your existing journal.\n` +
-        `Duplicate imports are safely skipped (matched by T212 trade ID).\n\n` +
-        `After import:\n` +
-        `• Strategies tagged as "other" — use ✎ to update\n` +
-        `• P&L% calculated from matched buy/sell prices (FIFO)\n` +
-        `• Open positions show with no exit price\n\n` +
-        `Proceed?`;
-
-      if (!confirm(preview)) return;
-
-      const existing    = getTrades();
-      const existingIds = new Set(existing.map(t => t.id));
-      const newTrades   = trades.filter(t => !existingIds.has(t.id));
-      const skipped     = trades.length - newTrades.length;
-
-      saveTrades([...existing, ...newTrades]);
-      renderJournal();
-
-      alert(
-        `✓ Import complete!\n\n` +
-        `${newTrades.length} trades added\n` +
-        `${skipped} duplicates skipped\n\n` +
-        `Tip: Click ✎ on any row to change the strategy tag from "other" to the correct one.`
-      );
-    } catch(e) {
-      alert(
-        `✗ Import failed: ${e.message}\n\n` +
-        `Make sure you exported from:\n` +
-        `Trading 212 → Activity → History → Export\n\n` +
-        `The file should start with columns like:\n` +
-        `Action, Time, ISIN, Ticker, Name, No. of shares...`
-      );
-    }
-    // Reset file input so same file can be re-imported if needed
-    g('t212-csv-file').value = '';
-  };
-  reader.readAsText(file);
-}
-
-// ─── Wire Journal events ──────────────────────────────────────────────────
-g('btn-new-trade').addEventListener('click', openEntryModal);
-g('btn-export-journal').addEventListener('click', exportJournal);
-g('btn-import-journal').addEventListener('click', () => g('journal-file').click());
-g('journal-file').addEventListener('change', e => { if (e.target.files[0]) importJournal(e.target.files[0]); });
-g('btn-import-t212').addEventListener('click', () => g('t212-csv-file').click());
-g('t212-csv-file').addEventListener('change', e => { if (e.target.files[0]) importT212CSV(e.target.files[0]); });
-
-// ── Bulk delete dropdown ───────────────────────────────────────────────────
-g('btn-bulk-delete').addEventListener('click', e => {
-  e.stopPropagation();
-  const menu = g('bulk-delete-menu');
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-});
-// Close when clicking outside
-document.addEventListener('click', () => {
-  const menu = g('bulk-delete-menu');
-  if (menu) menu.style.display = 'none';
-});
-
-g('bulk-del-t212').addEventListener('click', () => {
-  const trades  = getTrades();
-  const t212    = trades.filter(t => t.source === 't212');
-  if (!t212.length) { alert('No Trading 212 imported trades found.'); return; }
-  if (!confirm(`Delete all ${t212.length} Trading 212 imported trades?\n\nThis will remove them from all stats and cannot be undone.`)) return;
-  saveTrades(trades.filter(t => t.source !== 't212'));
-  renderJournal();
-  alert(`✓ Deleted ${t212.length} T212 trades.`);
-});
-
-g('bulk-del-open').addEventListener('click', () => {
-  const trades = getTrades();
-  const open   = trades.filter(t => t.status === 'open');
-  if (!open.length) { alert('No open trades found.'); return; }
-  if (!confirm(`Delete all ${open.length} open trades?\n\nThese are trades without an exit price.\nThis cannot be undone.`)) return;
-  saveTrades(trades.filter(t => t.status !== 'open'));
-  renderJournal();
-  alert(`✓ Deleted ${open.length} open trades.`);
-});
-
-g('bulk-del-all').addEventListener('click', () => {
-  const trades = getTrades();
-  if (!trades.length) { alert('Journal is already empty.'); return; }
-  const confirm1 = confirm(`⚠ Delete ALL ${trades.length} trades?\n\nThis wipes your entire journal including all stats, equity curve, and history.\n\nThis CANNOT be undone.`);
-  if (!confirm1) return;
-  const confirm2 = prompt(`Type DELETE to confirm wiping all ${trades.length} trades:`);
-  if (confirm2?.trim().toUpperCase() !== 'DELETE') { alert('Cancelled — nothing deleted.'); return; }
-  saveTrades([]);
-  renderJournal();
-  alert('✓ Journal cleared.');
-});
-
-g('entry-cancel').addEventListener('click', closeEntryModal);
-g('entry-save').addEventListener('click', saveEntry);
-g('modal-entry').addEventListener('click', e => { if (e.target === g('modal-entry')) closeEntryModal(); });
-
-g('exit-cancel').addEventListener('click', closeExitModal);
-g('exit-save').addEventListener('click', saveExit);
-g('exit-price').addEventListener('input', autoCalcPL);
-g('modal-exit').addEventListener('click', e => { if (e.target === g('modal-exit')) closeExitModal(); });
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (g('modal-entry').classList.contains('open')) closeEntryModal();
-    if (g('modal-exit').classList.contains('open'))  closeExitModal();
-  }
-});
-
-// Strategy chips
-document.querySelectorAll('.strat-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.strat-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    entryStrat = chip.dataset.strat;
-  });
-});
-
-// Reason chips
-document.querySelectorAll('.reason-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.reason-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    exitReason = chip.dataset.reason;
-  });
-});
-
-// Filters
-['trade-filter-status', 'trade-filter-strat', 'trade-sort'].forEach(id => {
-  g(id).addEventListener('change', renderTradeLog);
-});
-
-// Initial render
-renderJournal();
 
 // Initial ETF render (shows empty state or loads existing)
 renderETFs();
@@ -4856,7 +3785,7 @@ async function loadOpeningRange() {
     try {
       const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars`
                 + `?timeframe=1Min&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}`
-                + `&limit=50&feed=iex&sort=asc`;
+                + `&limit=50&feed=${getFeed()}&sort=asc`;
       const resp = await fetch(url, {
         headers: { 'APCA-API-KEY-ID': alpacaKeys.key, 'APCA-API-SECRET-KEY': alpacaKeys.secret }
       });
@@ -7310,7 +6239,6 @@ const BACKUP_KEYS_DATA = [
   'apex_watchlists',     // saved watchlists
   'apex_etfs',           // tracked ETFs
   'apex_etf_holdings',   // ETF holdings map
-  'apex_journal',        // trade journal entries
 ];
 const BACKUP_KEYS_SECRETS = [
   'alpaca_key', 'alpaca_secret', 'apex_finnhub_key',
@@ -7324,7 +6252,7 @@ function buildBackup(includeKeys = false) {
     _includesKeys: includeKeys,
     data: {},
   };
-  // Always include ETFs, holdings, watchlists, journal
+  // Always include ETFs, holdings, watchlists
   for (const k of BACKUP_KEYS_DATA) {
     const v = localStorage.getItem(k);
     if (v != null) data.data[k] = v;
@@ -7346,7 +6274,7 @@ function exportBackup() {
     '   (convenient for cross-device, but keep the file private)\n\n' +
     '✗ Cancel = Exclude keys\n' +
     '   (safer — re-enter keys after restoring)\n\n' +
-    'Either way: watchlists, ETFs, holdings, and journal are always included.'
+    'Either way: watchlists, ETFs, and holdings are always included.'
   );
 
   const backup = buildBackup(includeKeys);
@@ -7356,7 +6284,6 @@ function exportBackup() {
     watchlists: Object.keys(JSON.parse(backup.data.apex_watchlists || '{}')).length,
     etfs:       JSON.parse(backup.data.apex_etfs || '[]').length,
     holdings:   Object.keys(JSON.parse(backup.data.apex_etf_holdings || '{}')).length,
-    trades:     JSON.parse(backup.data.apex_journal || '[]').length,
   };
 
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -7373,7 +6300,6 @@ function exportBackup() {
     `📊 ${counts.etfs} tracked ETFs\n` +
     `🎯 ${counts.holdings} ETF holdings lists\n` +
     `📋 ${counts.watchlists} watchlists\n` +
-    `📔 ${counts.trades} journal trades\n` +
     `🔑 API keys: ${includeKeys ? 'INCLUDED ⚠ keep file private' : 'excluded'}\n\n` +
     `To restore on another device:\n` +
     `Click ⬆ Restore and select this file.`
@@ -7410,10 +6336,6 @@ function restoreBackup(file) {
         const nNew = Object.keys(wls).filter(n => !existing[n]).length;
         const nOver = Object.keys(wls).length - nNew;
         summary.push(`📋 ${Object.keys(wls).length} watchlists (${nNew} new, ${nOver} existing)`);
-      }
-      if (backup.data.apex_journal) {
-        const trades = JSON.parse(backup.data.apex_journal);
-        summary.push(`📔 ${trades.length} journal trades`);
       }
       if (backup._includesKeys) {
         const keyNames = [];
@@ -7473,14 +6395,6 @@ function restoreBackup(file) {
           const existing = JSON.parse(localStorage.getItem(key) || '[]');
           const merged   = [...new Set([...existing, ...incoming])];
           localStorage.setItem(key, JSON.stringify(merged));
-
-        } else if (key === 'apex_journal') {
-          // Array merge — add trades not already present (by id)
-          const incoming    = JSON.parse(backup.data[key]);
-          const existing    = JSON.parse(localStorage.getItem(key) || '[]');
-          const existingIds = new Set(existing.map(t => t.id));
-          const newOnes     = incoming.filter(t => !existingIds.has(t.id));
-          localStorage.setItem(key, JSON.stringify([...existing, ...newOnes]));
 
         } else {
           // API keys — ALWAYS restore in MERGE mode if the backup has them.
@@ -8644,7 +7558,7 @@ const LEARN_DATA = {
       {h:`Tiered profit-taking — the professional's approach`, b:`Amateurs try to pick the exact top. Professionals sell in tiers. The standard framework: <code>Tier 1</code> — sell 1/3 of position at 2:1 reward-to-risk (you risked 3%, sell when up 6%). This locks in a guaranteed profit and removes emotional pressure. <code>Tier 2</code> — sell another 1/3 at the next major resistance level (prior high, round number, measured move). <code>Tier 3</code> — let the final 1/3 run with a trailing stop, giving you the chance to capture a "moon move" if the stock truly accelerates.`},
       {h:`Moving average crossover exits`, b:`For swing trades held over days to weeks, a cross of a fast EMA below a slow EMA signals loss of momentum. The standard: when the <code>9-EMA crosses below the 20-EMA</code> on the daily chart, consider exiting. This isn't perfect — it will sometimes exit you too early in a strong trend. But it removes the paralysing question of "is this just a dip or the start of a reversal?" The cross gives you a rule. Rules reduce emotional decisions.`},
       {h:`The mental framework for exits`, b:`Think about exits differently from entries. When entering, you need conviction. When exiting, you need clarity and detachment. The stock doesn't know you own it. It doesn't care about your entry price. Exits should be based entirely on the current price action and your predefined rules — not on what you paid, not on how much profit you're "owed," and not on hope. The best traders exit with the same precision they enter: on a signal, not a feeling.`},
-      {h:`Connecting to this scanner's tools`, b:`Use the <b>Position Sizer</b> (top of Scanner tab) to define your stop and size simultaneously — it calculates shares so that hitting your stop equals exactly 2% of account. Use the <b>Journal</b> to track your exit reasons over time. The Mistake Tracker will show you whether "Held Too Long" or "Sold Too Early" costs you more. Over 20+ trades, patterns emerge that are unique to your psychology. That data is more valuable than any strategy guide.`},
+      {h:`Connecting to this scanner's tools`, b:`Use the <b>Position Sizer</b> (top of Scanner tab) to define your stop and size simultaneously — it calculates shares so that hitting your stop equals exactly 2% of account.`},
     ],
   },
 
@@ -8702,26 +7616,11 @@ function renderLearnPanel(stratKey) {
   const d = LEARN_DATA[stratKey];
   if (!d) return '<div style="padding:20px;color:var(--muted)">Coming soon</div>';
 
-  // Personal stats from journal
-  const trades = getTrades().filter(t=>t.strategy===stratKey&&t.status!=='open'&&t.plPct!=null);
-  const wins = trades.filter(t=>t.plPct>0);
-  const avgWin = wins.length ? (wins.reduce((a,b)=>a+b.plPct,0)/wins.length).toFixed(1) : '—';
-  const winRate = trades.length ? ((wins.length/trades.length)*100).toFixed(0) : '—';
-  const personalHTML = trades.length ? `
-    <div class="personal-stats">
-      <div class="personal-stats-title">📔 Your Journal Stats for This Strategy</div>
-      <div class="personal-stats-grid">
-        <div class="ps-item"><div class="ps-n" style="color:var(--text)">${trades.length}</div><div class="ps-l">Trades</div></div>
-        <div class="ps-item"><div class="ps-n" style="color:${parseFloat(winRate)>=50?'var(--green)':'var(--red)'}">${winRate}%</div><div class="ps-l">Win Rate</div></div>
-        <div class="ps-item"><div class="ps-n" style="color:var(--green)">${avgWin}%</div><div class="ps-l">Avg Win</div></div>
-      </div>
-    </div>` : '';
 
   return `
     <div class="learn-content">
       <h2><em>${d.title}</em></h2>
       <div class="tagline">${d.subtitle}</div>
-      ${personalHTML}
       <div class="learn-stats-row">
         ${d.stats.map(s=>`<div class="learn-stat"><div class="learn-stat-n">${s.v}</div><div class="learn-stat-l">${s.n}</div></div>`).join('')}
       </div>
@@ -8770,6 +7669,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
 // Load saved keys and watchlists on page ready
 loadKeys();
+updateFeedBadge();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
@@ -9335,452 +8235,6 @@ g('tbody').addEventListener('click', e => {
   tog.textContent = isOpen ? '▶' : '▼';
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-// PERFORMANCE ENGINE — Equity Curve + Day-of-Week + Expectancy
-// ═════════════════════════════════════════════════════════════════════════════
-function renderEquityCurve() {
-  const closed = getTrades().filter(t => t.status !== 'open' && t.plPct != null && t.exitDate);
-  closed.sort((a,b) => (a.exitDate||'').localeCompare(b.exitDate||''));
-
-  const statsEl = g('equity-stats-row');
-  const wrapEl  = g('equity-curve-wrap');
-  if (!statsEl || !wrapEl) return;
-
-  if (!closed.length) {
-    wrapEl.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:30px">Close trades to see your equity curve</div>';
-    statsEl.innerHTML = '';
-    return;
-  }
-
-  // ── Starting balance + mode + injections ──────────────────────────────────
-  const startingBalEl = g('equity-starting-bal');
-  const modeEl        = g('equity-mode');
-  const startBal      = parseFloat(startingBalEl?.value) || parseFloat(localStorage.getItem('apex_equity_start_bal')) || 0;
-  const mode          = modeEl?.value || 'compound';
-
-  // Save starting balance when set
-  if (startingBalEl && parseFloat(startingBalEl.value) > 0) {
-    localStorage.setItem('apex_equity_start_bal', startingBalEl.value);
-  } else if (startingBalEl && !startingBalEl.value) {
-    const saved = localStorage.getItem('apex_equity_start_bal');
-    if (saved) startingBalEl.value = saved;
-  }
-
-  // Merge capital injections into the timeline
-  const injections = getInjections().sort((a,b) => (a.date||'').localeCompare(b.date||''));
-  const totalDeposited = injections.filter(i=>i.amount>0).reduce((a,b)=>a+b.amount, startBal);
-  const netCapitalInvested = startBal + injections.reduce((a,b)=>a+b.amount, 0);
-
-  // ── Build data points ──────────────────────────────────────────────────────
-  const wins   = closed.filter(t => t.plPct > 0);
-  const losses = closed.filter(t => t.plPct < 0);
-  const winRate    = (wins.length / closed.length * 100).toFixed(1);
-  const avgWin     = wins.length   ? (wins.reduce((a,b) => a+b.plPct, 0) / wins.length).toFixed(2) : 0;
-  const avgLoss    = losses.length ? (losses.reduce((a,b) => a+b.plPct, 0) / losses.length).toFixed(2) : 0;
-  const expectancy = ((wins.length/closed.length)*(+avgWin) + (losses.length/closed.length)*(+avgLoss)).toFixed(2);
-
-  let points = [];
-  let finalLabel = '';
-  let startLabel = '';
-  let yAxisFmt   = v => v.toFixed(1) + '%';
-
-  if (mode === 'compound' && startBal > 0) {
-    const allTrades = getTrades(); // includes open + closed
-
-    // Get cost of each open position (what was actually paid)
-    const openCost = t => {
-      if (t.invested)           return parseFloat(t.invested);
-      if (t.entryPrice > 0 && t.shares > 0) return t.entryPrice * t.shares;
-      return 0;
-    };
-
-    // Build a fully-merged timeline of ALL events sorted by date:
-    //   - buy events (open trade entries) → cash OUT, deployed UP
-    //   - sell events (closed trade exits) → cash IN, deployed DOWN, P&L realised
-    //   - injections → cash IN/OUT
-    const buyEvents = allTrades
-      .filter(t => t.entryDate && openCost(t) > 0)
-      .map(t => ({
-        date:   t.entryDate,
-        type:   'buy',
-        cost:   openCost(t),
-        ticker: t.ticker,
-        id:     t.id,
-        status: t.status,
-      }));
-
-    const sellEvents = closed.map(t => ({
-      date:    t.exitDate,
-      type:    'sell',
-      cost:    openCost(t),
-      plPct:   t.plPct,
-      plGBP:   t.plGBP,
-      ticker:  t.ticker,
-      id:      t.id,
-    }));
-
-    const injEvents = injections.map(inj => ({
-      date:   inj.date,
-      type:   'injection',
-      amount: inj.amount,
-      note:   inj.note,
-    }));
-
-    const allEvents = [...buyEvents, ...sellEvents, ...injEvents]
-      .sort((a,b) => (a.date||'').localeCompare(b.date||''));
-
-    let cash     = startBal;   // free cash available
-    let deployed = 0;           // capital currently in open positions
-
-    // Track which trade IDs have been "bought" to avoid double-counting
-    const boughtIds = new Set();
-    // Track deployed by trade ID so sells can correctly unwind
-    const deployedByTrade = {};
-
-    const firstDate = allEvents[0]?.date || closed[0]?.exitDate || '';
-    points = [{ date: firstDate, val: startBal, cash: startBal, deployed: 0, type: 'start' }];
-
-    for (const ev of allEvents) {
-      if (ev.type === 'buy') {
-        if (boughtIds.has(ev.id)) continue; // skip duplicates
-        boughtIds.add(ev.id);
-        // Only deduct if we have enough cash (prevent negative)
-        const deduct = Math.min(ev.cost, cash);
-        cash -= deduct;
-        deployed += deduct;
-        deployedByTrade[ev.id] = deduct;
-        points.push({
-          date: ev.date, val: cash + deployed,
-          cash, deployed, type: 'buy',
-          ticker: ev.ticker,
-        });
-      } else if (ev.type === 'sell') {
-        // Return deployed capital + P&L to cash
-        const costBasis = deployedByTrade[ev.id] || 0;
-        const plGBP = ev.plGBP != null
-          ? ev.plGBP
-          : ev.plPct != null && costBasis > 0
-            ? costBasis * (ev.plPct / 100)
-            : 0;
-        cash     += costBasis + plGBP;
-        deployed  = Math.max(0, deployed - costBasis);
-        delete deployedByTrade[ev.id];
-        points.push({
-          date: ev.date, val: cash + deployed,
-          cash, deployed, type: 'sell',
-          ticker: ev.ticker, plGBP,
-        });
-      } else if (ev.type === 'injection') {
-        cash += ev.amount;
-        points.push({
-          date: ev.date, val: cash + deployed,
-          cash, deployed, type: 'injection',
-          amount: ev.amount, note: ev.note,
-        });
-      }
-    }
-
-    const finalBal     = cash + deployed;
-    const totalCapital = startBal + injections.reduce((a,b) => a+b.amount, 0);
-    const tradingGain  = finalBal - totalCapital;
-    const totalReturn  = totalCapital > 0 ? (tradingGain / totalCapital * 100) : 0;
-    const currentlyDeployed = deployed;
-    const freeCash     = cash;
-
-    finalLabel = `£${finalBal.toLocaleString('en-GB',{maximumFractionDigits:0})} (${totalReturn>=0?'+':''}${totalReturn.toFixed(1)}%)`;
-    startLabel = `£${startBal.toLocaleString('en-GB')}`;
-    yAxisFmt   = v => '£' + v.toLocaleString('en-GB',{maximumFractionDigits:0});
-
-    const allVals = points.map(p => p.val);
-    const maxBal  = Math.max(...allVals);
-    const minBal  = Math.min(...allVals);
-    const maxDD   = totalCapital > 0 ? ((maxBal - minBal) / maxBal * 100).toFixed(1) : '0.0';
-
-    statsEl.innerHTML = [
-      {v:`${winRate}%`,               l:'Win Rate',        c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
-      {v:`+${avgWin}%`,               l:'Avg Win',          c:'green'},
-      {v:`${avgLoss}%`,               l:'Avg Loss',         c:'red'},
-      {v:`${expectancy}%`,            l:'Expectancy',       c: +expectancy>0?'green':'red'},
-      {v:`£${freeCash.toLocaleString('en-GB',{maximumFractionDigits:0})}`,
-                                      l:'Free Cash',        c:''},
-      {v:`£${currentlyDeployed.toLocaleString('en-GB',{maximumFractionDigits:0})}`,
-                                      l:'Deployed (open)',  c:'amber'},
-      {v:`${totalReturn.toFixed(1)}%`,l:'Trading Return',   c: totalReturn>=0?'green':'red'},
-      {v:`${maxDD}%`,                 l:'Max Drawdown',     c:'red'},
-    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
-
-    // Append injection + deployment summary
-    if (injections.length || currentlyDeployed > 0) {
-      statsEl.innerHTML += `
-        ${injections.length ? `<div class="equity-stat"><div class="equity-stat-val" style="color:var(--cyan)">£${totalCapital.toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Total Capital</div></div>` : ''}
-        <div class="equity-stat"><div class="equity-stat-val" style="color:${tradingGain>=0?'var(--green)':'var(--red)'}">${tradingGain>=0?'+':''}£${Math.abs(tradingGain).toLocaleString('en-GB',{maximumFractionDigits:0})}</div><div class="equity-stat-lbl">Realised Gain</div></div>`;
-    }
-
-  } else if (mode === 'currency' && startBal > 0) {
-    // Currency: each trade's P&L applied as % of starting balance (simple, not compound)
-    let cum = startBal;
-    points = [{date: closed[0].exitDate, val: startBal, pl: 0}];
-    for (const t of closed) {
-      cum += startBal * (t.plPct / 100);
-      points.push({date: t.exitDate, val: cum, pl: t.plPct});
-    }
-    const finalBal  = points[points.length-1].val;
-    const totalGain = finalBal - startBal;
-    finalLabel = `£${finalBal.toLocaleString('en-GB', {maximumFractionDigits:0})}`;
-    startLabel = `£${startBal.toLocaleString('en-GB')}`;
-    yAxisFmt   = v => '£' + v.toLocaleString('en-GB', {maximumFractionDigits:0});
-
-    statsEl.innerHTML = [
-      {v:`${winRate}%`,    l:'Win Rate',    c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
-      {v:`+${avgWin}%`,   l:'Avg Win',     c:'green'},
-      {v:`${avgLoss}%`,   l:'Avg Loss',    c:'red'},
-      {v:`${expectancy}%`,l:'Expectancy',  c: +expectancy>0?'green':'red'},
-      {v:`£${Math.abs(totalGain).toLocaleString('en-GB',{maximumFractionDigits:0})}`, l:'Net Gain', c: totalGain>=0?'green':'red'},
-      {v:closed.length,   l:'Trades',      c:''},
-    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
-
-  } else {
-    // Legacy % stacked mode (no starting balance needed)
-    let cum = 0;
-    points = closed.map(t => { cum += t.plPct; return {date:t.exitDate, val:cum, pl:t.plPct}; });
-    finalLabel = `${cum>=0?'+':''}${cum.toFixed(1)}%`;
-    startLabel = '0%';
-
-    statsEl.innerHTML = [
-      {v:`${winRate}%`,    l:'Win Rate',    c: +winRate>=50?'green':+winRate>=40?'amber':'red'},
-      {v:`+${avgWin}%`,   l:'Avg Win',     c:'green'},
-      {v:`${avgLoss}%`,   l:'Avg Loss',    c:'red'},
-      {v:`${expectancy}%`,l:'Expectancy',  c: +expectancy>0?'green':'red'},
-      {v:`${cum.toFixed(1)}%`, l:'Total %',c: cum>=0?'green':'red'},
-      {v:closed.length,   l:'Trades',      c:''},
-    ].map(s=>`<div class="equity-stat"><div class="equity-stat-val" style="color:${s.c==='green'?'var(--green)':s.c==='red'?'var(--red)':s.c==='amber'?'var(--orange)':'var(--text)'}">${s.v}</div><div class="equity-stat-lbl">${s.l}</div></div>`).join('');
-
-    if (!startBal && mode !== 'pct') {
-      // Prompt user to set starting balance
-      const prompt = document.createElement('div');
-      prompt.style.cssText = 'padding:8px 12px;background:rgba(255,155,78,.08);border:1px solid rgba(255,155,78,.3);font-size:10px;color:var(--orange);margin-bottom:10px;letter-spacing:.3px';
-      prompt.innerHTML = '⚠ Set a <b>Starting Balance</b> above to see accurate £ values and compound returns instead of stacked percentages.';
-      statsEl.before(prompt);
-    }
-  }
-
-  // ── SVG chart ──────────────────────────────────────────────────────────────
-  const W=700, H=180, PAD=48;
-  const vals   = points.map(p => p.val);
-  const minV   = Math.min(0, ...vals) * 0.98;
-  const maxV   = Math.max(...vals) * 1.04;
-  const range  = maxV - minV || 1;
-  const x      = i  => PAD + (i / (points.length-1||1)) * (W - PAD*2);
-  const y      = v  => H - PAD - ((v - minV) / range) * (H - PAD*2);
-  const finalVal  = points[points.length-1].val;
-  const startVal  = points[0].val;
-  const finalColor = finalVal >= (startBal || startVal) ? '#3dffa0' : '#ff5277';
-
-  // Total value polyline
-  const pts  = points.map((p,i) => `${x(i).toFixed(1)},${y(p.val).toFixed(1)}`).join(' ');
-  const area = `${x(0)},${y(startVal)} ${pts} ${x(points.length-1)},${y(startVal)}`;
-
-  // Deployed capital area (orange fill below total, above cash line)
-  const deployedPts = points.map((p,i) =>
-    `${x(i).toFixed(1)},${y((p.cash||0) + (p.deployed||0)).toFixed(1)}`
-  ).join(' ');
-  const cashPts = points.map((p,i) =>
-    `${x(i).toFixed(1)},${y(p.cash != null ? p.cash : p.val).toFixed(1)}`
-  ).join(' ');
-  const hasCashData = points.some(p => p.cash != null);
-  const deployedArea = hasCashData
-    ? `${cashPts.split(' ').reverse().join(' ')} ${deployedPts}`
-    : '';
-
-  // Y-axis ticks
-  const yTicks = [0,1,2,3,4].map(i => {
-    const v  = minV + (range * i / 4);
-    const yp = y(v);
-    return `<text x="${PAD-4}" y="${yp+4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${yAxisFmt(v)}</text>
-      <line x1="${PAD}" y1="${yp}" x2="${W-PAD}" y2="${yp}" stroke="rgba(255,255,255,.04)" stroke-width="1"/>`;
-  }).join('');
-
-  // Buy markers (▽ downward triangle where cash was deployed)
-  const buyMarkers = points.map((p,i) => {
-    if (p.type !== 'buy') return '';
-    const xi = x(i);
-    return `<polygon points="${xi},${ (y(p.val)+8).toFixed(1)} ${(xi-5).toFixed(1)},${y(p.val).toFixed(1)} ${(xi+5).toFixed(1)},${y(p.val).toFixed(1)}"
-        fill="rgba(255,155,78,.7)" title="${p.ticker}"/>`;
-  }).join('');
-
-  // Injection markers
-  const injectionMarkers = points.map((p,i) => {
-    if (p.type !== 'injection') return '';
-    const xi = x(i);
-    const isDeposit = p.amount >= 0;
-    const col    = isDeposit ? 'rgba(78,232,255,.7)' : 'rgba(255,82,119,.7)';
-    const symbol = isDeposit ? '▲' : '▼';
-    const label  = (isDeposit?'+':'') + '£' + Math.abs(p.amount).toLocaleString('en-GB',{maximumFractionDigits:0});
-    return `<line x1="${xi.toFixed(1)}" y1="${PAD}" x2="${xi.toFixed(1)}" y2="${H-PAD}"
-        stroke="${col}" stroke-width="1.5" stroke-dasharray="3,2"/>
-      <text x="${xi.toFixed(1)}" y="${PAD-3}" fill="${col}" font-size="8" font-family="Fira Code" text-anchor="middle">${symbol} ${label}</text>`;
-  }).join('');
-
-  wrapEl.innerHTML = `<div style="font-size:9px;color:var(--muted);padding:4px 0 6px;display:flex;gap:14px;letter-spacing:.5px">
-    <span>━ <span style="color:#3dffa0">Total account value</span></span>
-    ${hasCashData ? `<span>▓ <span style="color:rgba(255,155,78,.5)">Deployed in open positions</span></span>` : ''}
-    ${hasCashData ? `<span>▽ <span style="color:rgba(255,155,78,.7)">Buy event</span></span>` : ''}
-  </div>
-  <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;width:100%;display:block">
-    ${yTicks}
-    <!-- Start balance line -->
-    <line x1="${PAD}" y1="${y(startVal)}" x2="${W-PAD}" y2="${y(startVal)}" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-dasharray="4"/>
-    <!-- Deployed capital area (orange) -->
-    ${hasCashData && deployedArea ? `<polygon points="${deployedArea}" fill="rgba(255,155,78,.12)"/>
-    <!-- Cash line -->
-    <polyline points="${cashPts}" fill="none" stroke="rgba(255,155,78,.3)" stroke-width="1" stroke-dasharray="3,2"/>` : ''}
-    <!-- Total value area fill -->
-    <polygon points="${area}" fill="${finalColor}" opacity=".07"/>
-    <!-- Total value line -->
-    <polyline points="${pts}" fill="none" stroke="${finalColor}" stroke-width="2"/>
-    <!-- Buy markers -->
-    ${buyMarkers}
-    <!-- Injection markers -->
-    ${injectionMarkers}
-    <!-- Start dot -->
-    <circle cx="${x(0)}" cy="${y(points[0].val)}" r="3" fill="${finalColor}"/>
-    <text x="${PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code">${points[0].date}</text>
-    <text x="${PAD}" y="${y(points[0].val)-6}" fill="rgba(255,255,255,.25)" font-size="9" font-family="Fira Code">${startLabel}</text>
-    <!-- End dot + label -->
-    <circle cx="${x(points.length-1)}" cy="${y(finalVal)}" r="4" fill="${finalColor}"/>
-    <text x="${W-PAD}" y="${H-4}" fill="rgba(255,255,255,.3)" font-size="9" font-family="Fira Code" text-anchor="end">${points[points.length-1].date}</text>
-    <text x="${(W-PAD+4).toFixed(1)}" y="${y(finalVal).toFixed(1)}" fill="${finalColor}" font-size="10" font-family="Fira Code,sans-serif" font-weight="700">${finalLabel}</text>
-  </svg>`;
-}
-
-function renderDOWChart() {
-  const el = g('dow-chart');
-  if (!el) return;
-  const closed = getTrades().filter(t=>t.status!=='open'&&t.plPct!=null&&t.entryDate);
-  if (!closed.length) {
-    el.innerHTML='<div style="color:var(--muted);font-size:10px;padding:14px;grid-column:1/-1;text-align:center">No closed trades yet</div>';
-    return;
-  }
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const buckets = Array.from({length:7}, ()=>({sum:0,n:0}));
-  for (const t of closed) {
-    const d = new Date(t.entryDate).getDay();
-    buckets[d].sum += t.plPct;
-    buckets[d].n++;
-  }
-  el.innerHTML = days.map((d,i)=>{
-    const b = buckets[i];
-    const avg = b.n ? (b.sum/b.n) : null;
-    const col = avg===null?'var(--muted)':avg>0?'var(--green)':avg<0?'var(--red)':'var(--muted)';
-    return `<div class="dow-cell">
-      <div class="dow-cell-day">${d}</div>
-      <div class="dow-cell-val" style="color:${col}">${avg!==null?(avg>=0?'+':'')+avg.toFixed(1)+'%':'—'}</div>
-      <div class="dow-cell-n">${b.n} trade${b.n!==1?'s':''}</div>
-    </div>`;
-  }).join('');
-}
-
-// Patch renderJournal to include equity curve
-const _origRenderJournalForPerf = renderJournal;
-renderJournal = function() {
-  _origRenderJournalForPerf();
-  renderEquityCurve();
-  renderDOWChart();
-};
-
-// Restore saved starting balance on load and wire inputs
-const savedStartBal = localStorage.getItem('apex_equity_start_bal');
-if (savedStartBal && g('equity-starting-bal')) {
-  g('equity-starting-bal').value = savedStartBal;
-}
-g('equity-starting-bal')?.addEventListener('input', renderEquityCurve);
-g('equity-mode')?.addEventListener('change', renderEquityCurve);
-
-// ─── Capital Injections / Withdrawals ─────────────────────────────────────────
-const INJECTIONS_KEY = 'apex_capital_injections';
-
-function getInjections() {
-  try { return JSON.parse(localStorage.getItem(INJECTIONS_KEY) || '[]'); }
-  catch { return []; }
-}
-function saveInjections(list) {
-  localStorage.setItem(INJECTIONS_KEY, JSON.stringify(list));
-}
-
-function renderInjectionList() {
-  const el   = g('injection-list');
-  if (!el) return;
-  const list = getInjections().sort((a,b) => (a.date||'').localeCompare(b.date||''));
-  if (!list.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:4px 0">No deposits or withdrawals logged yet.</div>';
-    return;
-  }
-  const totalDeposited   = list.filter(i=>i.amount>0).reduce((a,b)=>a+b.amount,0);
-  const totalWithdrawn   = list.filter(i=>i.amount<0).reduce((a,b)=>a+b.amount,0);
-  const netCapital       = totalDeposited + totalWithdrawn;
-
-  el.innerHTML = `
-    <div style="display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap">
-      <span style="font-size:10px;color:var(--green)">Total deposited: <b>£${totalDeposited.toLocaleString('en-GB',{maximumFractionDigits:0})}</b></span>
-      ${totalWithdrawn ? `<span style="font-size:10px;color:var(--red)">Withdrawn: <b>£${Math.abs(totalWithdrawn).toLocaleString('en-GB',{maximumFractionDigits:0})}</b></span>` : ''}
-      <span style="font-size:10px;color:var(--muted)">Net capital invested: <b style="color:var(--text)">£${netCapital.toLocaleString('en-GB',{maximumFractionDigits:0})}</b></span>
-    </div>
-    ${list.map((inj,i) => {
-      const isDeposit = inj.amount >= 0;
-      return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border2)">
-        <span style="font-size:10px;color:var(--muted);min-width:80px">${inj.date || '—'}</span>
-        <span style="font-family:var(--font-mono);font-size:11px;font-weight:600;color:${isDeposit?'var(--green)':'var(--red)'};min-width:80px">${isDeposit?'+':''}£${Math.abs(inj.amount).toLocaleString('en-GB',{maximumFractionDigits:0})}</span>
-        <span style="font-size:10px;color:var(--text);flex:1">${inj.note || (isDeposit ? 'Deposit' : 'Withdrawal')}</span>
-        <button data-del-inj="${i}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 4px" title="Delete">✕</button>
-      </div>`;
-    }).join('')}`;
-
-  // Wire delete buttons
-  el.querySelectorAll('[data-del-inj]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx  = parseInt(btn.dataset.delInj);
-      const list = getInjections();
-      const inj  = list[idx];
-      if (!confirm(`Remove this ${inj.amount>=0?'deposit':'withdrawal'}?\n£${Math.abs(inj.amount).toLocaleString('en-GB')} on ${inj.date}`)) return;
-      list.splice(idx, 1);
-      saveInjections(list);
-      renderInjectionList();
-      renderEquityCurve();
-    });
-  });
-}
-
-// Wire show/hide toggle
-g('btn-toggle-injections')?.addEventListener('click', () => {
-  const panel = g('injection-panel');
-  const btn   = g('btn-toggle-injections');
-  if (!panel || !btn) return;
-  const open = panel.style.display !== 'none';
-  panel.style.display = open ? 'none' : 'block';
-  btn.textContent = open ? '▼ Show' : '▲ Hide';
-  if (!open) renderInjectionList();
-});
-
-// Wire add injection button
-g('btn-add-injection')?.addEventListener('click', () => {
-  const date   = g('inj-date').value;
-  const amount = parseFloat(g('inj-amount').value);
-  const note   = g('inj-note').value.trim();
-
-  if (!date)           { alert('Please enter a date.'); return; }
-  if (!amount || isNaN(amount)) { alert('Please enter an amount (positive for deposit, negative for withdrawal).'); return; }
-
-  const list = getInjections();
-  list.push({ date, amount, note });
-  saveInjections(list);
-
-  // Clear inputs
-  g('inj-amount').value = '';
-  g('inj-note').value   = '';
-
-  renderInjectionList();
-  renderEquityCurve();
-});
 
 // ═════════════════════════════════════════════════════════════════════════════
 // PIPELINE v2 — Gap scan + RVOL filter + News catalyst + Score ranking
@@ -10537,161 +8991,6 @@ function populateSizer(entry, stop) {
   if (sp) sp.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// MISTAKE TRACKING
-// ═════════════════════════════════════════════════════════════════════════════
-let selectedMistakes = new Set();
-
-// Wire mistake chips in exit modal
-document.querySelectorAll('#mistake-row .reason-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    const m = chip.dataset.mistake;
-    if (selectedMistakes.has(m)) {
-      selectedMistakes.delete(m);
-      chip.classList.remove('active');
-    } else {
-      selectedMistakes.add(m);
-      chip.classList.add('active');
-    }
-  });
-});
-
-// Patch saveExit to include mistakes
-const _origSaveExit = saveExit;
-saveExit = function() {
-  // We intercept to add mistakes BEFORE saving
-  const list = getTrades();
-  const idx = list.findIndex(x => x.id === editingTradeId);
-  // Call original
-  _origSaveExit();
-  // After save, patch in mistakes (re-read, update, re-save)
-  const list2 = getTrades();
-  const idx2 = list2.findIndex(x => x.id === editingTradeId || (list[idx] && x.entryDate === list[idx].entryDate && x.ticker === list[idx].ticker));
-  if (idx2 !== -1 && selectedMistakes.size > 0) {
-    list2[idx2].mistakes = [...selectedMistakes];
-    saveTrades(list2);
-    renderJournal();
-  }
-  // Reset
-  selectedMistakes = new Set();
-  document.querySelectorAll('#mistake-row .reason-chip').forEach(c=>c.classList.remove('active'));
-};
-
-// Also reset mistakes when exit modal closes
-const _origCloseExit = closeExitModal;
-closeExitModal = function() {
-  _origCloseExit();
-  selectedMistakes = new Set();
-  document.querySelectorAll('#mistake-row .reason-chip').forEach(c=>c.classList.remove('active'));
-};
-
-function renderMistakeChart() {
-  const trades = getTrades().filter(t => t.status !== 'open' && t.mistakes && t.mistakes.length);
-  const el = g('mistake-chart-content');
-  if (!el) return;
-
-  if (!trades.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px">No mistakes logged yet — they appear here once you log exits with rule-adherence tags</div>';
-    return;
-  }
-
-  // Aggregate: mistake → {count, totalLoss}
-  const agg = {};
-  for (const t of trades) {
-    for (const m of t.mistakes) {
-      if (!agg[m]) agg[m] = {count:0, totalLoss:0};
-      agg[m].count++;
-      if (t.plPct < 0) agg[m].totalLoss += Math.abs(t.plPct);
-    }
-  }
-
-  const entries = Object.entries(agg).sort((a,b) => b[1].totalLoss - a[1].totalLoss);
-  const maxLoss = Math.max(...entries.map(e=>e[1].totalLoss), 0.01);
-
-  el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-      <div>
-        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">By Total P/L Lost (%)</div>
-        <div class="mistake-chart-wrap">
-          ${entries.map(([m,d])=>`
-            <div class="mistake-bar-row">
-              <span class="mistake-bar-label">${m}</span>
-              <div class="mistake-bar-track"><div class="mistake-bar-fill" style="width:${(d.totalLoss/maxLoss*100).toFixed(0)}%"></div></div>
-              <span class="mistake-bar-val">-${d.totalLoss.toFixed(1)}%</span>
-            </div>`).join('')}
-        </div>
-      </div>
-      <div>
-        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Frequency</div>
-        <div class="mistake-chart-wrap">
-          ${entries.sort((a,b)=>b[1].count-a[1].count).map(([m,d])=>`
-            <div class="mistake-bar-row">
-              <span class="mistake-bar-label">${m}</span>
-              <div class="mistake-bar-track"><div class="mistake-bar-fill" style="width:${(d.count/Math.max(...entries.map(e=>e[1].count))*100).toFixed(0)}%;background:var(--orange)"></div></div>
-              <span class="mistake-bar-val" style="color:var(--orange)">${d.count}×</span>
-            </div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-}
-
-// Patch renderJournal to include mistake chart
-const _origRenderJournal = renderJournal;
-renderJournal = function() {
-  _origRenderJournal();
-  renderMistakeChart();
-};
-
-// ═════════════════════════════════════════════════════════════════════════════
-// STRATEGY CHANGE IN JOURNAL TRADE ROWS
-// ═════════════════════════════════════════════════════════════════════════════
-const ALL_STRATS = {
-  nr4:'NR4', nr7:'NR7', macross:'21O50', htf:'🚩 HTF', htfs:'🚩 HTF-S', pull50:'50 SMA Pull', flat:'Flat Base',
-  cup:'Cup & Handle', vcp:'VCP', hvc:'HVC Breakout', hvc4:'HVC 2–4d', ema21:'21 EMA Pull', other:'Other'
-};
-
-function changeTradeStrategy(tradeId) {
-  const trades = getTrades();
-  const t = trades.find(x=>x.id===tradeId);
-  if (!t) return;
-  const opts = Object.entries(ALL_STRATS).map(([k,v])=>`${k}:${v}`).join('|');
-  const current = ALL_STRATS[t.strategy] || t.strategy;
-  const choice = prompt(
-    `Change strategy for ${t.ticker} (${fmtSmDate(t.entryDate)})\nCurrent: ${current}\n\nEnter new strategy key:\n${Object.entries(ALL_STRATS).map(([k,v])=>`  ${k} = ${v}`).join('\n')}`,
-    t.strategy
-  );
-  if (!choice || !choice.trim()) return;
-  const key = choice.trim().toLowerCase();
-  if (!ALL_STRATS[key]) { alert(`Unknown strategy key: "${key}"\nValid keys: ${Object.keys(ALL_STRATS).join(', ')}`); return; }
-  const idx = trades.findIndex(x=>x.id===tradeId);
-  trades[idx].strategy = key;
-  saveTrades(trades);
-  renderJournal();
-}
-
-// Patch renderTradeLog to add Edit Strategy button
-const _origRenderTradeLog = renderTradeLog;
-renderTradeLog = function() {
-  _origRenderTradeLog();
-  // Add change-strategy buttons to rendered rows
-  const tbody = g('trade-tbody');
-  if (!tbody) return;
-  tbody.querySelectorAll('[data-change-strat]').forEach(btn => {
-    btn.addEventListener('click', () => changeTradeStrategy(btn.dataset.changeStrat));
-  });
-};
-
-// Patch the trade row rendering to include change-strategy
-const _origRenderTradeLogFn = renderTradeLog;
-// We need to intercept the HTML generation — easier to patch at the td-act level
-// by adding the button in the original renderTradeLog source is complex; instead
-// we add it dynamically after render:
-document.addEventListener('click', e => {
-  const btn = e.target.closest('[data-change-strat]');
-  if (btn) changeTradeStrategy(btn.dataset.changeStrat);
-});
-
-// Strategy change is now wired directly in renderTradeLog
 
 // ═════════════════════════════════════════════════════════════════════════════
 // 10b5-1 FILTER — patch fetchInsider to filter automatic plan trades
@@ -10870,53 +9169,6 @@ if (typeof STRAT_NAMES !== 'undefined') {
   STRAT_NAMES.bull_engulf = 'Bullish Engulfing at Support';
 }
 
-// Add to journal filter dropdown
-const tradeFilterStrat = g('trade-filter-strat');
-const newStratOpts = [
-  {v:'ema21',      t:'21 EMA Pull'},
-  {v:'ema_rev',    t:'EMA Reversion'},
-  {v:'cons_bo',    t:'Consolidation BO'},
-  {v:'gap_hold',   t:'Earnings Gap Hold'},
-  {v:'mean_rev',   t:'Mean Reversion'},
-  {v:'qm5',        t:'⭐ QM 5-Star'},
-  {v:'qm7',        t:'🌟 QM 7-Star EP'},
-  {v:'hammer_sup', t:'🔨 Hammer Support'},
-  {v:'rsi_rev',    t:'📈 RSI Reversal'},
-  {v:'bull_engulf',t:'⚡ Bull Engulfing'},
-];
-newStratOpts.forEach(({v,t}) => {
-  if (tradeFilterStrat && !tradeFilterStrat.querySelector(`[value="${v}"]`)) {
-    const opt = document.createElement('option');
-    opt.value = v; opt.textContent = t;
-    tradeFilterStrat.appendChild(opt);
-  }
-});
-
-// Add to journal entry modal chips
-const entryStratRow = document.querySelector('#entry-strat-row');
-const newChips = [
-  {k:'ema21',      l:'21 EMA Pull'},
-  {k:'ema_rev',    l:'EMA Reversion'},
-  {k:'cons_bo',    l:'Consol. Breakout'},
-  {k:'gap_hold',   l:'Earnings Gap Hold'},
-  {k:'mean_rev',   l:'Mean Reversion'},
-  {k:'qm5',        l:'⭐ QM 5-Star'},
-  {k:'qm7',        l:'🌟 QM 7-Star EP'},
-  {k:'hammer_sup', l:'🔨 Hammer Support'},
-  {k:'rsi_rev',    l:'📈 RSI Reversal'},
-  {k:'bull_engulf',l:'⚡ Bull Engulfing'},
-];
-newChips.forEach(({k,l}) => {
-  if (entryStratRow && !entryStratRow.querySelector(`[data-strat="${k}"]`)) {
-    const chip = document.createElement('button');
-    chip.className = 'strat-chip'; chip.dataset.strat = k; chip.textContent = l;
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.strat-chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active'); entryStrat = k;
-    });
-    entryStratRow.appendChild(chip);
-  }
-});
 
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -11367,6 +9619,7 @@ loadAccountSize();
 
 // Load saved keys and watchlists on page ready
 loadKeys();
+updateFeedBadge();
 refreshWatchlistDropdown();
 refreshAlertsWatchlistDropdown();
 refreshRSWatchlistDropdown();
@@ -11426,7 +9679,7 @@ async function plFetchRange(ticker, startDate, endDate) {
   const keys = getKeys();
   if (!keys.key || !keys.secret) throw new Error('No Alpaca keys — configure on Scanner tab');
   const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars`
-    + `?timeframe=1Day&start=${startDate}&end=${endDate}&limit=500&feed=iex&sort=asc`;
+    + `?timeframe=1Day&start=${startDate}&end=${endDate}&limit=500&feed=${getFeed()}&sort=asc`;
   const resp = await fetch(url, {
     headers: { 'APCA-API-KEY-ID': keys.key, 'APCA-API-SECRET-KEY': keys.secret }
   });
@@ -12149,7 +10402,7 @@ async function chFetchBars(ticker, tf) {
   const start = new Date();
   is5m ? start.setDate(start.getDate() - 6) : start.setFullYear(start.getFullYear() - 2);
   const fmt = d => d.toISOString().slice(0, 10);
-  const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=${alpacaTF}&start=${fmt(start)}&end=${fmt(end)}&limit=500&feed=iex&sort=asc`;
+  const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=${alpacaTF}&start=${fmt(start)}&end=${fmt(end)}&limit=500&feed=${getFeed()}&sort=asc`;
   const resp = await fetch(url, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } });
   if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.message || `HTTP ${resp.status}`); }
   const j = await resp.json();
@@ -12180,7 +10433,7 @@ async function chFetchADR(ticker) {
     const end = new Date(), start = new Date();
     start.setDate(start.getDate() - 30);
     const fmt = d => d.toISOString().slice(0,10);
-    const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=30&feed=iex&sort=asc`;
+    const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=30&feed=${getFeed()}&sort=asc`;
     const resp = await fetch(url, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } });
     if (!resp.ok) return null;
     const j = await resp.json();
@@ -12495,26 +10748,16 @@ async function scBatchSnapshots(tickers) {
 }
 
 // ── Batch multi-symbol bars ───────────────────────────────────────────────────
-async function scBatchBars(tickers) {
-  const {key,secret} = getKeys();
+// Delegates to the shared paginated batch fetcher. The previous implementation
+// sent 50 symbols with limit=300 — because Alpaca's limit is the TOTAL bar count
+// across all symbols, that returned ~300 bars for the first symbol alphabetically
+// and nothing for the other 49, silently discarding ~98% of the universe.
+async function scBatchBars(tickers, onProgress = null) {
+  const map = await alpacaBarsBatch(tickers, { days: 300, onProgress });
+  // Screener helpers expect `date` as a 'YYYY-MM-DD' string.
   const out = {};
-  const end = new Date(), start = new Date();
-  start.setDate(start.getDate()-300);
-  const fmt=d=>d.toISOString().slice(0,10);
-  for (let i=0;i<tickers.length;i+=50) {
-    const batch = tickers.slice(i,i+50).join(',');
-    try {
-      const url=`https://data.alpaca.markets/v2/stocks/bars?symbols=${encodeURIComponent(batch)}&timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=300&feed=iex&sort=asc`;
-      const resp = await fetch(url,{headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}});
-      if (resp.ok) {
-        const j=await resp.json();
-        const bars=j.bars||{};
-        for (const [sym,bArr] of Object.entries(bars)) {
-          out[sym]=bArr.map(b=>({date:b.t.slice(0,10),o:+b.o,h:+b.h,l:+b.l,c:+b.c,v:+b.v}));
-        }
-      }
-    } catch {}
-    if (i+50<tickers.length) await new Promise(r=>setTimeout(r,200));
+  for (const [sym, arr] of Object.entries(map)) {
+    out[sym] = arr.map(b => ({ date: b.date.toISOString().slice(0,10), o:b.o, h:b.h, l:b.l, c:b.c, v:b.v }));
   }
   return out;
 }
@@ -12599,10 +10842,15 @@ window.scRun = async function() {
       const dv    = price * vol;
       return price >= priceMin && price <= priceMax && dv >= dvMin;
     });
-    scSetProgress(`<span class="ai-spin"></span> ${stage1.length} pass price/DV filter → fetching daily bars (${Math.ceil(stage1.length/50)} batches)…`);
+    scSetProgress(`<span class="ai-spin"></span> ${stage1.length} pass price/DV filter → fetching daily bars…`);
 
     // Stage 2: batch bars for MA/RVOL/performance
-    const barsMap = await scBatchBars(stage1);
+    const barsMap = await scBatchBars(stage1, (n, total) =>
+      scSetProgress(`<span class="ai-spin"></span> Fetching daily bars… <b>${n}</b>/${total} · ${getFeed().toUpperCase()} feed`));
+    const gotBars = Object.keys(barsMap).length;
+    if (gotBars < stage1.length) {
+      console.warn(`[apex] bars returned for ${gotBars}/${stage1.length} symbols`);
+    }
     const stage2 = [];
     for (const [sym, bars] of Object.entries(barsMap)) {
       if (bars.length < 10) continue;
