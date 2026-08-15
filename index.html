@@ -1771,20 +1771,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <div style="margin-top:6px">
           <label style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px">Famous Whales (click to load)</label>
-          <div class="fund-chip-row" id="fund-chips">
-            <button class="fund-chip" data-cik="1067983" data-name="Berkshire Hathaway (Buffett)">Berkshire Hathaway</button>
-            <button class="fund-chip" data-cik="1336528" data-name="Pershing Square (Ackman)">Pershing Square</button>
-            <button class="fund-chip" data-cik="1037389" data-name="Renaissance Tech (Simons)">Renaissance Tech</button>
-            <button class="fund-chip" data-cik="1029160" data-name="Bridgewater (Dalio)">Bridgewater</button>
-            <button class="fund-chip" data-cik="1167483" data-name="Scion Asset Mgmt (Burry)">Scion (Burry)</button>
-            <button class="fund-chip" data-cik="1709323" data-name="Tiger Global">Tiger Global</button>
-            <button class="fund-chip" data-cik="1650173" data-name="Coatue Management">Coatue</button>
-            <button class="fund-chip" data-cik="1364742" data-name="Citadel Advisors">Citadel</button>
-            <button class="fund-chip" data-cik="1112520" data-name="Greenlight Capital (Einhorn)">Greenlight (Einhorn)</button>
-            <button class="fund-chip" data-cik="1418814" data-name="Third Point (Loeb)">Third Point</button>
-            <button class="fund-chip" data-cik="884144" data-name="Appaloosa (Tepper)">Appaloosa (Tepper)</button>
-            <button class="fund-chip" data-cik="1364604" data-name="Bill & Melinda Gates Foundation">Gates Foundation</button>
-          </div>
+          <div class="fund-chip-row" id="fund-chips"><!-- built by renderFundChips() --></div>
         </div>
       </div>
 
@@ -1807,7 +1794,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <!-- ─── SMART ALERTS sub-panel ─── -->
     <div class="sm-panel" id="sm-panel-alerts" style="display:none">
       <div class="sm-info">
-        Automated signal scan: <b>CEO/CFO insider purchases ≥ $250K</b> (Finnhub) + <b>13F new/increased positions ≥ $1M</b> across <b>17 major institutions</b> (12 famous whales + 5 ETF sponsors). Scans every ticker in your selected watchlist. Results appear in real-time as each institution is checked.
+        Automated signal scan: <b>CEO/CFO insider purchases ≥ $250K</b> (Finnhub) + <b>13F new/increased positions ≥ $1M</b> across <b>36 major institutions</b> (28 hedge funds &amp; famous investors + 8 index/mega managers). Scans every ticker in your selected watchlist. Results appear in real-time as each institution is checked.
       </div>
 
       <div class="sm-controls">
@@ -5019,6 +5006,44 @@ g('proxy-test')?.addEventListener('click', async () => {
   }
 });
 
+
+// ─── 13F entity verification ──────────────────────────────────────────────────
+// A wrong CIK doesn't error — SEC happily returns a real filing for whoever that
+// CIK actually is, so the app silently shows another fund's portfolio under your
+// chosen label. (Every "famous whale" CIK shipped here was wrong at one point:
+// the Greenlight chip returned Akre Capital, Citadel returned BlackRock, and
+// Appaloosa pointed at a software company.) We now check the entity name SEC
+// returns against the name on the chip and refuse to render a silent mismatch.
+let expected13FName = null;
+
+const _GENERIC_TOKENS = new Set([
+  'CAPITAL','MANAGEMENT','MGMT','ADVISORS','ADVISERS','PARTNERS','ASSET','ASSETS',
+  'GROUP','FUND','FUNDS','HOLDINGS','INVESTMENT','INVESTMENTS','GLOBAL','TRUST',
+  'FOUNDATION','ASSOCIATES','COMPANY','TECHNOLOGIES','SECURITIES','FINANCIAL',
+  'INC','LLC','LLP','CORP','CO','THE','AND','OF','SQUARE',
+  'LTD','PLC','GRP','MGT','LPS','USA','NEW','INT','INTL',
+]);
+
+function _entityTokens(name) {
+  return new Set(
+    (name || '')
+      .toUpperCase()
+      .replace(/\(.*?\)/g, ' ')          // drop "(Buffett)" style annotations
+      .replace(/[^A-Z0-9 ]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length >= 3 && !_GENERIC_TOKENS.has(t))
+  );
+}
+
+// Returns null if it looks right, or an explanation string if it does not.
+function verify13FEntity(expected, actual) {
+  if (!expected) return null;                    // manual CIK entry — nothing to check
+  const e = _entityTokens(expected), a = _entityTokens(actual);
+  if (!e.size) return null;
+  for (const t of e) if (a.has(t)) return null;  // one distinctive token in common is enough
+  return `SEC returned "${actual}" for CIK ${g('thirteenf-input').value.trim()}, but you selected "${expected}".`;
+}
+
 async function fetch13F() {
   const input = g('thirteenf-input').value.trim();
   if (!input) {
@@ -5104,6 +5129,22 @@ async function fetch13F() {
     holdings.sort((a,b) => b.value - a.value);
 
     const subtitle = subData.name || `CIK ${cik}`;
+
+    // Guard against a wrong CIK silently rendering someone else's portfolio.
+    const mismatch = verify13FEntity(expected13FName, subtitle);
+    if (mismatch) {
+      g('thirteenf-status').innerHTML =
+        `<span style="color:var(--red);font-weight:700">⚠ WRONG ENTITY — not showing these holdings.</span><br>`
+        + `<span style="color:var(--muted);font-size:10px">${mismatch} `
+        + `The CIK on that button is incorrect. Search the correct one at `
+        + `<a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent((expected13FName||'').replace(/\(.*?\)/g,'').trim())}&type=13F-HR&dateb=&owner=include&count=40" target="_blank" style="color:var(--cyan)">SEC EDGAR ↗</a> `
+        + `and paste it above.</span>`;
+      g('thirteenf-tbody').innerHTML =
+        `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--muted)">Refused to display — the CIK does not belong to the fund you selected.</td></tr>`;
+      btn.disabled = false; btn.textContent = '▶ Fetch Filing';
+      return;
+    }
+
     const fundName = subtitle.replace(/\s*\(.*?\)\s*/g, '').trim(); // strip "(Buffett)" etc
     g('thirteenf-status').innerHTML = `<b style="color:var(--purple)">${subtitle}</b> · Filed ${fmtSmDate(filingDate)} · <b>${holdings.length}</b> positions · Total: <b>${fmtMoney(totalValue)}</b> · <a href="${filingHref}" target="_blank" style="color:var(--cyan);text-decoration:none;border-bottom:1px solid">View on SEC ↗</a>`;
 
@@ -5158,27 +5199,86 @@ function render13F(holdings, totalValue) {
 // SMART ALERTS — CEO/CFO buys ≥ $250K + 13F new/increased positions ≥ $1M
 // ═════════════════════════════════════════════════════════════════════════════
 
-const ALERT_INSTITUTIONS = [
-  // Famous 12 Whales
-  {cik:'1067983', name:'Berkshire (Buffett)',    group:'whale'},
-  {cik:'1336528', name:'Pershing Sq (Ackman)',   group:'whale'},
-  {cik:'1037389', name:'Renaissance Tech',        group:'whale'},
-  {cik:'1029160', name:'Bridgewater (Dalio)',     group:'whale'},
-  {cik:'1167483', name:'Scion (Burry)',           group:'whale'},
-  {cik:'1709323', name:'Tiger Global',            group:'whale'},
-  {cik:'1650173', name:'Coatue',                  group:'whale'},
-  {cik:'1364742', name:'Citadel',                 group:'whale'},
-  {cik:'1112520', name:'Greenlight (Einhorn)',    group:'whale'},
-  {cik:'1418814', name:'Third Point (Loeb)',      group:'whale'},
-  {cik:'884144',  name:'Appaloosa (Tepper)',      group:'whale'},
-  {cik:'1364604', name:'Gates Foundation',        group:'whale'},
-  // Major ETF-sponsor institutions
-  {cik:'1086364', name:'BlackRock / iShares',     group:'sponsor'},
-  {cik:'102909',  name:'Vanguard Group',           group:'sponsor'},
-  {cik:'93751',   name:'State Street / SPDR',     group:'sponsor'},
-  {cik:'703361',  name:'Invesco',                  group:'sponsor'},
-  {cik:'315066',  name:'Fidelity (FMR)',           group:'sponsor'},
+// ═════════════════════════════════════════════════════════════════════════════
+// INSTITUTIONS — single source of truth for the whale chips AND Smart Alerts
+// ═════════════════════════════════════════════════════════════════════════════
+// These were previously two hand-maintained lists that drifted apart, and 9 of the
+// 12 original CIKs pointed at the wrong entity (Greenlight -> Akre, Appaloosa -> a
+// software company, Gates Foundation -> a private individual). Every CIK below was
+// verified on 2026-08-15 by fetching
+//   https://data.sec.gov/submissions/CIK<10-digit-zero-padded>.json
+// and confirming the "name" field. Use that URL to check any CIK you add.
+// `label` is what the button shows; `name` is matched against SEC's entity name by
+// verify13FEntity(), so keep a distinctive word from the real filer name in it.
+const INSTITUTIONS = [
+  // ── Legendary / concentrated books ──────────────────────────────────────────
+  {cik:'1067983', label:'Berkshire Hathaway',  name:'Berkshire Hathaway (Buffett)',        group:'whale'},
+  {cik:'1336528', label:'Pershing Square',     name:'Pershing Square (Ackman)',            group:'whale'},
+  {cik:'1061768', label:'Baupost (Klarman)',   name:'Baupost Group',                       group:'whale'},
+  {cik:'1029160', label:'Soros Fund',          name:'Soros Fund Management',               group:'whale'},
+  {cik:'1536411', label:'Duquesne',            name:'Duquesne Family Office (Druckenmiller)', group:'whale'},
+  {cik:'1709323', label:'Himalaya (Li Lu)',    name:'Himalaya Capital Management',         group:'whale'},
+  {cik:'1112520', label:'Akre Capital',        name:'Akre Capital Management',             group:'whale'},
+  {cik:'1166559', label:'Gates Foundation',    name:'Gates Foundation Trust',              group:'whale'},
+
+  // ── Activists ───────────────────────────────────────────────────────────────
+  {cik:'1791786', label:'Elliott',             name:'Elliott Investment Management',       group:'whale'},
+  {cik:'1040273', label:'Third Point',         name:'Third Point (Loeb)',                  group:'whale'},
+  {cik:'1418814', label:'ValueAct',            name:'ValueAct Holdings',                   group:'whale'},
+  {cik:'1656456', label:'Appaloosa (Tepper)',  name:'Appaloosa LP (Tepper)',               group:'whale'},
+  {cik:'1079114', label:'Greenlight (Einhorn)',name:'Greenlight Capital (Einhorn)',        group:'whale'},
+  {cik:'1649339', label:'Scion (Burry)',       name:'Scion Asset Management (Burry)',      group:'whale'},
+
+  // ── Multi-strategy & quant ──────────────────────────────────────────────────
+  {cik:'1423053', label:'Citadel',             name:'Citadel Advisors',                    group:'whale'},
+  {cik:'1273087', label:'Millennium',          name:'Millennium Management',               group:'whale'},
+  {cik:'1603466', label:'Point72 (Cohen)',     name:'Point72 Asset Management',            group:'whale'},
+  {cik:'1350694', label:'Bridgewater',         name:'Bridgewater Associates (Dalio)',      group:'whale'},
+  {cik:'1037389', label:'Renaissance Tech',    name:'Renaissance Technologies (Simons)',   group:'whale'},
+  {cik:'1179392', label:'Two Sigma',           name:'Two Sigma Investments',               group:'whale'},
+  {cik:'1009207', label:'D. E. Shaw',          name:'D. E. Shaw',                          group:'whale'},
+  {cik:'1167557', label:'AQR',                 name:'AQR Capital Management',              group:'whale'},
+
+  // ── Growth / tech-tilted ────────────────────────────────────────────────────
+  {cik:'1167483', label:'Tiger Global',        name:'Tiger Global Management',             group:'whale'},
+  {cik:'1135730', label:'Coatue',              name:'Coatue Management',                   group:'whale'},
+  {cik:'1103804', label:'Viking Global',       name:'Viking Global Investors',             group:'whale'},
+  {cik:'1061165', label:'Lone Pine',           name:'Lone Pine Capital',                   group:'whale'},
+  {cik:'1697748', label:'ARK Invest (Wood)',   name:'ARK Investment Management',           group:'whale'},
+  {cik:'2045724', label:'Situational Awareness',name:'Situational Awareness (Aschenbrenner)', group:'whale'},
+
+  // ── Index / mega asset managers (the biggest holders of almost everything) ───
+  {cik:'1364742', label:'BlackRock',           name:'BlackRock',                           group:'sponsor'},
+  {cik:'102909',  label:'Vanguard',            name:'Vanguard Group',                      group:'sponsor'},
+  {cik:'93751',   label:'State Street',        name:'State Street',                        group:'sponsor'},
+  {cik:'315066',  label:'Fidelity (FMR)',      name:'FMR (Fidelity)',                      group:'sponsor'},
+  {cik:'1214717', label:'Geode Capital',       name:'Geode Capital Management',            group:'sponsor'},
+  {cik:'1113169', label:'T. Rowe Price',       name:'T Rowe Price Group',                  group:'sponsor'},
+  {cik:'902219',  label:'Wellington',          name:'Wellington Management Group',         group:'sponsor'},
+  {cik:'354204',  label:'Dimensional',         name:'Dimensional Fund Advisors',           group:'sponsor'},
 ];
+
+// Smart Alerts scans the same list — no second copy to drift out of sync.
+const ALERT_INSTITUTIONS = INSTITUTIONS.map(i => ({cik:i.cik, name:i.label, group:i.group}));
+
+// Build the whale chips from the same array.
+function renderFundChips() {
+  const row = g('fund-chips');
+  if (!row) return;
+  row.innerHTML = INSTITUTIONS.map(i =>
+    `<button class="fund-chip" data-cik="${i.cik}" data-name="${i.name.replace(/"/g,'&quot;')}"
+             title="${i.name} · CIK ${i.cik}">${i.label}</button>`).join('');
+  row.querySelectorAll('.fund-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      row.querySelectorAll('.fund-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      g('thirteenf-input').value = chip.dataset.cik;
+      expected13FName = chip.dataset.name;
+      g('thirteenf-status').textContent = `Selected: ${chip.dataset.name} (CIK ${chip.dataset.cik})`;
+      fetch13F();
+    });
+  });
+}
 
 let alertsRunning = false;
 let alertsStop = false;
@@ -5595,15 +5695,10 @@ g('con-politician').addEventListener('keydown', e => { if (e.key === 'Enter') fe
 
 g('btn-fetch-13f').addEventListener('click', fetch13F);
 g('thirteenf-input').addEventListener('keydown', e => { if (e.key === 'Enter') fetch13F(); });
-document.querySelectorAll('.fund-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.fund-chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    g('thirteenf-input').value = chip.dataset.cik;
-    g('thirteenf-status').textContent = `Selected: ${chip.dataset.name} (CIK ${chip.dataset.cik})`;
-    fetch13F();
-  });
-});
+renderFundChips();
+
+// Typing a CIK by hand means there's no expected name to check against.
+g('thirteenf-input').addEventListener('input', () => { expected13FName = null; });
 
 // ═════════════════════════════════════════════════════════════════════════════
 // STOCK DETAIL MODAL — chart, strategies, insider, institutional, congress
