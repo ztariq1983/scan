@@ -934,33 +934,6 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .pl-result-loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:10px;letter-spacing:1px;padding:20px 0}
 .pl-result-err{color:var(--red);font-size:10px;letter-spacing:.5px;padding:10px 0}
 
-/* ═══ CHARTS TAB ══════════════════════════════════════════════════════════ */
-.ch-topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);flex-wrap:wrap}
-.ch-topbar-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-.ch-layout-sel{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:7px 12px;outline:none;cursor:pointer}
-.ch-sync-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:7px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s}
-.ch-sync-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-.ch-grid{display:grid;gap:10px}
-.ch-grid[data-layout="1"]{grid-template-columns:1fr}
-.ch-grid[data-layout="2"]{grid-template-columns:1fr 1fr}
-.ch-grid[data-layout="4"]{grid-template-columns:1fr 1fr}
-.ch-grid[data-layout="6"]{grid-template-columns:1fr 1fr 1fr}
-.ch-grid[data-layout="8"]{grid-template-columns:1fr 1fr 1fr 1fr}
-.ch-grid[data-layout="10"]{grid-template-columns:1fr 1fr 1fr 1fr 1fr}
-.ch-cell{background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;min-height:320px}
-.ch-grid[data-layout="1"] .ch-cell{min-height:540px}
-.ch-grid[data-layout="2"] .ch-cell{min-height:480px}
-.ch-cell-hdr{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0}
-.ch-ticker-inp{width:80px;background:var(--bg);border:1px solid var(--border2);color:var(--accent);font-family:var(--font-display);font-size:13px;font-weight:800;padding:4px 8px;outline:none;letter-spacing:2px;text-transform:uppercase;transition:border-color .2s}
-.ch-ticker-inp:focus{border-color:var(--accent)}
-.ch-tf-btn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:1px;padding:3px 8px;cursor:pointer;transition:all .15s;text-transform:uppercase}
-.ch-tf-btn.active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
-.ch-adr{font-size:9px;color:var(--muted);letter-spacing:1px;margin-left:auto;white-space:nowrap}
-.ch-adr span{color:var(--orange)}
-.ch-widget{flex:1;position:relative;min-height:0}
-.ch-placeholder{display:flex;align-items:center;justify-content:center;height:100%;color:var(--border2);font-size:10px;letter-spacing:2px;text-transform:uppercase;flex-direction:column;gap:8px}
-.ch-placeholder .cpi{font-size:28px;opacity:.2}
-
 /* ═══ SCREENER TAB ════════════════════════════════════════════════════════ */
 .sc-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
 .sc-filters{background:var(--surface);border:1px solid var(--border);padding:18px}
@@ -986,9 +959,9 @@ td{padding:13px 16px;white-space:nowrap;vertical-align:middle}
 .sc-results-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .sc-results-count{font-size:11px;color:var(--text);letter-spacing:.5px}
 .sc-results-count strong{color:var(--accent);font-family:var(--font-display)}
-.sc-send-charts-btn{background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s}
-.sc-send-charts-btn:hover{background:var(--green);color:#000}
-.sc-send-charts-btn:disabled{opacity:.3;cursor:not-allowed}
+.sc-action-btn{background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 14px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+.sc-action-btn:hover{background:var(--green);color:#000}
+.sc-action-btn:disabled{opacity:.3;cursor:not-allowed}
 .sc-tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border)}
 table.sc-tbl{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
 table.sc-tbl thead tr{border-bottom:1px solid var(--border2)}
@@ -1047,7 +1020,6 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <button class="tab" data-tab="ai">⚡ AI</button>
     <button class="tab" data-tab="gemini">♊ Gemini</button>
     <button class="tab" data-tab="patlab">🔬 Pattern Lab</button>
-    <button class="tab" data-tab="charts">📊 Charts</button>
     <button class="tab" data-tab="screener">🔍 Screener</button>
     <button class="tab" data-tab="fundamentals">📑 Fundamentals</button>
   </div>
@@ -3222,7 +3194,7 @@ function renderTable() {
 
     return `
       <tr style="animation-delay:${i*40}ms">
-        <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a><button onclick="event.stopPropagation();openInCharts(['${r.ticker}'])" style="background:none;border:none;cursor:pointer;font-size:9px;color:var(--green);margin-left:6px;letter-spacing:1px;padding:0" title="Open in Charts">📊</button></td>
+        <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
         <td>$${r.price.toFixed(2)}</td>
         <td class="${chC}">${chS}</td>
         <td><div class="vbar-wrap"><div class="vbar"><div class="vfill" style="width:${vp}%;background:${vc}"></div></div><span class="vtxt">${r.volRatio.toFixed(1)}×</span></div></td>
@@ -10962,309 +10934,6 @@ document.addEventListener('DOMContentLoaded', () => plInit());
 
 })(); // end Pattern Lab IIFE
 
-// ═════════════════════════════════════════════════════════════════════════════
-// CHARTS TAB
-// ═════════════════════════════════════════════════════════════════════════════
-(function() {
-'use strict';
-
-let chLayout = 4;
-let chSyncMode = false;
-let chCells = []; // [{ticker,tf,chart,candleSeries,volSeries,ma9,ma21,ma50,ma200,pollTimer}]
-let lwcReady = false;
-
-// Load TradingView Lightweight Charts from CDN
-function loadLWC() {
-  if (lwcReady || window.LightweightCharts) { lwcReady = true; return Promise.resolve(); }
-  return new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = 'https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js';
-    s.onload = () => { lwcReady = true; res(); };
-    s.onerror = () => rej(new Error('Could not load Lightweight Charts library'));
-    document.head.appendChild(s);
-  });
-}
-
-// Fetch OHLCV bars from Alpaca
-async function chFetchBars(ticker, tf) {
-  const { key, secret } = getKeys();
-  if (!key || !secret) throw new Error('No Alpaca keys — configure on Scanner tab');
-  const is5m = tf === '5m';
-  const alpacaTF = is5m ? '5Min' : '1Day';
-  const end = new Date();
-  const start = new Date();
-  is5m ? start.setDate(start.getDate() - 6) : start.setFullYear(start.getFullYear() - 2);
-  const fmt = d => d.toISOString().slice(0, 10);
-  const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=${alpacaTF}&start=${fmt(start)}&end=${fmt(end)}&limit=500&feed=${getFeed()}&sort=asc`;
-  const resp = await fetch(url, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } });
-  if (!resp.ok) { const b = await resp.json().catch(()=>({})); throw new Error(b.message || `HTTP ${resp.status}`); }
-  const j = await resp.json();
-  return (j.bars || []).map(b => ({
-    time: is5m ? Math.floor(new Date(b.t).getTime() / 1000) : b.t.slice(0, 10),
-    open: +b.o, high: +b.h, low: +b.l, close: +b.c, volume: +b.v
-  }));
-}
-
-// Calculate EMA array
-function chEMA(vals, n) {
-  const k = 2 / (n + 1), r = new Array(vals.length).fill(null);
-  if (vals.length < n) return r;
-  r[n-1] = vals.slice(0, n).reduce((a,b)=>a+b,0) / n;
-  for (let i = n; i < vals.length; i++) r[i] = vals[i]*k + r[i-1]*(1-k);
-  return r;
-}
-
-// Calculate SMA array
-function chSMA(vals, n) {
-  return vals.map((_,i) => i < n-1 ? null : vals.slice(i-n+1,i+1).reduce((a,b)=>a+b,0)/n);
-}
-
-// Calculate ADR% (20-day)
-async function chFetchADR(ticker) {
-  try {
-    const { key, secret } = getKeys();
-    const end = new Date(), start = new Date();
-    start.setDate(start.getDate() - 30);
-    const fmt = d => d.toISOString().slice(0,10);
-    const url = `https://data.alpaca.markets/v2/stocks/${encodeURIComponent(ticker)}/bars?timeframe=1Day&start=${fmt(start)}&end=${fmt(end)}&limit=30&feed=${getFeed()}&sort=asc`;
-    const resp = await fetch(url, { headers: { 'APCA-API-KEY-ID': key, 'APCA-API-SECRET-KEY': secret } });
-    if (!resp.ok) return null;
-    const j = await resp.json();
-    const bars = (j.bars||[]).slice(-20);
-    if (bars.length < 5) return null;
-    const adr = bars.reduce((s,b) => s + (b.h-b.l)/b.c, 0) / bars.length * 100;
-    return adr.toFixed(2);
-  } catch { return null; }
-}
-
-// Create one chart in a cell container
-async function chCreateChart(cellIdx, ticker, tf) {
-  await loadLWC();
-  const cell = chCells[cellIdx];
-  if (!cell) return;
-
-  // Destroy existing chart
-  if (cell.chart) { try { cell.chart.remove(); } catch {} }
-  if (cell.pollTimer) clearInterval(cell.pollTimer);
-
-  const widgetEl = document.getElementById(`ch-widget-${cellIdx}`);
-  const adrEl    = document.getElementById(`ch-adr-${cellIdx}`);
-  if (!widgetEl) return;
-  widgetEl.innerHTML = '';
-
-  // Show loading
-  widgetEl.innerHTML = `<div class="ch-placeholder"><div class="cpi">📊</div><div class="ai-spin"></div></div>`;
-
-  let bars;
-  try {
-    bars = await chFetchBars(ticker, tf);
-  } catch (e) {
-    widgetEl.innerHTML = `<div class="ch-placeholder"><div style="color:var(--red);font-size:10px">⚠ ${e.message}</div></div>`;
-    return;
-  }
-
-  if (!bars.length) {
-    widgetEl.innerHTML = `<div class="ch-placeholder"><div style="color:var(--muted);font-size:10px">No data returned</div></div>`;
-    return;
-  }
-
-  widgetEl.innerHTML = '';
-
-  const LWC = window.LightweightCharts;
-  const is5m = tf === '5m';
-
-  // Main chart
-  const chart = LWC.createChart(widgetEl, {
-    layout: { background: { color: '#08080c' }, textColor: '#52526e' },
-    grid: { vertLines: { color: '#1e1e2e' }, horzLines: { color: '#1e1e2e' } },
-    crosshair: { mode: LWC.CrosshairMode.Normal },
-    rightPriceScale: { borderColor: '#1e1e2e' },
-    timeScale: { borderColor: '#1e1e2e', timeVisible: true, secondsVisible: false },
-    handleScroll: true, handleScale: true,
-    width: widgetEl.clientWidth || 300,
-    height: widgetEl.clientHeight || 280,
-  });
-
-  // Candlestick series
-  const candleSeries = chart.addCandlestickSeries({
-    upColor: '#3dffa0', downColor: '#ff5277',
-    borderUpColor: '#3dffa0', borderDownColor: '#ff5277',
-    wickUpColor: '#3dffa0', wickDownColor: '#ff5277',
-  });
-  candleSeries.setData(bars);
-
-  // Volume pane
-  const volSeries = chart.addHistogramSeries({
-    color: 'rgba(61,255,160,0.3)', priceFormat: { type: 'volume' },
-    priceScaleId: 'vol', scaleMargins: { top: 0.8, bottom: 0 },
-  });
-  volSeries.setData(bars.map(b => ({
-    time: b.time, value: b.volume,
-    color: b.close >= b.open ? 'rgba(61,255,160,0.35)' : 'rgba(255,82,119,0.35)'
-  })));
-
-  // MA line series
-  const closes = bars.map(b => b.close);
-  const times  = bars.map(b => b.time);
-  const addMA = (vals, color, lw) => {
-    const s = chart.addLineSeries({ color, lineWidth: lw||1, priceLineVisible: false, lastValueVisible: false });
-    s.setData(vals.map((v,i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean));
-    return s;
-  };
-  const ma9   = addMA(chEMA(closes, 9),   '#4ee8ff', 1);
-  const ma21  = addMA(chEMA(closes, 21),  '#ff9b4e', 1);
-  const ma50  = addMA(chSMA(closes, 50),  '#e8ff47', 1.5);
-  const ma200 = addMA(chSMA(closes, 200), '#ff5277', 1.5);
-
-  chart.timeScale().fitContent();
-
-  // Responsive resize
-  const ro = new ResizeObserver(() => {
-    chart.applyOptions({ width: widgetEl.clientWidth, height: widgetEl.clientHeight });
-  });
-  ro.observe(widgetEl);
-
-  cell.chart = chart; cell.candleSeries = candleSeries; cell.volSeries = volSeries;
-  cell.ma9 = ma9; cell.ma21 = ma21; cell.ma50 = ma50; cell.ma200 = ma200;
-  cell.ticker = ticker; cell.tf = tf; cell.ro = ro;
-
-  // ADR
-  chFetchADR(ticker).then(adr => {
-    if (adrEl) adrEl.innerHTML = adr ? `ADR <span>${adr}%</span>` : '';
-  });
-
-  // Poll for live updates
-  const pollMs = is5m ? 30000 : 300000;
-  cell.pollTimer = setInterval(async () => {
-    try {
-      const fresh = await chFetchBars(ticker, tf);
-      if (!fresh.length) return;
-      candleSeries.setData(fresh);
-      volSeries.setData(fresh.map(b => ({
-        time: b.time, value: b.volume,
-        color: b.close >= b.open ? 'rgba(61,255,160,0.35)' : 'rgba(255,82,119,0.35)'
-      })));
-      const fc = fresh.map(b => b.close), ft = fresh.map(b => b.time);
-      [[ma9,chEMA(fc,9)],[ma21,chEMA(fc,21)],[ma50,chSMA(fc,50)],[ma200,chSMA(fc,200)]].forEach(([s,v])=>{
-        s.setData(v.map((vv,i)=>vv!==null?{time:ft[i],value:vv}:null).filter(Boolean));
-      });
-    } catch {}
-  }, pollMs);
-}
-
-// Render the grid with N cells
-function chRenderGrid(n) {
-  chLayout = n;
-  // Clean up existing charts
-  chCells.forEach(c => {
-    if (c.chart) try { c.chart.remove(); } catch {}
-    if (c.pollTimer) clearInterval(c.pollTimer);
-    if (c.ro) c.ro.disconnect();
-  });
-  chCells = Array.from({ length: n }, () => ({}));
-
-  const grid = document.getElementById('ch-grid');
-  if (!grid) return;
-  grid.setAttribute('data-layout', n);
-  grid.innerHTML = Array.from({ length: n }, (_, i) => `
-    <div class="ch-cell">
-      <div class="ch-cell-hdr">
-        <input class="ch-ticker-inp" id="ch-tick-${i}" type="text" placeholder="NVDA" maxlength="6"
-          onkeydown="if(event.key==='Enter'){chLoadCell(${i})}">
-        <button class="ch-tf-btn active" id="ch-5m-${i}" onclick="chSetTF(${i},'5m')">5m</button>
-        <button class="ch-tf-btn"        id="ch-1d-${i}" onclick="chSetTF(${i},'1d')">1D</button>
-        <span class="ch-adr" id="ch-adr-${i}"></span>
-      </div>
-      <div class="ch-widget" id="ch-widget-${i}">
-        <div class="ch-placeholder"><div class="cpi">📊</div><div style="font-size:9px;letter-spacing:2px">Enter ticker</div></div>
-      </div>
-    </div>`).join('');
-
-  // Re-populate tickers if already set
-  chCells.forEach((c, i) => {
-    if (c._ticker) {
-      const inp = document.getElementById(`ch-tick-${i}`);
-      if (inp) { inp.value = c._ticker; chLoadCell(i); }
-    }
-  });
-}
-
-// Load a ticker into a specific cell
-window.chLoadCell = async function(idx) {
-  const inp = document.getElementById(`ch-tick-${idx}`);
-  if (!inp) return;
-  const ticker = inp.value.trim().toUpperCase();
-  if (!ticker) return;
-  inp.value = ticker;
-  if (!chCells[idx]) chCells[idx] = {};
-  const tf = chCells[idx].tf || '5m';
-  await chCreateChart(idx, ticker, tf);
-};
-
-// Set timeframe for a cell (or all if sync on)
-window.chSetTF = async function(idx, tf) {
-  const slots = chSyncMode ? chCells.map((_,i)=>i) : [idx];
-  for (const i of slots) {
-    if (!chCells[i]) continue;
-    const btn5 = document.getElementById(`ch-5m-${i}`);
-    const btn1 = document.getElementById(`ch-1d-${i}`);
-    if (btn5) btn5.classList.toggle('active', tf==='5m');
-    if (btn1) btn1.classList.toggle('active', tf==='1d');
-    chCells[i].tf = tf;
-    const inp = document.getElementById(`ch-tick-${i}`);
-    if (inp && inp.value.trim()) await chCreateChart(i, inp.value.trim().toUpperCase(), tf);
-  }
-};
-
-// Toggle sync mode
-window.chToggleSync = function() {
-  chSyncMode = !chSyncMode;
-  const btn = document.getElementById('ch-sync-btn');
-  if (btn) btn.classList.toggle('active', chSyncMode);
-};
-
-// Change layout
-window.chChangeLayout = function(n) {
-  n = parseInt(n, 10);
-  // Preserve current tickers
-  const tickers = chCells.map((c, i) => {
-    const inp = document.getElementById(`ch-tick-${i}`);
-    return inp ? inp.value.trim().toUpperCase() : '';
-  });
-  chCells.forEach((c, i) => { if (chCells[i]) chCells[i]._ticker = tickers[i]; });
-  chRenderGrid(n);
-};
-
-// Global: open tickers in charts tab (called from scanner/screener)
-window.openInCharts = function(tickers) {
-  if (!Array.isArray(tickers)) tickers = [tickers];
-  // Switch to charts tab
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'charts'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-charts'));
-  // Ensure enough cells
-  const needed = Math.min(tickers.length, 10);
-  const layouts = [1,2,4,4,6,6,8,8,10,10];
-  const newLayout = layouts[needed-1] || 10;
-  if (newLayout !== chLayout || chCells.length < needed) {
-    chCells.forEach((c,i) => { chCells[i]._ticker = ''; }); // reset
-    chRenderGrid(newLayout);
-    const sel = document.getElementById('ch-layout-sel');
-    if (sel) sel.value = newLayout;
-  }
-  tickers.slice(0, chCells.length).forEach((tk, i) => {
-    if (!tk) return;
-    const inp = document.getElementById(`ch-tick-${i}`);
-    if (inp) { inp.value = tk; chLoadCell(i); }
-  });
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-  chRenderGrid(chLayout);
-  const sel = document.getElementById('ch-layout-sel');
-  if (sel) sel.value = chLayout;
-});
-
-})(); // end Charts IIFE
 
 // ═════════════════════════════════════════════════════════════════════════════
 // SCREENER TAB
@@ -11616,7 +11285,7 @@ function scRenderResults() {
       <td>${r.lastEarningsDate}</td>
       <td>${r.upgrade!=='—'?`<span class="sc-tag upgrade">${r.upgrade}</span>`:'—'}</td>
       <td>${r.newsHeadline?`<a class="sc-news-link" href="${r.newsUrl}" target="_blank" title="${r.newsHeadline}">${r.newsHeadline}</a>`:'—'}</td>
-      <td><button class="td-tv" style="background:none;border:none;cursor:pointer;font-size:9px;letter-spacing:1px;color:var(--green)" onclick="openInCharts(['${r.sym}'])">📊</button></td>
+      <td><a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.sym}" target="_blank" style="font-size:9px;letter-spacing:1px;color:var(--green)">TV ↗</a></td>
     </tr>`).join('');
 
   // Sort on header click
@@ -11631,11 +11300,23 @@ function scRenderResults() {
   });
 }
 
-// Send selected rows to charts
-window.scSendToCharts = function() {
+// Save selected rows as a watchlist (feeds the Scanner / ORB / RS tabs)
+window.scSaveSelectedWL = function() {
   const tickers = [...document.querySelectorAll('.sc-row-chk:checked')].map(c=>c.value);
   if (!tickers.length) { alert('Select at least one row first'); return; }
-  openInCharts(tickers);
+  const d = new Date();
+  const def = `Screen ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  const name = prompt(`Save ${tickers.length} selected tickers as watchlist:`, def);
+  if (!name || !name.trim()) return;
+  const wls = getAllWatchlists();
+  const t = name.trim();
+  if (wls[t] && !confirm(`"${t}" already exists. Overwrite?`)) return;
+  wls[t] = tickers;
+  saveAllWatchlists(wls);
+  refreshWatchlistDropdown(t);
+  if (typeof refreshORBWatchlistDropdown === 'function') refreshORBWatchlistDropdown();
+  if (typeof refreshRSWatchlistDropdown === 'function') refreshRSWatchlistDropdown();
+  alert(`✓ Saved "${t}" with ${tickers.length} tickers — available in the Scanner, ORB and RS tabs.`);
 };
 
 // Select all / none
@@ -12119,23 +11800,6 @@ window.scSelectAll = function(chk) {
 
   </div><!-- /tab-patlab -->
 
-  <!-- ═══ CHARTS TAB ═══ -->
-  <div class="tab-panel" id="tab-charts">
-    <div class="ch-topbar">
-      <span class="ch-topbar-label">Layout</span>
-      <select class="ch-layout-sel" id="ch-layout-sel" onchange="chChangeLayout(this.value)">
-        <option value="1">1 Chart</option>
-        <option value="2">2 Charts</option>
-        <option value="4" selected>4 Charts</option>
-        <option value="6">6 Charts</option>
-        <option value="8">8 Charts</option>
-        <option value="10">10 Charts</option>
-      </select>
-      <button class="ch-sync-btn" id="ch-sync-btn" onclick="chToggleSync()">⇄ Sync Timeframe</button>
-      <span style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-left:auto">MA legend: <span style="color:#4ee8ff">9 EMA</span> · <span style="color:#ff9b4e">21 EMA</span> · <span style="color:#e8ff47">50 SMA</span> · <span style="color:#ff5277">200 SMA</span> · Volume sub-panel · ADR% (20d) per cell</span>
-    </div>
-    <div class="ch-grid" id="ch-grid" data-layout="4"></div>
-  </div><!-- /tab-charts -->
 
   <!-- ═══ SCREENER TAB ═══ -->
   <div class="tab-panel" id="tab-screener">
@@ -12208,7 +11872,7 @@ window.scSelectAll = function(chk) {
       <div class="sc-results-area">
         <div class="sc-results-bar">
           <div class="sc-results-count" id="sc-results-count"></div>
-          <button class="sc-send-charts-btn" onclick="scSendToCharts()">📊 Open Selected in Charts</button>
+          <button class="sc-action-btn" onclick="scSaveSelectedWL()">💾 Save Selected as Watchlist</button>
         </div>
         <div class="sc-tbl-wrap">
           <table class="sc-tbl">
