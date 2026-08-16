@@ -1005,6 +1005,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="ts" id="ts">—</div>
       <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;color:var(--muted)">
         Feed: <span id="feed-badge" style="font-weight:700">—</span>
+        <span style="opacity:.5;margin-left:8px" title="Build identifier — quote this when reporting a bug so we know which version you're running">build <span id="build-stamp">—</span></span>
       </div>
     </div>
   </header>
@@ -7829,7 +7830,13 @@ document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click', ()=>{ window.switchTabExtended?.(t.dataset.tab); });
 });
 
+// Bump this whenever the file is regenerated — it is how we tell which build
+// a browser is actually running when a screenshot disagrees with the source.
+const APEX_BUILD = '2026-08-15.7';
+
 // Load saved keys and watchlists on page ready
+if (g('build-stamp')) g('build-stamp').textContent = APEX_BUILD;
+console.log('%c[apex] build ' + APEX_BUILD, 'color:#3dffa0;font-weight:700');
 loadKeys();
 updateFeedBadge();
 loadProxyUrl();
@@ -11591,7 +11598,9 @@ window.scSelectAll = function(chk) {
       <input class="ai-date-inp" id="gm-date" type="date">
       <label>Context</label>
       <input class="ai-context-inp" id="gm-context" placeholder="Optional: paste in any relevant news, data, or notes for Gemini to use…">
-      <button class="btn btn-cyan" id="gm-run-all-btn" onclick="gmRunAll
+      <button class="btn btn-cyan" id="gm-run-all-btn" onclick="gmRunAll()">▶ Run All</button>
+    </div>
+
     <!-- Apex data dossier -->
     <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:12px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1.5px;color:var(--text);text-transform:uppercase;cursor:pointer;white-space:nowrap">
@@ -11603,8 +11612,6 @@ window.scSelectAll = function(chk) {
       <span style="font-size:9px;color:var(--muted);width:100%;line-height:1.6">
         Sends your price/MA/RS data, firing strategy signals, fundamentals, earnings history, analyst targets, insider activity and 13F holdings as verified ground truth — so Gemini spends its search budget on narrative instead of re-deriving numbers you already have.
       </span>
-    </div>
-()">▶ Run All</button>
     </div>
 
     <!-- Phase 1 -->
