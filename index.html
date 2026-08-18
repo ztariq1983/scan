@@ -1023,6 +1023,7 @@ table.sc-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
     <button class="tab" data-tab="patlab">🔬 Pattern Lab</button>
     <button class="tab" data-tab="screener">🔍 Screener</button>
     <button class="tab" data-tab="fundamentals">📑 Fundamentals</button>
+    <button class="tab" data-tab="earnings">📅 Earnings <span class="tab-count" id="earn-tab-count"></span></button>
   </div>
 
 
@@ -7832,7 +7833,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
 // Bump this whenever the file is regenerated — it is how we tell which build
 // a browser is actually running when a screenshot disagrees with the source.
-const APEX_BUILD = '2026-08-15.7';
+const APEX_BUILD = '2026-08-15.8';
 
 // Load saved keys and watchlists on page ready
 if (g('build-stamp')) g('build-stamp').textContent = APEX_BUILD;
@@ -9785,6 +9786,7 @@ function aiLoadKey() {
 }
 
 // ── Streaming Claude call ─────────────────────────────────────────────────
+window.aiLoadKey = aiLoadKey;
 async function streamClaude({ apiKey, system, userMsg, outEl, statusEl, useSearch = false }) {
   outEl.textContent = '';
   outEl.classList.remove('filled');
@@ -9944,6 +9946,8 @@ should be named as unknown, not estimated.`,
 };
 
 
+window.streamClaude = streamClaude;
+
 async function aiRunAnalyst(type) {
   const apiKey = document.getElementById('ai-api-key').value.trim() || aiLoadKey();
   if (!apiKey) { alert('Please enter your Anthropic API key at the top of the AI tab.'); return; }
@@ -10089,6 +10093,7 @@ function gmLoadKey() {
   return k;
 }
 
+window.gmLoadKey = gmLoadKey;
 async function streamGemini({ apiKey, system, userMsg, outEl, statusEl, useSearch = false }) {
   outEl.textContent = '';
   outEl.classList.remove('filled');
@@ -10166,6 +10171,8 @@ const GM_CFG = {
   social: { system: `You are a market sentiment analyst for a professional trading firm.\nThe user's message starts with an APEX TERMINAL DOSSIER which may already contain analyst consensus, price targets and insider activity. Treat those as authoritative; do not re-search them.\nUse Google Search for short interest, days-to-cover, options flow, retail sentiment, and the reasoning behind recent rating changes.\nReport: what the supplied consensus and targets imply, whether insider activity corroborates or contradicts sell-side sentiment, short interest, options activity, positioning.\n~250 words. Flag genuine disagreement between insiders, analysts and price action.` },
   fund:   { system: `You are a fundamental equity analyst for a professional trading firm.\nThe user's message starts with an APEX TERMINAL DOSSIER holding verified valuation multiples, margins, returns, balance-sheet ratios, growth rates and earnings-surprise history. Authoritative — do NOT re-derive or contradict.\nUse Google Search only for peer multiples, competitive moat, management capital allocation, segment detail and guidance commentary.\nReport: growth quality and durability, margin trend and drivers, balance-sheet strength, valuation vs the company's own history and peers, moat. The user is investing rather than trading — weight durability and capital allocation over near-term momentum.\n~250 words. Anything under DATA NOT AVAILABLE is unknown, not estimated.` }
 };
+
+window.streamGemini = streamGemini;
 
 async function gmRunAnalyst(type) {
   const apiKey = document.getElementById('gm-api-key').value.trim() || gmLoadKey();
@@ -12010,6 +12017,111 @@ window.scSelectAll = function(chk) {
     </div>
   </div><!-- /tab-screener -->
 
+  <!-- ═══ EARNINGS TAB ═══ -->
+  <div class="tab-panel" id="tab-earnings">
+
+    <!-- Universe -->
+    <div style="background:var(--surface);border:1px solid var(--border);padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">📋 Your earnings list</span>
+        <span id="earn-uni-count" style="font-size:10px;color:var(--orange)">no tickers yet</span>
+        <select class="fu-sel" id="earn-uni-load" style="margin-left:auto;font-size:10px;padding:5px 10px"><option value="">— merge a watchlist —</option></select>
+        <button class="btn btn-cyan" id="earn-uni-save" style="padding:5px 14px;font-size:9px">Save list</button>
+      </div>
+      <textarea id="earn-universe" placeholder="AAPL, MSFT, NVDA, GOOGL, AMZN …  — paste or type up to a few hundred tickers"
+        style="width:100%;height:64px;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:9px 12px;outline:none;resize:vertical;letter-spacing:1px;text-transform:uppercase"></textarea>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.6">
+        Only these tickers are checked. Edit any time and click Save. Nothing runs automatically — earnings are only fetched when you press the button.
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="fu-ctrl">
+      <div class="fu-field">
+        <label>Window</label>
+        <select class="fu-sel" id="earn-window">
+          <option value="next7">Next 7 days</option>
+          <option value="next14" selected>Next 14 days</option>
+          <option value="next30">Next 30 days</option>
+          <option value="last7">Last 7 days (reported)</option>
+          <option value="last14">Last 14 days (reported)</option>
+          <option value="last30">Last 30 days (reported)</option>
+          <option value="custom">Custom range…</option>
+        </select>
+      </div>
+      <div class="fu-field" id="earn-custom-range" style="display:none;gap:6px;align-items:end;flex-direction:row">
+        <div class="fu-field"><label>From</label><input class="fu-inp" id="earn-from" type="date"></div>
+        <div class="fu-field"><label>To</label><input class="fu-inp" id="earn-to" type="date"></div>
+      </div>
+      <button class="btn btn-accent" id="earn-run" style="padding:9px 20px">▶ Find Earnings</button>
+      <button class="btn btn-ghost" id="earn-stop" style="padding:9px 14px;display:none">⏹ Stop</button>
+      <div class="fu-status" id="earn-status" style="flex:1;min-width:220px">Add your tickers above, then press Find Earnings.</div>
+    </div>
+    <div class="fu-prog-wrap"><div class="fu-prog" id="earn-prog"></div></div>
+
+    <!-- Upcoming -->
+    <div style="font-size:9px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin:18px 0 8px">
+      Upcoming <span id="earn-count-up" style="color:var(--muted)"></span>
+    </div>
+    <div class="fu-tbl-wrap">
+      <table class="fu-tbl">
+        <thead><tr>
+          <th>Ticker</th><th>Date</th><th>When</th><th>Session</th><th>Period</th>
+          <th class="num">EPS est</th><th class="num">Rev est</th>
+        </tr></thead>
+        <tbody id="earn-tbody-up"></tbody>
+      </table>
+    </div>
+
+    <!-- Reported -->
+    <div style="font-size:9px;letter-spacing:3px;color:var(--green);text-transform:uppercase;margin:22px 0 8px">
+      Reported <span id="earn-count-rep" style="color:var(--muted)"></span>
+      <span style="color:var(--muted);letter-spacing:1px;text-transform:none;margin-left:8px">— click a row for the numbers and a base / bull / bear read</span>
+    </div>
+    <div class="fu-tbl-wrap">
+      <table class="fu-tbl">
+        <thead><tr>
+          <th>Ticker</th><th>Date</th><th>Period</th>
+          <th class="num">EPS act/est</th><th class="num">EPS surp</th>
+          <th class="num">Rev act/est</th><th class="num">Rev surp</th>
+          <th class="num">Since report</th><th></th>
+        </tr></thead>
+        <tbody id="earn-tbody-rep"></tbody>
+      </table>
+    </div>
+
+    <!-- Detail -->
+    <div id="earn-detail" style="display:none;margin-top:22px;background:var(--surface);border:1px solid var(--border);padding:18px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div id="earn-detail-title" style="font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text)"></div>
+        <button class="btn btn-ghost" id="earn-detail-close" style="margin-left:auto;padding:5px 12px;font-size:9px">✕ Close</button>
+      </div>
+      <div class="detail-tiles" id="earn-detail-nums" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:14px"></div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Base / Bull / Bear</span>
+        <button class="btn btn-purple" id="earn-run-claude" style="padding:5px 12px;font-size:9px">⚡ Claude</button>
+        <button class="btn btn-purple" id="earn-run-gemini" style="padding:5px 12px;font-size:9px">♊ Gemini</button>
+        <button class="btn btn-cyan" id="earn-run-both" style="padding:5px 12px;font-size:9px">Both</button>
+        <span id="earn-saved-note" style="font-size:9px;color:var(--muted);margin-left:auto"></span>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        Reported figures come from your verified data. Forward guidance is not in any free feed, so the model searches for it and labels those lines <b>[SEARCHED]</b>.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="ai-card">
+          <div class="ai-card-hdr"><div><div class="ai-card-label">⚡ Claude</div></div><div class="ai-card-foot" id="earn-status-claude" style="font-size:9px;color:var(--muted)"></div></div>
+          <div class="ai-out" id="earn-out-claude">Not run yet.</div>
+        </div>
+        <div class="ai-card">
+          <div class="ai-card-hdr"><div><div class="ai-card-label">♊ Gemini</div></div><div class="ai-card-foot" id="earn-status-gemini" style="font-size:9px;color:var(--muted)"></div></div>
+          <div class="ai-out" id="earn-out-gemini">Not run yet.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-earnings -->
+
   <!-- ═══ FUNDAMENTALS TAB ═══ -->
   <style>
     .fu-ctrl{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:14px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:14px;position:relative}
@@ -12543,6 +12655,464 @@ document.querySelectorAll('.tab').forEach(t => {
 });
 
 })();
+
+// ═════════════════════════════════════════════════════════════════════════════
+// EARNINGS TAB — calendar + tracker + post-earnings scenario analysis
+// ═════════════════════════════════════════════════════════════════════════════
+// Runs only when prompted (no polling). Scans a user-maintained universe of
+// ~100-120 tickers for earnings in a date window, splits them into upcoming vs
+// already-reported, and lets you open any reported name for the actual numbers
+// plus a base/bull/bear read.
+//
+// Fetch strategy: Finnhub's market-wide calendar (one call for the whole range)
+// is tried first because it is enormously cheaper. Its free-tier availability is
+// not documented clearly, so if it returns nothing usable we fall back to
+// per-symbol calls, rate-limited to stay under the 60/min free ceiling. The UI
+// always reports which path actually ran — a silent fallback would look like
+// missing earnings.
+
+const EARN_UNIVERSE_KEY = 'apex_earnings_universe';
+const EARN_ANALYSIS_KEY = 'apex_earnings_analysis';
+
+let earnRows      = [];
+let earnRunning   = false;
+let earnStopFlag  = false;
+let earnSortCol   = 'date';
+let earnSortDir   = 1;
+let earnActive    = null;   // ticker currently open in the detail panel
+
+// ── Universe -----------------------------------------------------------------
+function earnGetUniverse() {
+  try { return JSON.parse(localStorage.getItem(EARN_UNIVERSE_KEY) || '[]'); }
+  catch { return []; }
+}
+function earnSaveUniverse(list) {
+  localStorage.setItem(EARN_UNIVERSE_KEY, JSON.stringify(list));
+  earnRenderUniverseCount();
+}
+function earnParseTickers(raw) {
+  return [...new Set(
+    (raw || '').toUpperCase().split(/[^A-Z0-9.\-]+/).filter(t => t && t.length <= 8)
+  )];
+}
+function earnRenderUniverseCount() {
+  const u = earnGetUniverse(), el = g('earn-uni-count');
+  if (el) {
+    el.textContent = u.length ? `${u.length} tickers saved` : 'no tickers yet';
+    el.style.color = u.length ? 'var(--green)' : 'var(--orange)';
+  }
+}
+
+// ── Saved analyses (persist so you can reread a verdict later) ----------------
+function earnGetAnalyses() {
+  try { return JSON.parse(localStorage.getItem(EARN_ANALYSIS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function earnSaveAnalysis(ticker, period, provider, text) {
+  const all = earnGetAnalyses();
+  const k = `${ticker}|${period}`;
+  all[k] = all[k] || {};
+  all[k][provider] = { text, at: new Date().toISOString() };
+  localStorage.setItem(EARN_ANALYSIS_KEY, JSON.stringify(all));
+}
+
+// ── Date helpers -------------------------------------------------------------
+const earnISO = d => d.toISOString().slice(0, 10);
+function earnWindow() {
+  const mode = g('earn-window')?.value || 'next14';
+  const today = new Date();
+  const mk = n => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
+  switch (mode) {
+    case 'next7':   return { from: earnISO(today),   to: earnISO(mk(7)) };
+    case 'next14':  return { from: earnISO(today),   to: earnISO(mk(14)) };
+    case 'next30':  return { from: earnISO(today),   to: earnISO(mk(30)) };
+    case 'last7':   return { from: earnISO(mk(-7)),  to: earnISO(today) };
+    case 'last14':  return { from: earnISO(mk(-14)), to: earnISO(today) };
+    case 'last30':  return { from: earnISO(mk(-30)), to: earnISO(today) };
+    case 'custom':  return { from: g('earn-from').value, to: g('earn-to').value };
+    default:        return { from: earnISO(mk(-14)), to: earnISO(mk(14)) };
+  }
+}
+
+// ── Fetching -----------------------------------------------------------------
+async function earnMarketWide(from, to, key) {
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&token=${key}`,
+                          { signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return { ok: false, reason: `HTTP ${r.status}` };
+    const j = await r.json();
+    const arr = j?.earningsCalendar;
+    if (!Array.isArray(arr) || !arr.length) return { ok: false, reason: 'empty response' };
+    return { ok: true, rows: arr };
+  } catch (e) {
+    return { ok: false, reason: e.name === 'TimeoutError' ? 'timeout' : e.message };
+  }
+}
+
+async function earnPerSymbol(tickers, from, to, key, onProgress) {
+  const out = [];
+  for (let i = 0; i < tickers.length; i++) {
+    if (earnStopFlag) break;
+    const t = tickers[i];
+    try {
+      const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?symbol=${encodeURIComponent(t)}&from=${from}&to=${to}&token=${key}`,
+                            { signal: AbortSignal.timeout(15000) });
+      if (r.ok) {
+        const j = await r.json();
+        (j?.earningsCalendar || []).forEach(e => out.push(e));
+      }
+    } catch {}
+    onProgress?.(i + 1, tickers.length);
+    // Finnhub free tier is 60 req/min. 1.05s spacing keeps us safely under it.
+    if (i < tickers.length - 1) await new Promise(r => setTimeout(r, 1050));
+  }
+  return out;
+}
+
+function earnNormalise(raw, universeSet) {
+  const rows = [];
+  for (const e of raw) {
+    const t = (e.symbol || '').toUpperCase();
+    if (!t || (universeSet && !universeSet.has(t))) continue;
+    const epsA = e.epsActual, revA = e.revenueActual;
+    rows.push({
+      ticker: t,
+      date: e.date || '',
+      hour: e.hour || '',
+      quarter: e.quarter ?? null,
+      year: e.year ?? null,
+      period: `${e.year ?? ''}Q${e.quarter ?? ''}`,
+      epsA: epsA ?? null, epsE: e.epsEstimate ?? null,
+      revA: revA ?? null, revE: e.revenueEstimate ?? null,
+      reported: epsA != null || revA != null,
+      reaction: null,
+    });
+  }
+  // Finnhub can return the same period more than once; keep the richest row.
+  const byKey = {};
+  for (const r of rows) {
+    const k = `${r.ticker}|${r.date}|${r.period}`;
+    if (!byKey[k] || (r.reported && !byKey[k].reported)) byKey[k] = r;
+  }
+  return Object.values(byKey);
+}
+
+const earnSurprise = (a, e) => (a == null || e == null || !e) ? null : ((a - e) / Math.abs(e)) * 100;
+
+// Post-earnings price reaction, computed from bars we already batch-fetch.
+async function earnAttachReactions(rows) {
+  const reported = rows.filter(r => r.reported);
+  if (!reported.length) return;
+  const tickers = [...new Set(reported.map(r => r.ticker))];
+  let map = {};
+  try { map = await alpacaBarsBatch(tickers, { days: 120 }); } catch { return; }
+  for (const r of reported) {
+    const bars = map[r.ticker];
+    if (!bars || bars.length < 2 || !r.date) continue;
+    const d = new Date(r.date + 'T00:00:00Z');
+    // "hour" is bmo (before market open) / amc (after market close). An AMC print
+    // moves the NEXT session, so the reference bar differs.
+    const idx = bars.findIndex(b => b.date >= d);
+    if (idx < 0) continue;
+    const baseIdx = (r.hour === 'amc') ? idx : Math.max(0, idx - 1);
+    const base = bars[baseIdx]?.c, last = bars[bars.length - 1]?.c;
+    if (base && last) r.reaction = ((last - base) / base) * 100;
+  }
+}
+
+// ── Main run -----------------------------------------------------------------
+async function earnRun() {
+  if (earnRunning) return;
+  const key = (typeof getFinnhubKey === 'function') ? getFinnhubKey() : '';
+  if (!key) { earnStatus('⚠ No Finnhub key saved — add one on the ORB Live or Fundamentals tab', 'var(--red)'); return; }
+
+  const universe = earnGetUniverse();
+  if (!universe.length) { earnStatus('⚠ Add tickers to your earnings list first', 'var(--orange)'); return; }
+
+  const { from, to } = earnWindow();
+  if (!from || !to) { earnStatus('⚠ Pick a valid date range', 'var(--orange)'); return; }
+
+  earnRunning = true; earnStopFlag = false; earnRows = [];
+  g('earn-run').disabled = true; g('earn-run').textContent = '⟳ Scanning…';
+  g('earn-stop').style.display = 'inline-block';
+  g('earn-tbody-up').innerHTML = ''; g('earn-tbody-rep').innerHTML = '';
+  earnProgress(0);
+
+  try {
+    earnStatus(`Trying market-wide calendar for ${from} → ${to}…`);
+    const mw = await earnMarketWide(from, to, key);
+
+    let raw, path;
+    if (mw.ok) {
+      raw = mw.rows; path = `market-wide (1 call, ${mw.rows.length} companies returned)`;
+      earnProgress(70);
+    } else {
+      earnStatus(`Market-wide unavailable (${mw.reason}) — falling back to per-symbol across ${universe.length} tickers…`, 'var(--orange)');
+      raw = await earnPerSymbol(universe, from, to, key, (n, tot) => {
+        earnProgress(n / tot * 70);
+        earnStatus(`Per-symbol scan… <b>${n}</b>/${tot}${earnStopFlag ? ' (stopping)' : ''}`);
+      });
+      path = `per-symbol (${universe.length} calls)`;
+    }
+
+    earnRows = earnNormalise(raw, new Set(universe));
+    earnStatus(`Computing price reactions…`); earnProgress(85);
+    await earnAttachReactions(earnRows);
+
+    earnProgress(100);
+    const up = earnRows.filter(r => !r.reported).length;
+    const rep = earnRows.filter(r => r.reported).length;
+    earnStatus(`Found <b>${earnRows.length}</b> events in your list — <b>${up}</b> upcoming, <b>${rep}</b> reported · <span style="color:var(--muted)">via ${path}</span>`,
+               'var(--green)');
+    earnRender();
+  } catch (e) {
+    earnStatus(`Scan failed — ${e.message}`, 'var(--red)');
+  } finally {
+    earnRunning = false;
+    g('earn-run').disabled = false; g('earn-run').textContent = '▶ Find Earnings';
+    g('earn-stop').style.display = 'none';
+    setTimeout(() => earnProgress(0), 1500);
+  }
+}
+
+function earnStatus(html, color) {
+  const el = g('earn-status');
+  if (el) { el.innerHTML = html; el.style.color = color || 'var(--muted)'; }
+}
+function earnProgress(pct) {
+  const el = g('earn-prog');
+  if (el) el.style.width = pct + '%';
+}
+
+// ── Rendering ----------------------------------------------------------------
+const earnFmt = (n, d = 2) => (n == null || isNaN(n)) ? '—' : (+n).toFixed(d);
+const earnPct  = n => n == null ? '—' : `<span class="${n >= 0 ? 'up' : 'down'}">${n >= 0 ? '+' : ''}${n.toFixed(1)}%</span>`;
+const earnMoney = n => {
+  if (n == null) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (a >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  return (+n).toFixed(0);
+};
+
+function earnRender() {
+  const up  = earnRows.filter(r => !r.reported).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const rep = earnRows.filter(r => r.reported).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  g('earn-count-up').textContent  = up.length  ? `(${up.length})`  : '';
+  g('earn-count-rep').textContent = rep.length ? `(${rep.length})` : '';
+
+  g('earn-tbody-up').innerHTML = up.length ? up.map(r => {
+    const days = r.date ? Math.round((new Date(r.date + 'T00:00:00Z') - new Date(earnISO(new Date()) + 'T00:00:00Z')) / 864e5) : null;
+    const when = r.hour === 'bmo' ? 'before open' : r.hour === 'amc' ? 'after close' : (r.hour || '—');
+    return `<tr>
+      <td class="td-tick">${r.ticker}<a class="td-tv" href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank">TV ↗</a></td>
+      <td>${r.date || '—'}</td>
+      <td>${days == null ? '—' : days === 0 ? '<b style="color:var(--accent)">today</b>' : days > 0 ? `in ${days}d` : `${-days}d ago`}</td>
+      <td style="color:var(--muted)">${when}</td>
+      <td>${r.period}</td>
+      <td class="num">${earnFmt(r.epsE)}</td>
+      <td class="num">${earnMoney(r.revE)}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">No upcoming earnings in this window.</td></tr>`;
+
+  g('earn-tbody-rep').innerHTML = rep.length ? rep.map(r => {
+    const es = earnSurprise(r.epsA, r.epsE), rs = earnSurprise(r.revA, r.revE);
+    const beat = es != null && es > 0;
+    return `<tr data-earn-tk="${r.ticker}" data-earn-pd="${r.period}" style="cursor:pointer">
+      <td class="td-tick">${r.ticker}</td>
+      <td>${r.date || '—'}</td>
+      <td>${r.period}</td>
+      <td class="num">${earnFmt(r.epsA)} <span style="color:var(--muted)">vs ${earnFmt(r.epsE)}</span></td>
+      <td class="num">${earnPct(es)}</td>
+      <td class="num">${earnMoney(r.revA)} <span style="color:var(--muted)">vs ${earnMoney(r.revE)}</span></td>
+      <td class="num">${earnPct(rs)}</td>
+      <td class="num">${earnPct(r.reaction)}</td>
+      <td><button class="btn btn-purple" style="padding:4px 10px;font-size:9px" data-earn-analyse="${r.ticker}">Analyse →</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9" style="padding:24px;text-align:center;color:var(--muted)">No reported earnings in this window. Try a "Last 7/14/30 days" window.</td></tr>`;
+}
+
+// ── Detail + scenario analysis -----------------------------------------------
+function earnCloseDetail() {
+  g('earn-detail').style.display = 'none';
+  earnActive = null;
+}
+
+async function earnOpenDetail(ticker, period) {
+  const row = earnRows.find(r => r.ticker === ticker && r.period === period) ||
+              earnRows.find(r => r.ticker === ticker);
+  if (!row) return;
+  earnActive = row;
+
+  g('earn-detail').style.display = 'block';
+  g('earn-detail-title').textContent = `${ticker} · ${row.period} reported ${row.date}`;
+  g('earn-out-claude').textContent = 'Not run yet.';
+  g('earn-out-gemini').textContent = 'Not run yet.';
+
+  const es = earnSurprise(row.epsA, row.epsE), rs = earnSurprise(row.revA, row.revE);
+  g('earn-detail-nums').innerHTML = `
+    <div class="detail-tile"><div class="detail-tile-lbl">EPS actual</div><div class="detail-tile-val">${earnFmt(row.epsA)}</div></div>
+    <div class="detail-tile"><div class="detail-tile-lbl">EPS estimate</div><div class="detail-tile-val">${earnFmt(row.epsE)}</div></div>
+    <div class="detail-tile"><div class="detail-tile-lbl">EPS surprise</div><div class="detail-tile-val ${es>=0?'green':'red'}">${es==null?'—':(es>=0?'+':'')+es.toFixed(1)+'%'}</div></div>
+    <div class="detail-tile"><div class="detail-tile-lbl">Revenue actual</div><div class="detail-tile-val">${earnMoney(row.revA)}</div></div>
+    <div class="detail-tile"><div class="detail-tile-lbl">Rev estimate</div><div class="detail-tile-val">${earnMoney(row.revE)}</div></div>
+    <div class="detail-tile"><div class="detail-tile-lbl">Rev surprise</div><div class="detail-tile-val ${rs>=0?'green':'red'}">${rs==null?'—':(rs>=0?'+':'')+rs.toFixed(1)+'%'}</div></div>
+    <div class="detail-tile"><div class="detail-tile-lbl">Since report</div><div class="detail-tile-val ${row.reaction>=0?'green':'red'}">${row.reaction==null?'—':(row.reaction>=0?'+':'')+row.reaction.toFixed(1)+'%'}</div></div>`;
+
+  // Restore any previously saved analysis for this exact period.
+  const saved = earnGetAnalyses()[`${ticker}|${period}`];
+  if (saved?.claude) g('earn-out-claude').textContent = saved.claude.text;
+  if (saved?.gemini) g('earn-out-gemini').textContent = saved.gemini.text;
+  g('earn-saved-note').textContent = saved
+    ? `Showing saved analysis${saved.claude ? ' · Claude ' + saved.claude.at.slice(0,10) : ''}${saved.gemini ? ' · Gemini ' + saved.gemini.at.slice(0,10) : ''}`
+    : '';
+
+  g('earn-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// The post-earnings question is NOT the same as the thesis-level bull/bear debate
+// on the AI tab. That one asks "is this a good business". This one asks "given
+// what they just printed, what are the paths from here" — so it gets its own prompt.
+function earnScenarioSystem(ticker, row) {
+  return `You are an equity analyst writing a post-earnings scenario review for ${ticker}.
+
+The user's message contains an APEX TERMINAL DOSSIER of verified figures from their own
+data feeds, followed by the just-reported quarter. Every number there is ground truth —
+do NOT web-search to re-derive any of it and do not contradict it.
+
+CRITICAL — the reported EPS and revenue are given to you, but FORWARD GUIDANCE is NOT in
+the user's data and is usually what actually moves the stock. Use web search specifically
+to find: management's guidance for next quarter and full year, any change to prior guidance,
+segment commentary, and margin or demand remarks from the call. **Clearly label anything
+you obtained from search as [SEARCHED] so the user can tell it apart from their verified
+figures.** If you cannot find guidance, say so plainly rather than inferring it.
+
+Write three scenarios over the next 12 months:
+
+**BASE CASE** — what happens if current trends simply continue. State the assumption that
+does the most work.
+**BULL CASE** — what has to go right, and what the earliest observable evidence would be
+that it is going right.
+**BEAR CASE** — what breaks the story, and the earliest observable warning sign.
+
+For each: 3-4 sentences, and name the single metric to watch that would confirm or kill it.
+Finish with one line: "WHAT WOULD CHANGE MY MIND: …".
+
+The user is a long-term investor, not a trader — weight durability, margins and capital
+allocation over the next few weeks of price action. Be concrete and avoid hedging language
+that could apply to any stock.`;
+}
+
+async function earnRunScenario(provider) {
+  const row = earnActive;
+  if (!row) return;
+  const outEl = g(provider === 'claude' ? 'earn-out-claude' : 'earn-out-gemini');
+  const statusEl = g(provider === 'claude' ? 'earn-status-claude' : 'earn-status-gemini');
+
+  const apiKey = provider === 'claude'
+    ? (window.aiLoadKey ? window.aiLoadKey() : '')
+    : (window.gmLoadKey ? window.gmLoadKey() : '');
+  if (!apiKey) {
+    outEl.textContent = provider === 'claude'
+      ? 'No Anthropic API key saved — add one on the AI tab.'
+      : 'No Google AI Studio key saved — add one on the Gemini tab.';
+    return;
+  }
+
+  let userMsg = '';
+  try {
+    statusEl.textContent = 'building dossier…';
+    const dos = await buildTickerDossier(row.ticker, {
+      onProgress: m => { statusEl.textContent = 'dossier: ' + m; }
+    });
+    userMsg = dos.text + '\n\n';
+  } catch (e) {
+    userMsg = '';
+    console.warn('[apex] earnings dossier failed:', e.message);
+  }
+
+  const es = earnSurprise(row.epsA, row.epsE), rs = earnSurprise(row.revA, row.revE);
+  userMsg += `=== JUST-REPORTED QUARTER (verified) ===
+Ticker: ${row.ticker}
+Period: ${row.period}   Reported: ${row.date} (${row.hour === 'bmo' ? 'before open' : row.hour === 'amc' ? 'after close' : 'time n/a'})
+EPS: actual ${earnFmt(row.epsA)} vs estimate ${earnFmt(row.epsE)}${es != null ? ` (${es >= 0 ? '+' : ''}${es.toFixed(1)}% surprise)` : ''}
+Revenue: actual ${earnMoney(row.revA)} vs estimate ${earnMoney(row.revE)}${rs != null ? ` (${rs >= 0 ? '+' : ''}${rs.toFixed(1)}% surprise)` : ''}
+Price move since the report: ${row.reaction == null ? 'not available' : (row.reaction >= 0 ? '+' : '') + row.reaction.toFixed(1) + '%'}
+
+Guidance is NOT included above — search for it and label it [SEARCHED].`;
+
+  const fn = provider === 'claude' ? window.streamClaude : window.streamGemini;
+  const result = await fn({
+    apiKey, system: earnScenarioSystem(row.ticker, row),
+    userMsg, outEl, statusEl, useSearch: true
+  });
+  if (result) {
+    earnSaveAnalysis(row.ticker, row.period, provider, result);
+    g('earn-saved-note').textContent = 'Saved — this analysis will reload next time you open this quarter.';
+  }
+}
+
+// ── Wiring -------------------------------------------------------------------
+function earnInit() {
+  if (!g('earn-universe')) return;
+  g('earn-universe').value = earnGetUniverse().join(', ');
+  earnRenderUniverseCount();
+
+  g('earn-uni-save')?.addEventListener('click', () => {
+    const list = earnParseTickers(g('earn-universe').value);
+    earnSaveUniverse(list);
+    g('earn-universe').value = list.join(', ');
+    earnStatus(`✓ Saved ${list.length} tickers to your earnings list`, 'var(--green)');
+  });
+
+  g('earn-uni-load')?.addEventListener('change', e => {
+    const name = e.target.value; if (!name) return;
+    const wls = getAllWatchlists();
+    const list = wls[name] || [];
+    const merged = [...new Set([...earnGetUniverse(), ...list])];
+    g('earn-universe').value = merged.join(', ');
+    earnStatus(`Loaded ${list.length} from "${name}" — ${merged.length} total. Click Save to keep.`, 'var(--cyan)');
+    e.target.value = '';
+  });
+
+  g('earn-window')?.addEventListener('change', () => {
+    const custom = g('earn-window').value === 'custom';
+    g('earn-custom-range').style.display = custom ? 'flex' : 'none';
+  });
+
+  g('earn-run')?.addEventListener('click', earnRun);
+  g('earn-stop')?.addEventListener('click', () => {
+    earnStopFlag = true;
+    earnStatus('Stopping after the current request…', 'var(--orange)');
+  });
+
+  g('earn-tbody-rep')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-earn-analyse]');
+    const tr  = e.target.closest('tr[data-earn-tk]');
+    if (!tr) return;
+    earnOpenDetail(tr.dataset.earnTk, tr.dataset.earnPd);
+    if (btn) e.stopPropagation();
+  });
+
+  g('earn-detail-close')?.addEventListener('click', earnCloseDetail);
+  g('earn-run-claude')?.addEventListener('click', () => earnRunScenario('claude'));
+  g('earn-run-gemini')?.addEventListener('click', () => earnRunScenario('gemini'));
+  g('earn-run-both')?.addEventListener('click', () => {
+    earnRunScenario('claude'); earnRunScenario('gemini');
+  });
+
+  // Populate the watchlist loader
+  const sel = g('earn-uni-load');
+  if (sel && typeof getAllWatchlists === 'function') {
+    const names = Object.keys(getAllWatchlists()).sort();
+    sel.innerHTML = '<option value="">— merge a watchlist —</option>' +
+      names.map(n => `<option value="${n}">${n}</option>`).join('');
+  }
+}
+earnInit();
+window.earnRun = earnRun;
+
 </script>
 
 </body>
