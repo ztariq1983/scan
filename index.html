@@ -151,6 +151,12 @@ table.etf-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .ai-verdict-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple)}
 .ai-verdict-out{padding:12px 14px;font-size:10px;line-height:1.75;color:var(--muted);min-height:80px;white-space:pre-wrap}
 .ai-verdict-out.filled{color:var(--text)}
+.ai-xexam{background:var(--surface);border:1px solid rgba(255,155,78,.4);position:relative;overflow:hidden}
+.ai-xexam::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--orange)}
+.ai-xexam-hdr{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ai-xexam-label{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange)}
+.ai-xexam-out{padding:12px 14px;font-size:10px;line-height:1.75;color:var(--muted);min-height:120px;max-height:460px;overflow-y:auto;white-space:pre-wrap}
+.ai-xexam-out.filled{color:var(--text)}
 .ai-spin{display:inline-block;width:9px;height:9px;border:1.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .65s linear infinite;vertical-align:middle;margin-right:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .btn-cyan{background:rgba(78,232,255,.08);border:1px solid var(--cyan);color:var(--cyan)}
@@ -7833,7 +7839,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
 // Bump this whenever the file is regenerated — it is how we tell which build
 // a browser is actually running when a screenshot disagrees with the source.
-const APEX_BUILD = '2026-08-31.1';
+const APEX_BUILD = '2026-08-31.2';
 
 // Load saved keys and watchlists on page ready
 if (g('build-stamp')) g('build-stamp').textContent = APEX_BUILD;
@@ -9691,6 +9697,7 @@ const EXPORT_AGENTS = [
   { id: 'news',    group: 'analyst', title: 'News Analyst',         sub: 'company news · macro · catalysts' },
   { id: 'social',  group: 'analyst', title: 'Sentiment Analyst',    sub: 'options flow · short interest · positioning' },
   { id: 'fund',    group: 'analyst', title: 'Fundamentals Analyst', sub: 'financials · valuation · moat' },
+  { id: 'xexam',   group: 'xexam',   title: 'Chief of Research — Cross-Examination', sub: 'contradictions · unsupported claims · blind spots · crux questions' },
   { id: 'bull',    group: 'debate',  title: 'Bull Researcher',      sub: 'strongest upside case' },
   { id: 'bear',    group: 'debate',  title: 'Bear Researcher',      sub: 'strongest downside case' },
   { id: 'verdict', group: 'verdict', title: 'Research Manager — Synthesis', sub: 'lean · key determinants · action' }
@@ -9699,7 +9706,7 @@ const EXPORT_AGENTS = [
 // Copy the panels ship with before anything has been run.
 const _EXPORT_PLACEHOLDERS = [
   'waiting to run', 'run analysts first', 'run bull + bear researchers first',
-  'building dossier', 'dossier failed'
+  'building dossier', 'dossier failed', 'run at least two analysts'
 ];
 
 function _exportIsEmpty(txt) {
@@ -9817,6 +9824,15 @@ function buildAnalysisMarkdown(which) {
     });
   }
 
+  const xex = ran.find(r => r.group === 'xexam');
+  if (xex) {
+    sec('Cross-examination of the analyst team (model opinion)');
+    L.push('_Audits the four reports against each other and against the dossier, then sets the crux questions the debate argues._');
+    L.push('');
+    L.push(xex.text);
+    L.push('');
+  }
+
   const debate = ran.filter(r => r.group === 'debate');
   if (debate.length) {
     sec('Bull / bear debate (model opinion)');
@@ -9894,6 +9910,105 @@ function exportAnalysis(which) {
   }
 }
 window.exportAnalysis = exportAnalysis;
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CROSS-EXAMINATION — audits the four analyst reports before the debate runs
+// ═════════════════════════════════════════════════════════════════════════════
+// One shared implementation for both tabs. Deliberately NOT a fifth opinion on
+// the stock: it audits what the analyst team produced (contradictions between
+// them, claims the dossier does not support, blind spots) and sets the crux
+// questions the bull/bear debate then argues. Reads the analyst reports off the
+// rendered panels via _exportRead, so it needs nothing from either IIFE.
+
+function XEXAM_SYSTEM(ticker, date, hasDossier) {
+  return `You are the chief of research at an investment firm, cross-examining your own team's work on ${ticker} as of ${date}.
+
+You are given ${hasDossier ? 'an APEX TERMINAL DOSSIER of verified market data (measured from market-data APIs — this is ground truth, not model output), followed by ' : ''}analyst reports written by your market, news, sentiment and fundamentals analysts. They worked independently and did not see each other's work.
+
+Your job is NOT to add a fifth opinion, restate their findings, or judge whether the stock is attractive. You are auditing the team and telling the debate stage what to argue about. The reader is a long-term investor, not a trader, so weight durability over near-term momentum when judging what is consequential.
+
+Output exactly these four sections, with these headings, in this order:
+
+CONTRADICTIONS
+Where do the analysts disagree with each other? Name the analyst and quote or closely paraphrase the conflicting claims. A real tension — fundamentals calling the multiple stretched while sentiment reports insiders buying, say — is the most valuable thing on this page. Do not manufacture conflict where they genuinely agree; write "None material." instead.
+
+UNSUPPORTED CLAIMS
+${hasDossier
+  ? 'Which analyst statements are not supported by the dossier, or contradict it? Include figures that differ from dossier figures, claims stated as fact with no source, and anything asserted about a data point the dossier lists under DATA NOT AVAILABLE. Quote the claim, then say what the dossier actually says.'
+  : 'No dossier was supplied, so say so in one line, then flag only claims that are internally inconsistent or presented as fact with no cited source.'} Write "None found." if clean.
+
+BLIND SPOTS
+What did none of the four address that a serious long-term investor would want to know about this specific company? Say why it matters here. Do not list generic risks that apply to every equity.
+
+CRUX QUESTIONS
+The 2-3 questions whose answers actually decide whether this investment works. Each must be specific to this company, genuinely uncertain today, and consequential — if you knew the answer you would change your mind. Number them 1., 2., 3. Put nothing else in this section.
+
+Rules: cite the analyst or the dossier for every claim you make. Be terse — you are auditing, not writing prose. Under 400 words total.`;
+}
+
+const _XEXAM_LABELS = {
+  market: 'MARKET ANALYST',
+  news:   'NEWS ANALYST',
+  social: 'SENTIMENT ANALYST',
+  fund:   'FUNDAMENTALS ANALYST'
+};
+
+async function runCrossExam(which, opts) {
+  const silent = !!(opts && opts.silent);
+  const isGm = which === 'gm';
+  const outEl = document.getElementById(which + '-out-xexam');
+  const statusEl = document.getElementById(which + '-status-xexam');
+  if (!outEl) return null;
+
+  const keyInp = document.getElementById(which + '-api-key');
+  let apiKey = (keyInp && keyInp.value.trim()) || '';
+  if (!apiKey) apiKey = localStorage.getItem(isGm ? 'apexGeminiKey' : 'apexAnthropicKey') || '';
+  if (!apiKey) {
+    if (!silent) alert('Please enter your ' + (isGm ? 'Google AI Studio' : 'Anthropic') + ' API key at the top of the tab.');
+    return null;
+  }
+
+  const tkEl = document.getElementById(which + '-ticker');
+  const dtEl = document.getElementById(which + '-date');
+  const ticker = ((tkEl && tkEl.value) || '').trim().toUpperCase() || 'the stock';
+  const date = (dtEl && dtEl.value) || new Date().toISOString().slice(0, 10);
+
+  const reports = Object.keys(_XEXAM_LABELS)
+    .map(k => { const t = _exportRead(which, k); return t ? _XEXAM_LABELS[k] + ' REPORT:\n' + t : ''; })
+    .filter(Boolean);
+
+  if (reports.length < 2) {
+    if (!silent) alert('Run at least two analysts first — cross-examination works by comparing their reports against each other.');
+    else if (statusEl) statusEl.textContent = 'skipped — needs 2+ analyst reports';
+    return null;
+  }
+
+  const dos = _dossierCache.get(ticker);
+  const dosText = (dossierEnabled() && dos && dos.text) ? dos.text + '\n\n---\n\n' : '';
+  const note = reports.length < 4
+    ? `\n\nNOTE: only ${reports.length} of the 4 analysts were run. Audit what is here; do not speculate about what the missing analysts would have said.`
+    : '';
+
+  const stream = isGm ? window.streamGemini : window.streamClaude;
+  return await stream({
+    apiKey,
+    system: XEXAM_SYSTEM(ticker, date, !!dosText),
+    userMsg: dosText + reports.join('\n\n---\n\n') + note,
+    outEl, statusEl,
+    useSearch: false
+  });
+}
+window.runCrossExam = runCrossExam;
+
+// Appends the cross-examination to whatever the debate stages already send, so
+// bull, bear and synthesis all argue the crux questions it set. Returns the
+// text unchanged when cross-examination has not been run.
+function withCrossExam(which, text) {
+  const x = _exportRead(which, 'xexam');
+  if (!x) return text;
+  return (text ? text + '\n\n---\n\n' : '') + 'CROSS-EXAMINATION OF THE ANALYST TEAM (your chief of research):\n' + x;
+}
+window.withCrossExam = withCrossExam;
 
 async function buildTickerDossier(ticker, { onProgress = null, force = false } = {}) {
   const TK = (ticker || '').trim().toUpperCase();
@@ -10227,7 +10342,22 @@ async function aiRunBull() {
   const { apiKey, ticker, date, reportsText } = aiGetBase();
   if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
   if (!reportsText) { alert('Run at least one analyst first.'); return; }
-  const result = await streamClaude({ apiKey, system: `You are a bullish equity researcher. Given the analyst reports, construct the strongest BULLISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bull catalysts. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('ai-out-bull'), statusEl: document.getElementById('ai-status-bull') });
+  const result = await streamClaude({ apiKey, system: `You are a bullish equity researcher. Build the strongest BULLISH case for ${ticker} as of ${date} from the material supplied.
+
+If a CROSS-EXAMINATION section is present, its CRUX QUESTIONS are what this debate is about: answer them from the bull side first, before any other argument. Do not repeat any claim it flagged as unsupported.
+
+Use these headings:
+
+CASE
+3-5 bull catalysts, each citing specific evidence from the dossier or the analyst reports.
+
+WEAKEST LINK
+The single point your own case most depends on and is least sure of. One sentence. Be honest — a bull case with no admitted weak point is not credible.
+
+CONVICTION
+A score from 1 to 10 for how strong this bull case actually is on the evidence available, then one sentence of justification. You are not required to be bullish: if the evidence is thin, score it low and say so.
+
+~250 words.`, userMsg: withCrossExam('ai', reportsText), outEl: document.getElementById('ai-out-bull'), statusEl: document.getElementById('ai-status-bull') });
   if (result) aiReports._bull = result;
 }
 window.aiRunBull = aiRunBull;
@@ -10235,7 +10365,25 @@ async function aiRunBear() {
   const { apiKey, ticker, date, reportsText } = aiGetBase();
   if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
   if (!reportsText) { alert('Run at least one analyst first.'); return; }
-  const result = await streamClaude({ apiKey, system: `You are a bearish equity researcher. Given the analyst reports, construct the strongest BEARISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bear risks. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('ai-out-bear'), statusEl: document.getElementById('ai-status-bear') });
+  const result = await streamClaude({ apiKey, system: `You are a bearish equity researcher. Build the strongest BEARISH case for ${ticker} as of ${date} from the material supplied.
+
+If a CROSS-EXAMINATION section is present, its CRUX QUESTIONS are what this debate is about: answer them from the bear side first, before any other argument. Do not repeat any claim it flagged as unsupported.
+
+Use these headings:
+
+CASE
+3-5 bear risks, each citing specific evidence from the dossier or the analyst reports.
+
+PRE-MORTEM
+It is 18 months from today and a long position in ${ticker} has lost 40%. Write the 3-4 sentence story of what happened, reasoning backwards from the loss. This is deliberately not an argument from today's evidence — use it to surface the failure path the case above misses. Name the sequence, not a generic risk.
+
+WEAKEST LINK
+The single point your own case most depends on and is least sure of. One sentence.
+
+CONVICTION
+A score from 1 to 10 for how strong this bear case actually is on the evidence available, then one sentence of justification. You are not required to be bearish: if the evidence is thin, score it low and say so.
+
+~300 words.`, userMsg: withCrossExam('ai', reportsText), outEl: document.getElementById('ai-out-bear'), statusEl: document.getElementById('ai-status-bear') });
   if (result) aiReports._bear = result;
 }
 window.aiRunBear = aiRunBear;
@@ -10247,7 +10395,15 @@ async function aiRunSynthesis() {
   const ctx = `BULL CASE:\n${bullText}\n\nBEAR CASE:\n${bearText}` + (reportsText ? `\n\n---\nAnalyst reports:\n\n${reportsText}` : '');
   const statusEl = document.getElementById('ai-debate-status');
   statusEl.innerHTML = '<span class="ai-spin"></span> Synthesising…';
-  await streamClaude({ apiKey, system: `You are a senior research manager. Synthesise the bull vs bear debate for ${ticker} as of ${date}. State your lean (bullish/bearish/neutral) with conviction. Identify 2-3 key determinants. Give a trade action (BUY/SELL/HOLD/WAIT) with rationale. ~250 words. Be decisive.`, userMsg: ctx, outEl: document.getElementById('ai-out-verdict'), statusEl: null });
+  await streamClaude({ apiKey, system: `You are a senior research manager. Adjudicate the bull vs bear debate for ${ticker} as of ${date}.
+
+Both researchers were told to score their own conviction 1-10 and name their own weakest link. Weigh those explicitly, and treat a large gap between the two conviction scores as a signal in its own right. The bear was also asked for a pre-mortem: say whether its failure path is plausible enough to act on.
+
+If CROSS-EXAMINATION set CRUX QUESTIONS, answer each one directly with your best current judgement and state how confident you are in each answer.
+
+Then: state your lean (bullish / bearish / neutral) with your own conviction score, identify the 2-3 determinants that decide it, and give an action (BUY / SELL / HOLD / WAIT) with rationale.
+
+~300 words. Be decisive. If the honest conclusion is that neither case is strong, say that plainly rather than splitting the difference — "no view worth holding" is a legitimate and useful verdict.`, userMsg: withCrossExam('ai', ctx), outEl: document.getElementById('ai-out-verdict'), statusEl: null });
   statusEl.innerHTML = '✓ Synthesis complete';
 }
 window.aiRunSynthesis = aiRunSynthesis;
@@ -10265,6 +10421,7 @@ async function aiRunAll() {
   const btn = document.getElementById('ai-run-all-btn');
   btn.disabled = true; btn.innerHTML = '<span class="ai-spin"></span> Running…';
   for (const type of ['market', 'news', 'social', 'fund']) await aiRunAnalyst(type);
+  await runCrossExam('ai', { silent: true });
   await aiRunDebate();
   btn.disabled = false; btn.textContent = '▶ Run All';
 }
@@ -10457,7 +10614,22 @@ async function gmRunBull() {
   const { apiKey, ticker, date, reportsText } = gmGetBase();
   if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
   if (!reportsText) { alert('Run at least one analyst first.'); return; }
-  const result = await streamGemini({ apiKey, system: `You are a bullish equity researcher. Given the analyst reports, construct the strongest BULLISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bull catalysts. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bull'), statusEl: document.getElementById('gm-status-bull') });
+  const result = await streamGemini({ apiKey, system: `You are a bullish equity researcher. Build the strongest BULLISH case for ${ticker} as of ${date} from the material supplied.
+
+If a CROSS-EXAMINATION section is present, its CRUX QUESTIONS are what this debate is about: answer them from the bull side first, before any other argument. Do not repeat any claim it flagged as unsupported.
+
+Use these headings:
+
+CASE
+3-5 bull catalysts, each citing specific evidence from the dossier or the analyst reports.
+
+WEAKEST LINK
+The single point your own case most depends on and is least sure of. One sentence. Be honest — a bull case with no admitted weak point is not credible.
+
+CONVICTION
+A score from 1 to 10 for how strong this bull case actually is on the evidence available, then one sentence of justification. You are not required to be bullish: if the evidence is thin, score it low and say so.
+
+~250 words.`, userMsg: withCrossExam('gm', reportsText), outEl: document.getElementById('gm-out-bull'), statusEl: document.getElementById('gm-status-bull') });
   if (result) gmReports._bull = result;
 }
 window.gmRunBull = gmRunBull;
@@ -10465,7 +10637,25 @@ async function gmRunBear() {
   const { apiKey, ticker, date, reportsText } = gmGetBase();
   if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
   if (!reportsText) { alert('Run at least one analyst first.'); return; }
-  const result = await streamGemini({ apiKey, system: `You are a bearish equity researcher. Given the analyst reports, construct the strongest BEARISH case for ${ticker} as of ${date}. Cite specific evidence. Top 3-5 bear risks. ~200 words.`, userMsg: reportsText, outEl: document.getElementById('gm-out-bear'), statusEl: document.getElementById('gm-status-bear') });
+  const result = await streamGemini({ apiKey, system: `You are a bearish equity researcher. Build the strongest BEARISH case for ${ticker} as of ${date} from the material supplied.
+
+If a CROSS-EXAMINATION section is present, its CRUX QUESTIONS are what this debate is about: answer them from the bear side first, before any other argument. Do not repeat any claim it flagged as unsupported.
+
+Use these headings:
+
+CASE
+3-5 bear risks, each citing specific evidence from the dossier or the analyst reports.
+
+PRE-MORTEM
+It is 18 months from today and a long position in ${ticker} has lost 40%. Write the 3-4 sentence story of what happened, reasoning backwards from the loss. This is deliberately not an argument from today's evidence — use it to surface the failure path the case above misses. Name the sequence, not a generic risk.
+
+WEAKEST LINK
+The single point your own case most depends on and is least sure of. One sentence.
+
+CONVICTION
+A score from 1 to 10 for how strong this bear case actually is on the evidence available, then one sentence of justification. You are not required to be bearish: if the evidence is thin, score it low and say so.
+
+~300 words.`, userMsg: withCrossExam('gm', reportsText), outEl: document.getElementById('gm-out-bear'), statusEl: document.getElementById('gm-status-bear') });
   if (result) gmReports._bear = result;
 }
 window.gmRunBear = gmRunBear;
@@ -10477,7 +10667,15 @@ async function gmRunSynthesis() {
   const ctx = `BULL CASE:\n${bullText}\n\nBEAR CASE:\n${bearText}` + (reportsText ? `\n\n---\nAnalyst reports:\n\n${reportsText}` : '');
   const statusEl = document.getElementById('gm-debate-status');
   statusEl.innerHTML = '<span class="ai-spin"></span> Synthesising…';
-  await streamGemini({ apiKey, system: `You are a senior research manager. Synthesise the bull vs bear debate for ${ticker} as of ${date}. State your lean (bullish/bearish/neutral) with conviction. Identify 2-3 key determinants. Give a trade action (BUY/SELL/HOLD/WAIT) with rationale. ~250 words. Be decisive.`, userMsg: ctx, outEl: document.getElementById('gm-out-verdict'), statusEl: null });
+  await streamGemini({ apiKey, system: `You are a senior research manager. Adjudicate the bull vs bear debate for ${ticker} as of ${date}.
+
+Both researchers were told to score their own conviction 1-10 and name their own weakest link. Weigh those explicitly, and treat a large gap between the two conviction scores as a signal in its own right. The bear was also asked for a pre-mortem: say whether its failure path is plausible enough to act on.
+
+If CROSS-EXAMINATION set CRUX QUESTIONS, answer each one directly with your best current judgement and state how confident you are in each answer.
+
+Then: state your lean (bullish / bearish / neutral) with your own conviction score, identify the 2-3 determinants that decide it, and give an action (BUY / SELL / HOLD / WAIT) with rationale.
+
+~300 words. Be decisive. If the honest conclusion is that neither case is strong, say that plainly rather than splitting the difference — "no view worth holding" is a legitimate and useful verdict.`, userMsg: withCrossExam('gm', ctx), outEl: document.getElementById('gm-out-verdict'), statusEl: null });
   statusEl.innerHTML = '✓ Synthesis complete';
 }
 window.gmRunSynthesis = gmRunSynthesis;
@@ -10495,6 +10693,7 @@ async function gmRunAll() {
   const btn = document.getElementById('gm-run-all-btn');
   btn.disabled = true; btn.innerHTML = '<span class="ai-spin"></span> Running…';
   for (const type of ['market', 'news', 'social', 'fund']) await gmRunAnalyst(type);
+  await runCrossExam('gm', { silent: true });
   await gmRunDebate();
   btn.disabled = false; btn.textContent = '▶ Run All';
 }
@@ -11756,10 +11955,30 @@ window.scSelectAll = function(chk) {
       </div>
     </div>
 
-    <!-- Phase 2: Research Debate -->
+    <!-- Phase 2: Cross-Examination -->
     <div class="ai-phase">
       <div class="ai-phase-hdr">
         <span class="ai-phase-num">02</span>
+        <span class="ai-phase-title">Cross-Examination</span>
+        <span class="ai-phase-sub">Audits the four reports and sets the questions the debate argues</span>
+      </div>
+      <div class="ai-xexam">
+        <div class="ai-xexam-hdr">
+          <div>
+            <div class="ai-xexam-label">&#128269; Chief of Research &mdash; Cross-Examination</div>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:3px">Contradictions between the analysts &middot; claims the dossier doesn't support &middot; blind spots &middot; crux questions</div>
+          </div>
+          <button class="btn" style="background:rgba(255,155,78,.08);border:1px solid var(--orange);color:var(--orange);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--orange)';this.style.color='#000'" onmouseout="this.style.background='rgba(255,155,78,.08)';this.style.color='var(--orange)'" onclick="runCrossExam('ai')">&#9654; Cross-Examine</button>
+        </div>
+        <div class="ai-xexam-out" id="ai-out-xexam">Run at least two analysts first &mdash; this compares their reports against each other and against your Apex data&hellip;</div>
+        <div id="ai-status-xexam" style="padding:6px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border)"></div>
+      </div>
+    </div>
+
+    <!-- Phase 3: Research Debate -->
+    <div class="ai-phase">
+      <div class="ai-phase-hdr">
+        <span class="ai-phase-num">03</span>
         <span class="ai-phase-title">Bull / Bear Debate</span>
         <span class="ai-phase-sub">Researchers stress-test the thesis from both sides</span>
       </div>
@@ -11905,10 +12124,30 @@ window.scSelectAll = function(chk) {
       </div>
     </div>
 
-    <!-- Phase 2 -->
+    <!-- Phase 2: Cross-Examination -->
     <div class="ai-phase">
       <div class="ai-phase-hdr">
         <span class="ai-phase-num">02</span>
+        <span class="ai-phase-title">Cross-Examination</span>
+        <span class="ai-phase-sub">Audits the four reports and sets the questions the debate argues</span>
+      </div>
+      <div class="ai-xexam">
+        <div class="ai-xexam-hdr">
+          <div>
+            <div class="ai-xexam-label">&#128269; Chief of Research &mdash; Cross-Examination</div>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:3px">Contradictions between the analysts &middot; claims the dossier doesn't support &middot; blind spots &middot; crux questions</div>
+          </div>
+          <button class="btn" style="background:rgba(255,155,78,.08);border:1px solid var(--orange);color:var(--orange);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='var(--orange)';this.style.color='#000'" onmouseout="this.style.background='rgba(255,155,78,.08)';this.style.color='var(--orange)'" onclick="runCrossExam('gm')">&#9654; Cross-Examine</button>
+        </div>
+        <div class="ai-xexam-out" id="gm-out-xexam">Run at least two analysts first &mdash; this compares their reports against each other and against your Apex data&hellip;</div>
+        <div id="gm-status-xexam" style="padding:6px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-top:1px solid var(--border)"></div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="ai-phase">
+      <div class="ai-phase-hdr">
+        <span class="ai-phase-num">03</span>
         <span class="ai-phase-title">Bull / Bear Debate</span>
         <span class="ai-phase-sub">Researchers stress-test the thesis from both sides</span>
       </div>
