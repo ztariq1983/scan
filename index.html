@@ -7833,7 +7833,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
 // Bump this whenever the file is regenerated — it is how we tell which build
 // a browser is actually running when a screenshot disagrees with the source.
-const APEX_BUILD = '2026-08-15.8';
+const APEX_BUILD = '2026-08-31.1';
 
 // Load saved keys and watchlists on page ready
 if (g('build-stamp')) g('build-stamp').textContent = APEX_BUILD;
@@ -9671,6 +9671,229 @@ async function previewDossier(which) {
 }
 window.previewDossier = previewDossier;
 window.setDossierEnabled = setDossierEnabled;
+
+// ═════════════════════════════════════════════════════════════════════════════
+// EXPORT — save a full multi-agent analysis as a Markdown context file
+// ═════════════════════════════════════════════════════════════════════════════
+// One shared implementation for both the Claude (ai-) and Gemini (gm-) tabs.
+// Reads straight from the rendered panels, so whatever you can see is what you
+// get. Output is UTF-8 Markdown with a BOM and CRLF line endings so it opens
+// correctly in Notepad, and is structured/labelled so it can be uploaded into a
+// fresh Claude or Gemini chat as a context file without further explanation.
+
+const EXPORT_PROVIDERS = {
+  ai: { name: 'Claude', model: 'claude-sonnet-4-6', slug: 'claude' },
+  gm: { name: 'Gemini', model: 'gemini-2.5-flash',  slug: 'gemini' }
+};
+
+const EXPORT_AGENTS = [
+  { id: 'market',  group: 'analyst', title: 'Market Analyst',       sub: 'price action · technicals · momentum' },
+  { id: 'news',    group: 'analyst', title: 'News Analyst',         sub: 'company news · macro · catalysts' },
+  { id: 'social',  group: 'analyst', title: 'Sentiment Analyst',    sub: 'options flow · short interest · positioning' },
+  { id: 'fund',    group: 'analyst', title: 'Fundamentals Analyst', sub: 'financials · valuation · moat' },
+  { id: 'bull',    group: 'debate',  title: 'Bull Researcher',      sub: 'strongest upside case' },
+  { id: 'bear',    group: 'debate',  title: 'Bear Researcher',      sub: 'strongest downside case' },
+  { id: 'verdict', group: 'verdict', title: 'Research Manager — Synthesis', sub: 'lean · key determinants · action' }
+];
+
+// Copy the panels ship with before anything has been run.
+const _EXPORT_PLACEHOLDERS = [
+  'waiting to run', 'run analysts first', 'run bull + bear researchers first',
+  'building dossier', 'dossier failed'
+];
+
+function _exportIsEmpty(txt) {
+  const t = (txt || '').trim();
+  if (t.length < 40) return true;
+  if (t.startsWith('⚠')) return true;          // API / network error text
+  const low = t.toLowerCase();
+  return _EXPORT_PLACEHOLDERS.some(p => low.startsWith(p));
+}
+
+function _exportRead(which, id) {
+  const el = document.getElementById(which + '-out-' + id);
+  const txt = el ? (el.textContent || '').trim() : '';
+  return _exportIsEmpty(txt) ? '' : txt;
+}
+
+// Fence pre-formatted text so it cannot break out of its own code block.
+function _exportFence(txt) {
+  let fence = '```';
+  while (txt.indexOf(fence) !== -1) fence += '`';
+  return fence + 'text\n' + txt + '\n' + fence;
+}
+
+function _exportPad(n) { return String(n).padStart(2, '0'); }
+
+function buildAnalysisMarkdown(which) {
+  const P = EXPORT_PROVIDERS[which];
+  if (!P) throw new Error('Unknown provider: ' + which);
+
+  const tkEl  = document.getElementById(which + '-ticker');
+  const dtEl  = document.getElementById(which + '-date');
+  const cxEl  = document.getElementById(which + '-context');
+  const ticker  = ((tkEl && tkEl.value) || '').trim().toUpperCase() || 'UNKNOWN';
+  const asOf    = (dtEl && dtEl.value) || new Date().toISOString().slice(0, 10);
+  const userCtx = ((cxEl && cxEl.value) || '').trim();
+
+  const now = new Date();
+  const stamp = now.getFullYear() + '-' + _exportPad(now.getMonth() + 1) + '-' + _exportPad(now.getDate())
+              + ' ' + _exportPad(now.getHours()) + ':' + _exportPad(now.getMinutes());
+
+  const dos     = _dossierCache.get(ticker) || null;
+  const dossier = (dos && dos.text) || '';
+
+  const parts  = EXPORT_AGENTS.map(a => Object.assign({}, a, { text: _exportRead(which, a.id) }));
+  const ran    = parts.filter(p => p.text);
+  const notRun = parts.filter(p => !p.text);
+  if (!ran.length && !dossier) return null;
+
+  const build = (typeof APEX_BUILD !== 'undefined') ? APEX_BUILD : 'n/a';
+  const L = [];
+
+  L.push('# Apex Analysis — ' + ticker + ' — ' + asOf);
+  L.push('');
+  L.push('> **What this file is.** A multi-agent equity research package produced by Apex, a personal');
+  L.push('> stock-research terminal. It holds two different kinds of content and they should not be');
+  L.push('> weighted the same:');
+  L.push('>');
+  L.push('> 1. **Apex Dossier** — measured market data pulled from live APIs (Alpaca bars, Finnhub');
+  L.push('>    fundamentals/earnings/analyst data, SEC EDGAR 13F holdings). This is *not* model output.');
+  L.push('>    Treat it as ground truth for the as-of date below; do not re-derive or contradict it.');
+  L.push('>    Anything listed under `DATA NOT AVAILABLE` was genuinely missing — it does not mean zero.');
+  L.push('> 2. **Agent reports** — written by ' + P.name + ' (`' + P.model + '`) reasoning over that dossier');
+  L.push('>    plus web search. These are model opinion: a useful prior and a record of what was believed');
+  L.push('>    on this date, not fact.');
+  L.push('>');
+  L.push('> **If you are an AI reading this as context:** anchor quantitative claims on the dossier,');
+  L.push('> treat the bull/bear/synthesis sections as one analyst’s view to be challenged rather than');
+  L.push('> accepted, and re-check anything time-sensitive — prices, ratings, targets and catalysts here');
+  L.push('> are a snapshot of ' + asOf + ' and go stale quickly. Not investment advice.');
+  L.push('');
+  L.push('| Field | Value |');
+  L.push('| --- | --- |');
+  L.push('| Ticker | `' + ticker + '` |');
+  L.push('| Analysis as-of date | ' + asOf + ' |');
+  L.push('| Exported | ' + stamp + ' (local time) |');
+  L.push('| Model | ' + P.name + ' — `' + P.model + '` |');
+  L.push('| Apex build | `' + build + '` |');
+  L.push('| Apex dossier | ' + (dossier
+        ? 'included' + (dos && dos.sections ? ' — ' + dos.sections + ' sections, ' + (dos.chars / 1000).toFixed(1) + 'k chars' : '')
+                     + (dos && dos.missing && dos.missing.length ? ', ' + dos.missing.length + ' gap(s)' : '')
+        : 'not included') + ' |');
+  L.push('| Agents run | ' + (ran.length ? ran.map(r => r.id).join(', ') : 'none') + ' |');
+  if (notRun.length) L.push('| Agents not run | ' + notRun.map(r => r.id).join(', ') + ' |');
+  L.push('');
+
+  let n = 0;
+  const sec = t => { n++; L.push('---'); L.push(''); L.push('## ' + n + '. ' + t); L.push(''); };
+
+  if (dossier) {
+    sec('Apex Dossier — verified data (ground truth)');
+    L.push('_Pulled from live market-data APIs' + (dos && dos.day ? ' on ' + dos.day : '') + '. Measured, not generated._');
+    L.push('');
+    L.push(_exportFence(dossier));
+    L.push('');
+  }
+
+  if (userCtx) {
+    sec('Context supplied by the user');
+    L.push(_exportFence(userCtx));
+    L.push('');
+  }
+
+  const analysts = ran.filter(r => r.group === 'analyst');
+  if (analysts.length) {
+    sec('Analyst team — ' + P.name + ' agents (model opinion)');
+    L.push('_Four specialised analysts, each run separately over the dossier with web search enabled._');
+    L.push('');
+    analysts.forEach((a, i) => {
+      L.push('### ' + n + '.' + (i + 1) + ' ' + a.title);
+      L.push('');
+      L.push('_' + a.sub + '_');
+      L.push('');
+      L.push(a.text);
+      L.push('');
+    });
+  }
+
+  const debate = ran.filter(r => r.group === 'debate');
+  if (debate.length) {
+    sec('Bull / bear debate (model opinion)');
+    L.push('_Both sides argued from the same analyst reports and the same dossier._');
+    L.push('');
+    debate.forEach((d, i) => {
+      L.push('### ' + n + '.' + (i + 1) + ' ' + d.title);
+      L.push('');
+      L.push('_' + d.sub + '_');
+      L.push('');
+      L.push(d.text);
+      L.push('');
+    });
+  }
+
+  const verdict = ran.find(r => r.group === 'verdict');
+  if (verdict) {
+    sec('Research Manager — synthesis (model opinion)');
+    L.push('_Weighs the bull case against the bear case and states a lean and an action._');
+    L.push('');
+    L.push(verdict.text);
+    L.push('');
+  }
+
+  L.push('---');
+  L.push('');
+  L.push('_Generated by Apex build `' + build + '` on ' + stamp + '. Agent reports by ' + P.name
+        + ' (`' + P.model + '`). Dossier figures come from third-party market-data APIs and are');
+  L.push('accurate only as of ' + asOf + '. This file is a research record, not investment advice._');
+  L.push('');
+
+  return L.join('\n');
+}
+window.buildAnalysisMarkdown = buildAnalysisMarkdown;
+
+function exportAnalysis(which) {
+  const P = EXPORT_PROVIDERS[which];
+  let md;
+  try {
+    md = buildAnalysisMarkdown(which);
+  } catch (e) {
+    console.error('[apex] export failed', e);
+    alert('Export failed: ' + e.message);
+    return;
+  }
+  if (!md) {
+    alert('Nothing to export yet — run at least one agent, or preview a dossier, first.');
+    return;
+  }
+
+  const tkEl = document.getElementById(which + '-ticker');
+  const dtEl = document.getElementById(which + '-date');
+  const ticker = (((tkEl && tkEl.value) || '').trim().toUpperCase().replace(/[^A-Z0-9._-]/g, '')) || 'UNKNOWN';
+  const asOf   = (((dtEl && dtEl.value) || new Date().toISOString().slice(0, 10)).replace(/[^0-9-]/g, ''));
+  const fname  = 'APEX_' + ticker + '_' + asOf + '_' + P.slug + '.md';
+
+  // BOM + CRLF: makes Notepad render the file correctly; harmless everywhere else.
+  const body = '﻿' + md.replace(/\r?\n/g, '\r\n');
+  const blob = new Blob([body], { type: 'text/markdown;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = fname;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  const st = document.getElementById(which + '-debate-status');
+  if (st) {
+    const msg = '✓ Saved ' + fname + '  ·  ' + (body.length / 1024).toFixed(1) + ' KB';
+    st.textContent = msg;
+    setTimeout(() => { if (st.textContent === msg) st.textContent = ''; }, 7000);
+  }
+}
+window.exportAnalysis = exportAnalysis;
 
 async function buildTickerDossier(ticker, { onProgress = null, force = false } = {}) {
   const TK = (ticker || '').trim().toUpperCase();
@@ -11577,6 +11800,7 @@ window.scSelectAll = function(chk) {
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onclick="aiRunSynthesis()">▶ Synthesise</button>
             <button class="btn" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onclick="aiRunDebate()">▶ All 3</button>
+            <button class="btn" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--cyan)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--cyan)'" onclick="exportAnalysis('ai')" title="Save the full analysis — dossier, analysts, bull, bear and synthesis — as a Markdown file. Opens in Notepad and can be uploaded to Claude or Gemini as a context file.">⬇ Export .md</button>
           </div>
         </div>
         <div class="ai-verdict-out" id="ai-out-verdict">Run Bull + Bear researchers first…</div>
@@ -11725,6 +11949,7 @@ window.scSelectAll = function(chk) {
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-purple" style="font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase" onclick="gmRunSynthesis()">▶ Synthesise</button>
             <button class="btn" style="background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase" onclick="gmRunDebate()">▶ All 3</button>
+            <button class="btn" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:6px 12px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--cyan)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--cyan)'" onclick="exportAnalysis('gm')" title="Save the full analysis — dossier, analysts, bull, bear and synthesis — as a Markdown file. Opens in Notepad and can be uploaded to Claude or Gemini as a context file.">⬇ Export .md</button>
           </div>
         </div>
         <div class="ai-verdict-out" id="gm-out-verdict">Run Bull + Bear researchers first…</div>
